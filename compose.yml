@@ -1,0 +1,64 @@
+services:
+  php:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: php
+    volumes:
+      - ".:/var/www/public"
+    networks:
+      - app-network
+    environment:
+      PHP_IDE_CONFIG: serverName=Docker
+    restart: unless-stopped
+
+  nginx:
+    image: "nginx:latest"
+    container_name: nginx
+    ports:
+      - "8080:80"
+    volumes:
+      - ".:/var/www/public"
+      - "./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf"
+    depends_on:
+      - php
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  mysql:
+    image: "mysql:8.0"
+    container_name: mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD:-rootpassword}"
+      MYSQL_DATABASE: "${MYSQL_DATABASE:-sudochan}"
+      MYSQL_USER: "${MYSQL_USER:-sudochan_user}"
+      MYSQL_PASSWORD: "${MYSQL_PASSWORD:-userpassword}"
+    volumes:
+      - "mysql_data:/var/lib/mysql"
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  redis:
+    image: "redis:alpine"
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - "redis_data:/data"
+    networks:
+      - app-network
+    restart: unless-stopped
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mysql_data:
+    driver: local
+  redis_data:
+    driver: local

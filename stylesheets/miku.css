@@ -2,86 +2,91 @@
  * miku.css
  * For AwsumChan by Circlepuller
  */
+
 body {
-	background: #D2FFEE url('img/fade-miku.png') top repeat-x;
+    background: #d2ffee url("img/fade-miku.png") top repeat-x;
 }
 
-a:link, a:visited {
-	text-decoration: none;
-	color: #0093AB;
+a:link,
+a:visited {
+    text-decoration: none;
+    color: #0093ab;
 }
 
-a:link:hover, a:visited:hover {
-	color: #DD0000;
+a:link:hover,
+a:visited:hover {
+    color: #d00;
 }
 
 a.post_no {
-	color: #000033;
+    color: #003;
 }
 
 p.intro a.email span.name {
-	color: #0093AB;
+    color: #0093ab;
 }
 
 p.intro a.email:hover span.name {
-	color: #DD0000;
+    color: #d00;
 }
 
-h2, div.title, h1 {
-	color: #800000;
+h2,
+div.title,
+h1 {
+    color: #800000;
 }
 
 form table tr th {
-	background: #95D2D3;
+    background: #95d2d3;
 }
 
 div.banner {
-	background-color: #E04000;
+    background-color: #e04000;
 }
 
 div.post.op hr {
-	border-color: #B7C9D5;
+    border-color: #b7c9d5;
 }
 
 p.intro span.subject {
-	color: #117743;
-	font-weight: 800;
+    color: #117743;
+    font-weight: 800;
 }
 
 p.intro span.name {
-	color: #117743;
-	font-weight: 800;
+    color: #117743;
+    font-weight: 800;
 }
 
 div.post.reply.highlighted {
-	background: #9988EE;
+    background: #98e;
 }
 
 div.post.reply {
-	background: #B6DDDE;
-	border-color: #8FCCCD;
+    background: #b6ddde;
+    border-color: #8fcccd;
 }
 
 div.ban {
-	border: 1px solid #0093AB;
+    border: 1px solid #0093ab;
 }
 
 div.ban h2 {
-	background: #B6DDDE;
-	color: #0093AB;
+    background: #b6ddde;
+    color: #0093ab;
 }
 
 div.pages {
-	color: #8899AA;
-	background: #B6DDDE;
-	border-right: 1px solid #8FCCCD;
-	border-bottom: 1px solid #8FCCCD;
+    color: #89a;
+    background: #b6ddde;
+    border-right: 1px solid #8fcccd;
+    border-bottom: 1px solid #8fcccd;
 }
 
 hr {
-	border-color: #B7D9C5;
+    border-color: #b7d9c5;
 }
 
 div.boardlist {
-	color: #0093AB;
+    color: #0093ab;
 }

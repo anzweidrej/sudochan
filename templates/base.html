@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="{{ config.locale }}">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <title>{% block title %}{% endblock %}</title>
+        {% include 'header.html' %}
+        {% block stylesheets %}{% endblock %}
+        {% block javascripts %}{% endblock %}
+    </head>
+    <body>
+        {{ boardlist.top }}
+
+        {% if pm %}
+            <div class="top_notice">
+                You have <a href="?/PM/{{ pm.id }}">an unread PM</a>
+                {% if pm.waiting > 0 %}
+                    , plus {{ pm.waiting }} more waiting
+                {% endif %}.
+            </div>
+            <hr />
+        {% endif %}
+
+        {% block banner %}
+            {% if config.url_banner %}
+                <img class="banner"
+                    src="{{ config.url_banner }}"
+                    {% if config.banner_width or config.banner_height %}
+                        style="
+                            {% if config.banner_width %}width:{{ config.banner_width }}px;{% endif %}
+                            {% if config.banner_height %}height:{{ config.banner_height }}px;{% endif %}
+                        "
+                    {% endif %}
+                    alt="" />
+            {% endif %}
+        {% endblock %}
+
+        {% block header %}{% endblock %}
+
+        {% block body %}
+            <main>
+                <section id="content">
+                    {% block content %}{% endblock %}
+                </section>
+                <section id="sidebar">
+                    {% block sidebar %}{% endblock %}
+                </section>
+            </main>
+        {% endblock %}
+
+        {{ boardlist.bottom }}
+    
+        {% block footer %}
+            <footer>
+                <p class="unimportant" style="margin-top:20px;text-align:center;">
+                    Powered by Sudochan {{ config.version }} |
+                    &copy; 2010-{{ time()|date("Y") }}
+                </p>
+                {% for footer in config.footer %}
+                    <p class="unimportant" style="text-align:center;">{{ footer }}</p>
+                {% endfor %}
+            </footer>
+        {% endblock %}
+        
+        <script>{% verbatim %}ready();{% endverbatim %}</script>
+    </body>
+</html>

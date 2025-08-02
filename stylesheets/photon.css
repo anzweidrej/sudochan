@@ -1,296 +1,328 @@
-/*https://github.com/turanga/Tinyboard/blob/efe78b81c1ffca32bcf9601d0e3877bb65c70df1/stylesheets/photon.css*/
+/* https://github.com/turanga/Tinyboard/blob/efe78b81c1ffca32bcf9601d0e3877bb65c70df1/stylesheets/photon.css */
 
-
-.floatiframe{
-float:left;
-padding:10px;
+.floatiframe {
+    float: left;
+    padding: 10px;
 }
 
-
 div.boardlist {
-    color: #8899AA;
+    color: #89a;
     font-size: 12pt;
-    margin-top: 0px;
-    background-color:  #DDDDDD;
-    border: 1px solid #cccccc;
-    border-radius: 4px 4px 4px 4px;
+    background-color: #ddd;
+    border: 1px solid #ccc;
+    border-radius: 4px;
     margin-top: 0;
     padding: 10px;
     position: fixed;
     top: 0;
 }
+
 div.boardlist.bottom {
     margin-top: 20px;
     position: inherit;
-    background:inherit;
+    background: inherit;
 }
 
-
-
-.return1 a{
-float:left;
-font-size: inherit;
-
+.return1 a {
+    float: left;
+    font-size: inherit;
 }
 
 div.blotter {
-    background: none repeat scroll 0 0 #DDDDDD;
-    border: 1px solid #CCCCCC;
-    border-radius: 5px 5px 5px 5px;
+    background: none repeat scroll 0 0 #ddd;
+    border: 1px solid #ccc;
+    border-radius: 5px;
     clear: both;
-    color: #006AB9;
+    color: #006ab9;
     font-weight: bold;
     margin-bottom: 0.5em;
     padding: 2px;
     text-align: center;
 }
 
-
-
 div.title {
-    margin-bottom: 0em;
+    margin-bottom: 0;
     clear: both;
-    color: #FFAB3F;
+    color: #ffab3f;
     font-size: 2em;
     font-weight: bold;
-
 }
 
 div.ban h2 {
-    border-radius: 6px 6px 6px 6px;
+    border-radius: 6px;
 }
 
 div.ban {
-    background: none repeat scroll 0 0  #DDDDDD;
-    border: 1px solid #CCCCCC;
+    background: none repeat scroll 0 0 #ddd;
+    border: 1px solid #ccc;
     margin: 30px auto;
     max-width: 700px;
     border-radius: 7px;
-
 }
 
 form {
-    margin-bottom: 0px;
+    margin-bottom: 0;
 }
 
-
 form {
-    margin-bottom: 0px;
+    margin-bottom: 0;
 }
 
 span.heading {
-    color: #FFAB3F;
+    color: #ffab3f;
     display: block;
     font-size: 12pt;
     font-weight: bold;
 }
 
-textarea#body{
+textarea#body {
     height: 136px;
     width: 518px;
 }
 
-
-
-html, body {
-	background: none;
-	background-color: #EEEEEE;
-	color: #333333;
-	font-family: "Trebuchet MS",Trebuchet,serif;
-	font-size: 12pt;
+html,
+body {
+    background: none;
+    background-color: #eee;
+    color: #333;
+    font-family: "Trebuchet MS", Trebuchet, serif;
+    font-size: 12pt;
 }
+
 a {
-	color: #8A8A8A;
+    color: #8a8a8a;
 }
+
 a:hover {
-	color: #0066FF;
+    color: #06f;
 }
+
 .adminbar {
-        clear:both;
-        float:right;
-        font-size: .8em;
+    clear: both;
+    float: right;
+    font-size: 0.8em;
 }
+
 .adminbar a {
-	font-weight: bold;
+    font-weight: bold;
 }
+
 .logo {
-        clear:both;
-        text-align:left;
-        font-size:2em;
-        font-weight: bold;
-        color:#FF6600;
-        /*width:100%;*/
+    clear: both;
+    text-align: left;
+    font-size: 2em;
+    font-weight: bold;
+    color: #f60;
+
+    /* width:100%; */
 }
-.theader, .passvalid {
-        background:#DDDDDD;
-        text-align:center;
-        padding:2px;
-        color:#2266AA;
-        clear: both;
-        font-weight: bold;
-        margin-bottom: .5em;
-        border: solid 1px #CCCCCC;
-        -moz-border-radius: 5px;
+
+.theader,
+.passvalid {
+    background: #ddd;
+    text-align: center;
+    padding: 2px;
+    color: #26a;
+    clear: both;
+    font-weight: bold;
+    margin-bottom: 0.5em;
+    border: solid 1px #ccc;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
 }
-.postarea {
-}
+
 .rules {
-        font-size:0.7em;
+    font-size: 0.7em;
 }
+
 .postblock {
-        background:transparent;
-        color:#002244;
-        font-weight:bold;
+    background: transparent;
+    color: #024;
+    font-weight: bold;
 }
+
 .footer {
-        text-align:center;
-        font-size:12px;
-        font-family:serif;
-        margin: 2em 0 0 0;
+    text-align: center;
+    font-size: 12px;
+    font-family: serif;
+    margin: 2em 0 0;
 }
+
 .dellist {
-	font-weight: bold;
-	text-align:center;
+    font-weight: bold;
+    text-align: center;
 }
+
 .delbuttons {
-	text-align:center;
-	padding-bottom:4px;
+    text-align: center;
+    padding-bottom: 4px;
 }
+
 .managehead {
-	background:#DDDDDD;
-	color:#002244;
-	padding:0px;
+    background: #ddd;
+    color: #024;
+    padding: 0;
 }
+
 .postlists {
-	background:#FFFFFF;
-	width:100%;
-	padding:0px;
-	color:#800000;
+    background: #fff;
+    width: 100%;
+    padding: 0;
+    color: #800000;
 }
+
 .row1 {
-	background:#DDDDDD;
-	color:#002244;
+    background: #ddd;
+    color: #024;
 }
+
 .row2 {
-        background:#CCCCCC;
-        color:#002244;
+    background: #ccc;
+    color: #024;
 }
+
 .unkfunc {
-	background:inherit;
-	color:#789922;
+    background: inherit;
+    color: #789922;
 }
+
 .reflink {
-	font-size: .8em;
-	font-weight: bold;
+    font-size: 0.8em;
+    font-weight: bold;
 }
+
 .filesize {
-	text-decoration:none;
-	color: #666666;
-	font-size: .8em;
+    text-decoration: none;
+    color: #666;
+    font-size: 0.8em;
 }
+
 .filetitle {
-	background:inherit;
-	font-size:1.2em;
-	color:#002244;
-	font-weight:bold;
+    background: inherit;
+    font-size: 1.2em;
+    color: #024;
+    font-weight: bold;
 }
+
 .postername {
-	color:#004A99;
-	font-weight:bold;
+    color: #004a99;
+    font-weight: bold;
 }
+
 .postertrip {
-	color:#FF3300;
+    color: #f30;
 }
+
 .oldpost {
-        color:#CC1105;
-        font-weight:bold;
+    color: #cc1105;
+    font-weight: bold;
 }
+
 .omittedposts {
-        color:#666666;
+    color: #666;
 }
+
 .reply {
-	background:#DDDDDD;
-	border: solid 1px #CCCCCC;
-	padding: 0;
-	margin: 0;
-	-moz-border-radius: 5px;
+    background: #ddd;
+    border: solid 1px #ccc;
+    padding: 0;
+    margin: 0;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
 }
+
 blockquote {
-	margin: .5em .5em .5em 1em;
+    margin: 0.5em 0.5em 0.5em 1em;
 }
+
 blockquote p {
-	margin: 0;
-	padding: 0;
+    margin: 0;
+    padding: 0;
 }
+
 .reply blockquote {
-	margin: .5em;
+    margin: 0.5em;
 }
+
 .doubledash {
-	display: none;
- 	vertical-align:top;
-	clear:both;
-	float:left;
+    display: none;
+    vertical-align: top;
+    clear: both;
+    float: left;
 }
+
 .replytitle {
-	font-size: 1.2em;
-        color:#002244;
-        font-weight:bold;
+    font-size: 1.2em;
+    color: #024;
+    font-weight: bold;
 }
+
 .commentpostername {
-        color:#004A99;
-	font-weight:800;
+    color: #004a99;
+    font-weight: 800;
 }
+
 .thumbnailmsg {
-	font-size: .8em;
-	color:#666666;
+    font-size: 0.8em;
+    color: #666;
 }
+
 hr {
-	border-style: solid none none none;
-	border-width: 1px;
-	border-color: #BBBBBB;
+    border-style: solid none none;
+    border-width: 1px;
+    border-color: #bbb;
 }
+
 table {
-	border-style: none;
+    border-style: none;
 }
+
 table td {
-	border-style: none;
+    border-style: none;
 }
+
 .nothumb {
-	background-color: #FFFFFF;
-	border-style: dotted;
-	margin: .3em .5em;
+    background-color: #fff;
+    border-style: dotted;
+    margin: 0.3em 0.5em;
 }
 
 .abbrev {
-        color:#666666;
+    color: #666;
 }
+
 .highlight {
-	background:#EEDACB;
-	color:#333333;
-	border: 2px dashed #EE6600;
+    background: #eedacb;
+    color: #333;
+    border: 2px dashed #e60;
 }
 
-
-div.banner, div.banner a {
+div.banner,
+div.banner a {
     color: inherit;
 }
+
 div.banner {
     background-color: inherit;
 }
+
 form table tr th {
     background: none;
 }
 
 div.post.reply {
-    background: none repeat scroll 0 0 #DDDDDD;
-    border: 1px solid #CCCCCC;
-    border-radius: 5px 5px 5px 5px;
+    background: none repeat scroll 0 0 #ddd;
+    border: 1px solid #ccc;
+    border-radius: 5px;
 }
-div.title,h1 {
-    color: #FF6600;
+
+div.title,
+h1 {
+    color: #f60;
     font-size: 32px;
     font-weight: bold;
 }
+
 div.title p {
     font-size: 26px;
     margin: 0;
@@ -301,17 +333,17 @@ h1 {
 }
 
 .pages {
-    background: rgba(204, 204, 204, 0.32) !important;
-    width:100%;
+    background: rgb(204 204 204 / 32%) !important;
+    width: 100%;
     color: #707070 !important;
 }
 
 div.banner {
-    background: none repeat scroll 0 0 #DDDDDD;
-    border: 1px solid #CCCCCC;
-    border-radius: 5px 5px 5px 5px;
+    background: none repeat scroll 0 0 #ddd;
+    border: 1px solid #ccc;
+    border-radius: 5px;
     clear: both;
-    color: #2266AA;
+    color: #26a;
     font-weight: bold;
     margin-bottom: 0.5em;
     padding: 2px;
@@ -319,9 +351,9 @@ div.banner {
 }
 
 form table tr td div {
-    padding-left: 0px;
-
+    padding-left: 0;
 }
+
 .recaptchatable .recaptcha_image_cell {
-    padding: 0px !important;
+    padding: 0 !important;
 }

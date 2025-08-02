@@ -1,20 +1,19 @@
-{% filter remove_whitespace %}
-<!doctype html>
-<html>
-<head>
-        <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
-	<title>{{ settings.title }}</title>
-	<link rel="stylesheet" media="screen" href="{{ config.url_stylesheet }}"/>
-</head>
-<body>
-	{{ boardlist.top }}
+{% extends 'base.html' %}
+
+{% block title %}
+	{{ settings.title }}
+{% endblock %}
+
+{% block header %}
 	<header>
 		<h1>{{ settings.title }}</h1>
 		<div class="subtitle">{{ settings.subtitle }}</div>
 	</header>
-	
+{% endblock %}
+
+{% block content %}
 	<div class="ban">
-		{% if news|count == 0 %}
+		{% if news|length == 0 %}
 			<p style="text-align:center" class="unimportant">{% trans %}(No news to show.){% endtrans %}</p>
 		{% else %}
 			{% for entry in news %}
@@ -30,8 +29,4 @@
 			{% endfor %}
 		{% endif %}
 	</div>
-	
-	<p class="unimportant" style="margin-top:20px;text-align:center;">Powered by <a href="http://tinyboard.org/">Tinyboard</a> {{ config.version }} | <a href="http://tinyboard.org/">Tinyboard</a> Copyright &copy; 2010-2012 Tinyboard Development Group</p>
-</body>
-</html>
-{% endfilter %}
+{% endblock %}

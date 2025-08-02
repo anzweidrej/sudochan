@@ -1,20 +1,18 @@
-# static html
-*.html
-
-# instance-config
-/inc/instance-config.php
-
-# .installed
-/.installed
-
-# script file
-/main.js
-
-# templates cache
-/templates/cache
-
-# other stuff
 .DS_Store
-thumbs.db
+.env
+.idea/
+/.installed
+.vscode/
 Icon?
 Thumbs.db
+b/
+composer.lock
+/inc/instance-config.php
+/main.js
+megalinter-reports/
+tmp/*
+!tmp/.gitkeep
+vendor/
+/*.html
+*.log
+*.cache

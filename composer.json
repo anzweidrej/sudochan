@@ -1,0 +1,61 @@
+{
+    "name": "anzweidrej/sudochan",
+    "type": "project",
+    "description": "Sudochan is a simple open-source imageboard software written in PHP.",
+    "keywords": [
+        "imageboard",
+        "forum",
+        "php"
+    ],
+    "license": "MIT",
+    "homepage": "https://github.com/anzweidrej/sudochan",
+    "authors": [
+        {
+            "name": "anzweidrej",
+            "homepage": "https://github.com/anzweidrej"
+        },
+        {
+            "name": "savetheinternet",
+            "homepage": "https://github.com/savetheinternet"
+        }
+    ],
+    "autoload": {
+        "classmap": ["inc/"],
+        "files": [
+            "inc/bootstrap.php",
+            "inc/display.php",
+            "inc/template.php",
+            "inc/database.php",
+            "inc/events.php",
+            "inc/api.php",
+            "inc/mod/auth.php",
+            "inc/functions.php"
+        ]
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "require": {
+        "php": ">=8.3",
+        "fortawesome/font-awesome": "^6.7",
+        "geoip2/geoip2": "^3.2",
+        "gettext/gettext": "^5.7",
+        "google/recaptcha": "^1.3",
+        "lifo/ip": "^1.1",
+        "phpmyadmin/twig-i18n-extension": "^5.0",
+        "twig/twig": "^3.21",
+        "vlucas/phpdotenv": "^5.6"
+    },
+    "config": {
+        "sort-packages": true,
+        "optimize-autoloader": true,
+        "allow-plugins": {
+            "composer/package-versions-deprecated": true
+        },
+        "platform": {
+            "php": "8.3"
+        }
+    },
+    "scripts": {
+        "serve": "@php -S localhost:8000"
+    }
+}
