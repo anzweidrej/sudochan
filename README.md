@@ -3,44 +3,45 @@
 Sudochan is a free, lightweight, fast, highly configurable, and user-friendly imageboard software package. It is written in PHP and has few dependencies.
 
 ### Requirements
-1. PHP >= 8.3
-2. MySQL/MariaDB server
-3. ext-mbstring 
-4. ext-gd
-5. ext-pdo
+- PHP >= 8.3
+- MySQL/MariaDB server
+- PHP extensions: mbstring, gd, pdo
 
-Sudochan does not include an Apache .htaccess file nor does it need one.
+> Sudochan does not include an Apache .htaccess file nor does it need one.
 
 ### Recommended
-1. ImageMagick (command-line ImageMagick or GraphicsMagick preferred)
-2. OpenSSL
-3. APCu, XCache, Redis or Memcached
+- ImageMagick or GraphicsMagick (command-line)
+- OpenSSL
+- APCu, XCache, Redis, or Memcached
 
 ### Contributing
 You can contribute to Sudochan by:
-* Developing patches/improvements/translations and using GitHub to submit pull requests.
-* Providing feedback and suggestions.
-* Writing/editing documentation.
+- Submitting pull requests for patches, improvements, or translations
+- Providing feedback and suggestions
+- Writing or editing documentation
 
 ### Installation
 1. Download and extract Sudochan to your web directory or get the latest development version with:
+```sh
+git clone git://github.com/anzweidrej/sudochan.git
+cd sudochan
+```
 
-	git clone git://github.com/anzweidrej/sudochan.git
+2. Install Composer packages:
+```sh
+composer install
+```
 
-2. Change directory and install composer packages with:
-
-        cd sudochan
-
-        composer install
-
-3. Create basic instance-config.php in /inc folder.
+3. Create a basic instance-config.php in the /inc folder.
 4. Navigate to /install.php in your web browser and follow the prompts.
 5. Sudochan should now be installed. Log in to /mod.php with the default username and password combination: admin / password.
-6. For running development environment, use following Docker command:
 
-        docker compose up -d --build
+**NOTE:** Please remember to change the administrator account password!
 
-NOTE: Please remember to change the administrator account password!
+To run a development environment, use:
+```sh
+docker compose up -d --build
+```
 
 ### Support
 Sudochan is still beta software, and there are bound to be bugs. If you find a
@@ -49,8 +50,8 @@ bug, please report it.
 If you need assistance with installing, configuring, or using Sudochan, you may
 find support from a variety of sources:
 
-* If you're unsure about how to enable or configure certain features, make sure you have read the comments in `inc/config.php`
-* Create Github issue
+- If you're unsure about how to enable or configure certain features, make sure you have read the comments in inc/config.php
+- Create a Github issue
 
 ### License
 This work is dual-licensed under MIT AND LicenseRef-Tinyboard (or any later version).
