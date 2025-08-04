@@ -30,14 +30,6 @@ function loadConfig()
         $_SERVER['REMOTE_ADDR'] = '0.0.0.0';
     }
 
-    // Ensure fallback translation function is always defined
-    if (!function_exists('_')) {
-        function _($str)
-        {
-            return $str;
-        }
-    }
-
     // Initialize config arrays
     $arrays = [
         'db', 'api', 'cache', 'cookies', 'error', 'dir', 'mod', 'spam', 'filters',

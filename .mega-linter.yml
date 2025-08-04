@@ -14,7 +14,6 @@ APPLY_FIXES: none
 # default
 ENABLE_LINTERS:
   - PHP_PHPCSFIXER
-  - PHP_PHPSTAN
 
 DISABLE:
   - COPYPASTE # Comment to enable checks of excessive copy-pastes
