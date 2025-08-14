@@ -18,7 +18,7 @@ register_shutdown_function('fatal_error_handler');
 mb_internal_encoding('UTF-8');
 loadConfig();
 
-function loadConfig()
+function loadConfig(): void
 {
     global $board, $config, $__ip, $debug, $__version, $microtime_start;
 
@@ -195,7 +195,7 @@ function loadConfig()
     }
 }
 
-function basic_error_function_because_the_other_isnt_loaded_yet($message, $priority = true)
+function basic_error_function_because_the_other_isnt_loaded_yet(string $message, int|bool $priority = true): void
 {
     global $config;
 
@@ -215,7 +215,7 @@ function basic_error_function_because_the_other_isnt_loaded_yet($message, $prior
         '<p class="c">This alternative error page is being displayed because the other couldn\'t be found or hasn\'t loaded yet.</p></body></html>');
 }
 
-function fatal_error_handler()
+function fatal_error_handler(): void
 {
     if ($error = error_get_last()) {
         if ($error['type'] == E_ERROR) {
@@ -228,7 +228,7 @@ function fatal_error_handler()
     }
 }
 
-function _syslog($priority, $message)
+function _syslog(int $priority, string $message): void
 {
     if (isset($_SERVER['REMOTE_ADDR'], $_SERVER['REQUEST_METHOD'], $_SERVER['REQUEST_URI'])) {
         // CGI
@@ -238,7 +238,7 @@ function _syslog($priority, $message)
     }
 }
 
-function verbose_error_handler($errno, $errstr, $errfile, $errline)
+function verbose_error_handler(int $errno, string $errstr, ?string $errfile, ?int $errline): bool
 {
     if (error_reporting() == 0) {
         return false;
@@ -251,7 +251,7 @@ function verbose_error_handler($errno, $errstr, $errfile, $errline)
     ]);
 }
 
-function define_groups()
+function define_groups(): void
 {
     global $config;
 
@@ -265,14 +265,14 @@ function define_groups()
     ksort($config['mod']['groups']);
 }
 
-function create_antibot($board, $thread = null)
+function create_antibot(string $board, ?int $thread = null): object
 {
     require_once dirname(__FILE__) . '/anti-bot.php';
 
     return _create_antibot($board, $thread);
 }
 
-function rebuildThemes($action, $board = false)
+function rebuildThemes(string $action, string|false $board = false): void
 {
     // List themes
     $query = query("SELECT `theme` FROM ``theme_settings`` WHERE `name` IS NULL AND `value` IS NULL") or error(db_error());
@@ -282,8 +282,7 @@ function rebuildThemes($action, $board = false)
     }
 }
 
-
-function loadThemeConfig($_theme)
+function loadThemeConfig(string $_theme): array|false
 {
     global $config;
 
@@ -297,7 +296,7 @@ function loadThemeConfig($_theme)
     return $theme;
 }
 
-function rebuildTheme($theme, $action, $board = false)
+function rebuildTheme(string $theme, string $action, string|false $board = false): void
 {
     global $config, $_theme;
     $_theme = $theme;
@@ -311,7 +310,7 @@ function rebuildTheme($theme, $action, $board = false)
     }
 }
 
-function themeSettings($theme)
+function themeSettings(string $theme): array
 {
     $query = prepare("SELECT `name`, `value` FROM ``theme_settings`` WHERE `theme` = :theme AND `name` IS NOT NULL");
     $query->bindValue(':theme', $theme);
@@ -325,7 +324,7 @@ function themeSettings($theme)
     return $settings;
 }
 
-function sprintf3($str, $vars, $delim = '%')
+function sprintf3(string $str, array $vars, string $delim = '%'): string
 {
     $replaces = [];
     foreach ($vars as $k => $v) {
@@ -338,12 +337,12 @@ function sprintf3($str, $vars, $delim = '%')
     );
 }
 
-function mb_substr_replace($string, $replacement, $start, $length)
+function mb_substr_replace(string $string, string $replacement, int $start, int $length): string
 {
     return mb_substr($string, 0, $start) . $replacement . mb_substr($string, $start + $length);
 }
 
-function setupBoard($array)
+function setupBoard(array $array): void
 {
     global $board, $config;
 
@@ -378,7 +377,7 @@ function setupBoard($array)
     }
 }
 
-function openBoard($uri)
+function openBoard(string $uri): bool
 {
     global $config, $build_pages;
 
@@ -394,7 +393,7 @@ function openBoard($uri)
     return false;
 }
 
-function getBoardInfo($uri)
+function getBoardInfo(string $uri): array|false
 {
     global $config;
 
@@ -416,7 +415,7 @@ function getBoardInfo($uri)
     return false;
 }
 
-function boardTitle($uri)
+function boardTitle(string $uri): string|false
 {
     $board = getBoardInfo($uri);
     if ($board) {
@@ -425,7 +424,7 @@ function boardTitle($uri)
     return false;
 }
 
-function purge($uri)
+function purge(string $uri): void
 {
     global $config, $debug;
 
@@ -462,7 +461,7 @@ function purge($uri)
     }
 }
 
-function file_write($path, $data, $simple = false, $skip_purge = false)
+function file_write(string $path, string $data, bool $simple = false, bool $skip_purge = false): void
 {
     global $config, $debug;
 
@@ -530,7 +529,7 @@ function file_write($path, $data, $simple = false, $skip_purge = false)
     event('write', $path);
 }
 
-function file_unlink($path)
+function file_unlink(string $path): bool
 {
     global $config, $debug;
 
@@ -563,7 +562,7 @@ function file_unlink($path)
     return $ret;
 }
 
-function hasPermission($action = null, $board = null, $_mod = null)
+function hasPermission(?int $action = null, ?string $board = null, ?array $_mod = null): bool
 {
     global $config;
 
@@ -596,7 +595,7 @@ function hasPermission($action = null, $board = null, $_mod = null)
     return true;
 }
 
-function listBoards()
+function listBoards(): array
 {
     global $config;
 
@@ -614,7 +613,7 @@ function listBoards()
     return $boards;
 }
 
-function until($timestamp)
+function until(int $timestamp): string
 {
     $difference = $timestamp - time();
     if ($difference < 60) {
@@ -632,7 +631,7 @@ function until($timestamp)
     return ($num = round($difference / (60 * 60 * 24 * 365))) . ' ' . ngettext('year', 'years', $num);
 }
 
-function ago($timestamp)
+function ago(int $timestamp): string
 {
     $difference = time() - $timestamp;
     if ($difference < 60) {
@@ -650,7 +649,7 @@ function ago($timestamp)
     return ($num = round($difference / (60 * 60 * 24 * 365))) . ' ' . ngettext('year', 'years', $num);
 }
 
-function displayBan($ban)
+function displayBan(array $ban): void
 {
     global $config, $board;
 
@@ -718,13 +717,13 @@ function displayBan($ban)
         ));
 }
 
-function checkBan($board = false)
+function checkBan(string|false $board = false): ?bool
 {
     global $config;
 
     if (!isset($_SERVER['REMOTE_ADDR'])) {
         // Server misconfiguration
-        return;
+        return null;
     }
 
     if (event('check-ban', $board)) {
@@ -758,7 +757,7 @@ function checkBan($board = false)
     // now and then to keep the ban list tidy.
     if ($config['cache']['enabled'] && $last_time_purged = Cache::get('purged_bans_last')) {
         if (time() - $last_time_purged < $config['purge_bans']) {
-            return;
+            return null;
         }
     }
 
@@ -769,7 +768,7 @@ function checkBan($board = false)
     }
 }
 
-function threadLocked($id)
+function threadLocked(int $id): bool
 {
     global $board;
 
@@ -789,7 +788,7 @@ function threadLocked($id)
     return (bool) $locked;
 }
 
-function threadSageLocked($id)
+function threadSageLocked(int $id): bool
 {
     global $board;
 
@@ -809,7 +808,7 @@ function threadSageLocked($id)
     return (bool) $sagelocked;
 }
 
-function threadExists($id)
+function threadExists(int $id): bool
 {
     global $board;
 
@@ -824,7 +823,7 @@ function threadExists($id)
     return false;
 }
 
-function insertFloodPost(array $post)
+function insertFloodPost(array $post): void
 {
     global $board;
 
@@ -842,7 +841,7 @@ function insertFloodPost(array $post)
     $query->execute() or error(db_error($query));
 }
 
-function post(array $post)
+function post(array $post): string
 {
     global $pdo, $board;
     $query = prepare(sprintf("INSERT INTO ``posts_%s`` VALUES ( NULL, :thread, :subject, :email, :name, :trip, :capcode, :body, :body_nomarkup, :time, :time, :thumb, :thumbwidth, :thumbheight, :file, :width, :height, :filesize, :filename, :filehash, :password, :ip, :sticky, :locked, 0, :embed)", $board['uri']));
@@ -941,7 +940,7 @@ function post(array $post)
     return $pdo->lastInsertId();
 }
 
-function bumpThread($id)
+function bumpThread(int $id): bool
 {
     global $config, $board, $build_pages;
 
@@ -960,7 +959,7 @@ function bumpThread($id)
 }
 
 // Remove file from post
-function deleteFile($id, $remove_entirely_if_already = true)
+function deleteFile(int $id, bool $remove_entirely_if_already = true): void
 {
     global $board, $config;
 
@@ -1001,7 +1000,7 @@ function deleteFile($id, $remove_entirely_if_already = true)
 }
 
 // rebuild post (markup)
-function rebuildPost($id)
+function rebuildPost(int $id): bool
 {
     global $board;
 
@@ -1026,7 +1025,7 @@ function rebuildPost($id)
 }
 
 // Delete a post (reply or thread)
-function deletePost($id, $error_if_doesnt_exist = true, $rebuild_after = true)
+function deletePost(int $id, bool $error_if_doesnt_exist = true, bool $rebuild_after = true): bool
 {
     global $board, $config;
 
@@ -1106,7 +1105,7 @@ function deletePost($id, $error_if_doesnt_exist = true, $rebuild_after = true)
     return true;
 }
 
-function clean()
+function clean(): void
 {
     global $board, $config;
     $offset = round($config['max_pages'] * $config['threads_per_page']);
@@ -1121,7 +1120,7 @@ function clean()
     }
 }
 
-function thread_find_page($thread)
+function thread_find_page(int $thread): int|false
 {
     global $config, $board;
 
@@ -1133,7 +1132,7 @@ function thread_find_page($thread)
     return floor(($config['threads_per_page'] + $index) / $config['threads_per_page']);
 }
 
-function index($page, $mod = false)
+function index(int $page, bool|array $mod = false): array|false
 {
     global $board, $config, $debug;
 
@@ -1218,7 +1217,7 @@ function index($page, $mod = false)
     ];
 }
 
-function getPageButtons($pages, $mod = false)
+function getPageButtons(array $pages, bool $mod = false): array
 {
     global $config, $board;
 
@@ -1267,7 +1266,7 @@ function getPageButtons($pages, $mod = false)
     return $btn;
 }
 
-function getPages($mod = false)
+function getPages(bool $mod = false): array
 {
     global $board, $config;
 
@@ -1296,7 +1295,7 @@ function getPages($mod = false)
 }
 
 // Stolen with permission from PlainIB (by Frank Usrs)
-function make_comment_hex($str)
+function make_comment_hex(string $str)
 {
     // remove cross-board citations
     // the numbers don't matter
@@ -1316,7 +1315,7 @@ function make_comment_hex($str)
     return md5($str);
 }
 
-function makerobot($body)
+function makerobot(string $body): string
 {
     global $config;
     $body = strtolower($body);
@@ -1331,7 +1330,7 @@ function makerobot($body)
     return sha1($body);
 }
 
-function checkRobot($body)
+function checkRobot(string $body): bool
 {
     if (empty($body) || event('check-robot', $body)) {
         return true;
@@ -1355,7 +1354,7 @@ function checkRobot($body)
 }
 
 // Returns an associative array with 'replies' and 'images' keys
-function numPosts($id)
+function numPosts(int $id): array
 {
     global $board;
     $query = prepare(sprintf("SELECT COUNT(*) AS `replies`, COUNT(NULLIF(`file`, 0)) AS `images` FROM ``posts_%s`` WHERE `thread` = :thread", $board['uri'], $board['uri']));
@@ -1365,7 +1364,7 @@ function numPosts($id)
     return $query->fetch(PDO::FETCH_ASSOC);
 }
 
-function muteTime()
+function muteTime(): int
 {
     global $config;
 
@@ -1385,7 +1384,7 @@ function muteTime()
     return pow($config['robot_mute_multiplier'], $result);
 }
 
-function mute()
+function mute(): int
 {
     // Insert mute
     $query = prepare("INSERT INTO ``mutes`` VALUES (:ip, :time)");
@@ -1396,7 +1395,7 @@ function mute()
     return muteTime();
 }
 
-function checkMute()
+function checkMute(): void
 {
     global $config, $debug;
 
@@ -1421,8 +1420,8 @@ function checkMute()
 
         if ($mute['time'] + $mutetime > time()) {
             if ($config['cache']['enabled']) {
-                Cache::set("mute_${_SERVER['REMOTE_ADDR']}", $mute, $mute['time'] + $mutetime - time());
-                Cache::set("mutetime_${_SERVER['REMOTE_ADDR']}", $mutetime, $mute['time'] + $mutetime - time());
+                Cache::set("mute_{$_SERVER['REMOTE_ADDR']}", $mute, $mute['time'] + $mutetime - time());
+                Cache::set("mutetime_{$_SERVER['REMOTE_ADDR']}", $mutetime, $mute['time'] + $mutetime - time());
             }
             // Not expired yet
             error(sprintf($config['error']['youaremuted'], $mute['time'] + $mutetime - time()));
@@ -1433,7 +1432,7 @@ function checkMute()
     }
 }
 
-function buildIndex()
+function buildIndex(): void
 {
     global $board, $config, $build_pages;
 
@@ -1504,7 +1503,7 @@ function buildIndex()
     }
 }
 
-function buildJavascript()
+function buildJavascript(): void
 {
     global $config;
 
@@ -1540,7 +1539,7 @@ function buildJavascript()
     file_write($config['file_script'], $script);
 }
 
-function checkDNSBL()
+function checkDNSBL(): void
 {
     global $config;
 
@@ -1595,17 +1594,17 @@ function checkDNSBL()
     }
 }
 
-function isIPv6()
+function isIPv6(): bool
 {
     return strstr($_SERVER['REMOTE_ADDR'], ':') !== false;
 }
 
-function ReverseIPOctets($ip)
+function ReverseIPOctets(string $ip): string
 {
     return implode('.', array_reverse(explode('.', $ip)));
 }
 
-function wordfilters(&$body)
+function wordfilters(string &$body): void
 {
     global $config;
 
@@ -1622,7 +1621,7 @@ function wordfilters(&$body)
     }
 }
 
-function quote($body, $quote = true)
+function quote(string $body, bool $quote = true): string
 {
     global $config;
 
@@ -1641,7 +1640,7 @@ function quote($body, $quote = true)
     return $body;
 }
 
-function markup_url($matches)
+function markup_url(array $matches): string
 {
     global $config, $markup_urls;
 
@@ -1673,7 +1672,7 @@ function markup_url($matches)
     return '<a ' . implode(' ', $parts) . '>' . $link['text'] . '</a>' . $after;
 }
 
-function unicodify($body)
+function unicodify(string $body): string
 {
     $body = str_replace('...', '&hellip;', $body);
     $body = str_replace('&lt;--', '&larr;', $body);
@@ -1688,7 +1687,7 @@ function unicodify($body)
     return $body;
 }
 
-function extract_modifiers($body)
+function extract_modifiers(string $body): array
 {
     $modifiers = [];
 
@@ -1704,7 +1703,7 @@ function extract_modifiers($body)
     return $modifiers;
 }
 
-function markup(&$body, $track_cites = false)
+function markup(string &$body, bool $track_cites = false): array
 {
     global $board, $config, $markup_urls;
 
@@ -1957,17 +1956,17 @@ function markup(&$body, $track_cites = false)
     return $tracked_cites;
 }
 
-function escape_markup_modifiers($string)
+function escape_markup_modifiers(string $string): string
 {
     return preg_replace('@<(tinyboard) ([\w\s]+)>@mi', '<$1 escape $2>', $string);
 }
 
-function utf8tohtml($utf8)
+function utf8tohtml(string $utf8): string
 {
     return htmlspecialchars($utf8, ENT_NOQUOTES, 'UTF-8');
 }
 
-function ordutf8($string, &$offset)
+function ordutf8(string $string, int &$offset): int
 {
     $code = ord(substr($string, $offset, 1));
     if ($code >= 128) { // otherwise 0xxxxxxx
@@ -1995,7 +1994,7 @@ function ordutf8($string, &$offset)
     return $code;
 }
 
-function strip_combining_chars($str)
+function strip_combining_chars(string $str): string
 {
     $chars = preg_split('//u', $str, -1, PREG_SPLIT_NO_EMPTY);
     $str = '';
@@ -2024,13 +2023,13 @@ function strip_combining_chars($str)
     return $str;
 }
 
-function buildThread($id, $return = false, $mod = false)
+function buildThread(int $id, bool $return = false, bool $mod = false): ?string
 {
     global $board, $config, $build_pages;
     $id = round($id);
 
     if (event('build-thread', $id)) {
-        return;
+        return null;
     }
 
     if ($config['cache']['enabled'] && !$mod) {
@@ -2087,7 +2086,7 @@ function buildThread($id, $return = false, $mod = false)
     }
 }
 
-function rrmdir($dir)
+function rrmdir(string $dir): void
 {
     if (is_dir($dir)) {
         $objects = scandir($dir);
@@ -2105,7 +2104,7 @@ function rrmdir($dir)
     }
 }
 
-function poster_id($ip, $thread)
+function poster_id(string $ip, int $thread): string
 {
     global $config;
 
@@ -2117,7 +2116,7 @@ function poster_id($ip, $thread)
     return substr(sha1(sha1($ip . $config['secure_trip_salt'] . $thread) . $config['secure_trip_salt']), 0, $config['poster_id_length']);
 }
 
-function generate_tripcode($name)
+function generate_tripcode(string $name): array
 {
     global $config;
 
@@ -2159,7 +2158,7 @@ function generate_tripcode($name)
 }
 
 // Highest common factor
-function hcf($a, $b)
+function hcf(int $a, int $b): int
 {
     $gcd = 1;
     if ($a > $b) {
@@ -2180,7 +2179,7 @@ function hcf($a, $b)
     return $gcd;
 }
 
-function fraction($numerator, $denominator, $sep)
+function fraction(int $numerator, int $denominator, string $sep): string
 {
     $gcf = hcf($numerator, $denominator);
     $numerator = $numerator / $gcf;
@@ -2189,7 +2188,7 @@ function fraction($numerator, $denominator, $sep)
     return "{$numerator}{$sep}{$denominator}";
 }
 
-function getPostByHash($hash)
+function getPostByHash(string $hash): array|false
 {
     global $board;
     $query = prepare(sprintf("SELECT `id`,`thread` FROM ``posts_%s`` WHERE `filehash` = :hash", $board['uri']));
@@ -2203,7 +2202,7 @@ function getPostByHash($hash)
     return false;
 }
 
-function getPostByHashInThread($hash, $thread)
+function getPostByHashInThread(string $hash, int $thread): array|false
 {
     global $board;
     $query = prepare(sprintf("SELECT `id`,`thread` FROM ``posts_%s`` WHERE `filehash` = :hash AND ( `thread` = :thread OR `id` = :thread )", $board['uri']));
@@ -2218,7 +2217,7 @@ function getPostByHashInThread($hash, $thread)
     return false;
 }
 
-function undoImage(array $post)
+function undoImage(array $post): void
 {
     if (!$post['has_file']) {
         return;
@@ -2232,7 +2231,7 @@ function undoImage(array $post)
     }
 }
 
-function rDNS($ip_addr)
+function rDNS(string $ip_addr): string
 {
     global $config;
 
@@ -2258,7 +2257,7 @@ function rDNS($ip_addr)
     return $host;
 }
 
-function DNS($host)
+function DNS(string $host): string|false
 {
     global $config;
 
@@ -2287,7 +2286,7 @@ function DNS($host)
     return $ip_addr;
 }
 
-function shell_exec_error($command, $suppress_stdout = false)
+function shell_exec_error(string $command, bool $suppress_stdout = false): string|false
 {
     global $config, $debug;
 

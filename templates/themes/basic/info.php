@@ -46,10 +46,16 @@ $theme['build_function'] = 'basic_build';
 $theme['install_callback'] = 'build_install';
 
 if (!function_exists('build_install')) {
-    function build_install($settings)
+    /**
+     * @param array<string, mixed> $settings
+     * @return array{0:bool,1:string}|null Returns [false, message] on failure, null on success
+     */
+    function build_install(array $settings): ?array
     {
         if (!is_numeric($settings['no_recent']) || $settings['no_recent'] < 0) {
             return [false, '<strong>' . utf8tohtml($settings['no_recent']) . '</strong> is not a non-negative integer.'];
         }
+
+        return null;
     }
 }

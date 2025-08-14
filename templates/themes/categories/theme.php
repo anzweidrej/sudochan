@@ -2,7 +2,12 @@
 
 require 'info.php';
 
-function categories_build($action, $settings, $board)
+/**
+ * @param 'all'|'news'|'boards' $action
+ * @param array<string, mixed> $settings
+ * @param mixed $board
+ */
+function categories_build(string $action, array $settings, mixed $board): void
 {
     // Possible values for $action:
     //	- all (rebuild everything, initialization)
@@ -15,7 +20,11 @@ function categories_build($action, $settings, $board)
 // Wrap functions in a class so they don't interfere with normal Tinyboard operations
 class Categories
 {
-    public static function build($action, $settings)
+    /**
+     * @param 'all'|'news'|'boards' $action
+     * @param array<string, mixed> $settings
+     */
+    public static function build(string $action, array $settings): void
     {
         global $config;
 
@@ -32,16 +41,24 @@ class Categories
         }
     }
 
-    // Build homepage
-    public static function homepage($settings)
+    /**
+     * Build homepage
+     *
+     * @param array<string, mixed> $settings
+     */
+    public static function homepage(array $settings): string
     {
         global $config;
 
         return element('themes/categories/frames.html', ['config' => $config, 'settings' => $settings]);
     }
 
-    // Build news page
-    public static function news($settings)
+    /**
+     * Build news page
+     *
+     * @param array<string, mixed> $settings
+     */
+    public static function news(array $settings): string
     {
         global $config;
 
@@ -56,8 +73,12 @@ class Categories
         ]);
     }
 
-    // Build sidebar
-    public static function sidebar($settings)
+    /**
+     * Build sidebar
+     *
+     * @param array<string, mixed> $settings
+     */
+    public static function sidebar(array $settings): string
     {
         global $config, $board;
 
@@ -79,4 +100,4 @@ class Categories
             'categories' => $categories,
         ]);
     }
-};
+}

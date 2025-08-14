@@ -8,7 +8,14 @@ defined('TINYBOARD') or exit;
 
 class Remote
 {
-    public function __construct($config)
+    public array $auth = [];
+    /** @var resource|mixed|null */
+    private $connection = null;
+
+    /**
+     * @param array<string,mixed> $config
+     */
+    public function __construct(array $config)
     {
         foreach ($config as $name => $value) {
             $this->{$name} = $value;
@@ -56,7 +63,7 @@ class Remote
         }
     }
 
-    public function write($data, $remote_path)
+    public function write(string $data, string $remote_path): void
     {
         global $config;
 

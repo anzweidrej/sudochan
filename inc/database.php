@@ -14,7 +14,7 @@ class PreparedQueryDebug
     protected PDOStatement $query;
     protected PDOStatement|false $explain_query = false;
 
-    public function __construct($query)
+    public function __construct(string $query)
     {
         global $pdo, $config;
         $query = preg_replace("/[\n\t]+/", ' ', $query);
@@ -29,7 +29,7 @@ class PreparedQueryDebug
         }
     }
 
-    public function __call($function, $args)
+    public function __call(string $function, array $args): mixed
     {
         global $config, $debug;
 
@@ -64,7 +64,7 @@ class PreparedQueryDebug
 /**
  * Opens a PDO connection if not already open.
  */
-function sql_open()
+function sql_open(): PDO|true
 {
     global $pdo, $config, $debug;
     if (isset($pdo) && $pdo) {
@@ -123,7 +123,7 @@ function sql_open()
 /**
  * Returns MySQL version as an integer.
  */
-function mysql_version()
+function mysql_version(): int|false
 {
     global $pdo;
 
@@ -138,7 +138,7 @@ function mysql_version()
 /**
  * Prepares a SQL query.
  */
-function prepare($query)
+function prepare(string $query): PDOStatement|PreparedQueryDebug
 {
     global $pdo, $debug, $config;
 
@@ -156,7 +156,7 @@ function prepare($query)
 /**
  * Executes a SQL query.
  */
-function query($query)
+function query(string $query): PDOStatement|false
 {
     global $pdo, $debug, $config;
 
@@ -190,7 +190,7 @@ function query($query)
 /**
  * Returns the last database error.
  */
-function db_error($PDOStatement = null)
+function db_error(?PDOStatement $PDOStatement = null): string
 {
     global $pdo, $db_error;
 

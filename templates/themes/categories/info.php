@@ -53,7 +53,11 @@ $theme['build_function'] = 'categories_build';
 $theme['install_callback'] = 'categories_install';
 
 if (!function_exists('categories_install')) {
-    function categories_install($settings)
+    /**
+     * @param array<string, mixed> $settings
+     * @return array{0: bool, 1: string}|null Returns [false, message] on failure, null on success
+     */
+    function categories_install(array $settings): ?array
     {
         global $config;
 
@@ -61,5 +65,7 @@ if (!function_exists('categories_install')) {
             return [false, '<h2>Prerequisites not met!</h2>' .
                 'This theme requires $config[\'boards\'] and $config[\'categories\'] to be set.'];
         }
+
+        return null;
     }
 }

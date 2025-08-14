@@ -2,7 +2,12 @@
 
 require 'info.php';
 
-function recentposts_build($action, $settings, $board)
+/**
+ * @param 'all'|'news'|'boards'|'post'|'post-thread'|'post-delete' $action
+ * @param array<string, mixed> $settings
+ * @param mixed $board
+ */
+function recentposts_build(string $action, array $settings, mixed $board): void
 {
     // Possible values for $action:
     //	- all (rebuild everything, initialization)
@@ -18,7 +23,13 @@ function recentposts_build($action, $settings, $board)
 // Wrap functions in a class so they don't interfere with normal Tinyboard operations
 class RecentPosts
 {
-    public function build($action, $settings)
+    private array $excluded = [];
+
+    /**
+     * @param 'all'|'news'|'boards'|'post'|'post-thread'|'post-delete' $action
+     * @param array<string, mixed> $settings
+     */
+    public function build(string $action, array $settings): void
     {
         global $config, $_theme;
 
@@ -33,8 +44,12 @@ class RecentPosts
         }
     }
 
-    // Build news page
-    public function homepage($settings)
+    /**
+     * Build news page
+     *
+     * @param array<string, mixed> $settings
+     */
+    public function homepage(array $settings): string
     {
         global $config, $board;
 

@@ -2,7 +2,12 @@
 
 require 'info.php';
 
-function sitemap_build($action, $settings, $board)
+/**
+ * @param 'all'|'news'|'boards'|'post'|'post-thread'|'post-delete' $action
+ * @param array<string, mixed> $settings
+ * @param mixed $board
+ */
+function sitemap_build(string $action, array $settings, mixed $board): void
 {
     global $config;
 

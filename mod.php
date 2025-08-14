@@ -8,6 +8,7 @@ require_once 'inc/bootstrap.php';
 require_once 'inc/mod/pages.php';
 require_once 'inc/mod/auth.php';
 
+// Authenticate the mode user
 authenticate();
 
 if ($config['debug']) {
@@ -17,6 +18,14 @@ if ($config['debug']) {
 $query = isset($_SERVER['QUERY_STRING']) ? rawurldecode($_SERVER['QUERY_STRING']) : '';
 
 $pages = require 'inc/routes.php';
+
+$pages += [
+    '/(\%b)/' => 'view_board',
+    '/(\%b)/' . preg_quote($config['file_index'], '!') => 'view_board',
+    '/(\%b)/' . str_replace('%d', '(\d+)', preg_quote($config['file_page'], '!')) => 'view_board',
+    '/(\%b)/' . preg_quote($config['dir']['res'], '!') .
+        str_replace('%d', '(\d+)', preg_quote($config['file_page'], '!')) => 'view_thread',
+];
 
 // If not logged in as mod, redirect to login
 if (!$mod) {

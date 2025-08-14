@@ -7,7 +7,7 @@
 defined('TINYBOARD') or exit;
 
 // create a hash/salt pair for validate logins
-function mkhash($username, $password, $salt = false)
+function mkhash(string $username, string $password, string|false $salt = false): array|string
 {
     global $config;
 
@@ -41,13 +41,13 @@ function mkhash($username, $password, $salt = false)
     }
 }
 
-function generate_salt()
+function generate_salt(): string
 {
     mt_srand(microtime(true) * 100000 + memory_get_usage(true));
     return md5(uniqid(mt_rand(), true));
 }
 
-function login($username, $password, $makehash = true)
+function login(string $username, string $password, bool $makehash = true): array|false
 {
     global $mod;
 
@@ -75,7 +75,7 @@ function login($username, $password, $makehash = true)
     return false;
 }
 
-function setCookies()
+function setCookies(): void
 {
     global $mod, $config;
     if (!$mod) {
@@ -89,30 +89,36 @@ function setCookies()
         $mod['hash'][0] . // password
         ':' .
         $mod['hash'][1], // salt
-        time() + $config['cookies']['expire'],
-        $config['cookies']['jail'] ? $config['cookies']['path'] : '/',
-        '',
-        false,
-        $config['cookies']['httponly'],
+        [
+            'expires'  => time() + $config['cookies']['expire'],
+            'path'     => $config['cookies']['jail'] ? $config['cookies']['path'] : '/',
+            'domain'   => '',
+            'secure'   => false,
+            'httponly' => $config['cookies']['httponly'],
+            'samesite' => $config['cookies']['samesite'] ?? 'Lax',
+        ],
     );
 }
 
-function destroyCookies()
+function destroyCookies(): void
 {
     global $config;
     // Delete the cookies
     setcookie(
         $config['cookies']['mod'],
         'deleted',
-        time() - $config['cookies']['expire'],
-        $config['cookies']['jail'] ? $config['cookies']['path'] : '/',
-        '',
-        false,
-        true,
+        [
+            'expires'  => time() - $config['cookies']['expire'],
+            'path'     => $config['cookies']['jail'] ? $config['cookies']['path'] : '/',
+            'domain'   => '',
+            'secure'   => false,
+            'httponly' => true,
+            'samesite' => $config['cookies']['samesite'] ?? 'Lax',
+        ],
     );
 }
 
-function modLog($action, $_board = null)
+function modLog(string $action, ?string $_board = null): void
 {
     global $mod, $board, $config;
     $query = prepare("INSERT INTO ``modlogs`` VALUES (:id, :ip, :board, :time, :text)");
@@ -134,7 +140,7 @@ function modLog($action, $_board = null)
     }
 }
 
-function authenticate()
+function authenticate(): void
 {
     global $config, $mod;
 
@@ -173,7 +179,7 @@ function authenticate()
     ];
 }
 
-function create_pm_header()
+function create_pm_header(): array|false
 {
     global $mod, $config;
 
@@ -209,7 +215,7 @@ function create_pm_header()
     return $header;
 }
 
-function make_secure_link_token($uri)
+function make_secure_link_token(string $uri): string
 {
     global $mod, $config;
     return substr(sha1($config['cookies']['salt'] . '-' . $uri . '-' . $mod['id']), 0, 8);

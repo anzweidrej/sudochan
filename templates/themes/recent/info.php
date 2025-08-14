@@ -70,7 +70,11 @@ $theme['build_function'] = 'recentposts_build';
 $theme['install_callback'] = 'recentposts_install';
 
 if (!function_exists('recentposts_install')) {
-    function recentposts_install($settings)
+    /**
+     * @param array<string, mixed> $settings
+     * @return array{0: bool, 1: string}|null Returns [false, message] on failure, null on success
+     */
+    function recentposts_install(array $settings): ?array
     {
         if (!is_numeric($settings['limit_images']) || $settings['limit_images'] < 0) {
             return [false, '<strong>' . utf8tohtml($settings['limit_images']) . '</strong> is not a non-negative integer.'];
@@ -78,5 +82,7 @@ if (!function_exists('recentposts_install')) {
         if (!is_numeric($settings['limit_posts']) || $settings['limit_posts'] < 0) {
             return [false, '<strong>' . utf8tohtml($settings['limit_posts']) . '</strong> is not a non-negative integer.'];
         }
+
+        return null;
     }
 }

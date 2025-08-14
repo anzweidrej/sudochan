@@ -25,7 +25,7 @@ if (file_exists($config['has_installed'])) {
         $version = 'v0.9.1';
     }
 
-    function __query($sql)
+    function __query(string $sql): mixed
     {
         sql_open();
 
@@ -774,7 +774,7 @@ if ($step == 0) {
 } elseif ($step == 3) {
     $instance_config = '<?php';
 
-    function create_config_from_array(&$instance_config, &$array, $prefix = '')
+    function create_config_from_array(string &$instance_config, array &$array, string $prefix = ''): void
     {
         foreach ($array as $name => $value) {
             if (is_array($value)) {

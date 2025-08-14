@@ -13,7 +13,7 @@ if (realpath($_SERVER['SCRIPT_FILENAME']) == str_replace('\\', '/', __FILE__)) {
     joaoptm78@gmail.com
     http://www.php.net/manual/en/function.filesize.php#100097
 */
-function format_bytes($size)
+function format_bytes(int|float $size): string
 {
     $units = [' B', ' KB', ' MB', ' GB', ' TB'];
     for ($i = 0; $size >= 1024 && $i < 4; $i++) {
@@ -22,7 +22,7 @@ function format_bytes($size)
     return round($size, 2) . $units[$i];
 }
 
-function doBoardListPart($list, $root)
+function doBoardListPart(array $list, string $root): string
 {
     global $config;
 
@@ -45,7 +45,7 @@ function doBoardListPart($list, $root)
     return $body;
 }
 
-function createBoardlist($mod = false)
+function createBoardlist(bool|array $mod = false): array
 {
     global $config;
 
@@ -66,7 +66,7 @@ function createBoardlist($mod = false)
     ];
 }
 
-function error($message, $priority = true, $debug_stuff = false)
+function error(string $message, bool|int $priority = true, mixed $debug_stuff = false): never
 {
     global $board, $mod, $config, $db_error;
 
@@ -106,7 +106,7 @@ function error($message, $priority = true, $debug_stuff = false)
     ]));
 }
 
-function loginForm($error = false, $username = false, $redirect = false)
+function loginForm(string|false $error = false, string|false $username = false, string|false $redirect = false): never
 {
     global $config;
 
@@ -126,7 +126,7 @@ function loginForm($error = false, $username = false, $redirect = false)
     ]));
 }
 
-function pm_snippet($body, $len = null)
+function pm_snippet(string $body, ?int $len = null): string
 {
     global $config;
 
@@ -152,7 +152,7 @@ function pm_snippet($body, $len = null)
     return '<em>' . utf8tohtml($body) . ($strlen > $len ? '&hellip;' : '') . '</em>';
 }
 
-function capcode($cap)
+function capcode(string|false $cap): array|false
 {
     global $config;
 
@@ -180,7 +180,7 @@ function capcode($cap)
     return $capcode;
 }
 
-function truncate($body, $url, $max_lines = false, $max_chars = false)
+function truncate(string $body, string $url, int|false $max_lines = false, int|false $max_chars = false): string
 {
     global $config;
 
@@ -251,7 +251,7 @@ function truncate($body, $url, $max_lines = false, $max_chars = false)
     return $body;
 }
 
-function bidi_cleanup($data)
+function bidi_cleanup(string $data): string
 {
     // Closes all embedded RTL and LTR unicode formatting blocks in a string so that
     // it can be used inside another without controlling its direction.
@@ -302,18 +302,18 @@ function bidi_cleanup($data)
     return $data;
 }
 
-function secure_link_confirm($text, $title, $confirm_message, $href)
+function secure_link_confirm(string $text, string $title, string $confirm_message, string $href): string
 {
     global $config;
 
     return '<a onclick="if (event.which==2) return true;if (confirm(\'' . htmlentities(addslashes($confirm_message)) . '\')) document.location=\'?/' . htmlspecialchars(addslashes($href . '/' . make_secure_link_token($href))) . '\';return false;" title="' . htmlentities($title) . '" href="?/' . $href . '">' . $text . '</a>';
 }
-function secure_link($href)
+function secure_link(string $href): string
 {
     return $href . '/' . make_secure_link_token($href);
 }
 
-function embed_html($link)
+function embed_html(string $link): string
 {
     global $config;
 
@@ -340,7 +340,7 @@ function embed_html($link)
 
 class Post
 {
-    public function __construct($post, $root = null, $mod = false)
+    public function __construct(object|array $post, ?string $root = null, bool $mod = false)
     {
         global $config;
         if (!isset($root)) {
@@ -377,13 +377,13 @@ class Post
             );
         }
     }
-    public function link($pre = '')
+    public function link(string $pre = ''): string
     {
         global $config, $board;
 
         return $this->root . $board['dir'] . $config['dir']['res'] . sprintf($config['file_page'], $this->thread) . '#' . $pre . $this->id;
     }
-    public function postControls()
+    public function postControls(): string
     {
         global $board, $config;
 
@@ -438,12 +438,12 @@ class Post
         return $built;
     }
 
-    public function ratio()
+    public function ratio(): string
     {
         return fraction($this->filewidth, $this->fileheight, ':');
     }
 
-    public function build($index = false)
+    public function build(bool $index = false): string
     {
         global $board, $config;
 
@@ -453,7 +453,7 @@ class Post
 
 class Thread
 {
-    public function __construct($post, $root = null, $mod = false, $hr = true)
+    public function __construct(object|array $post, ?string $root = null, bool $mod = false, bool $hr = true)
     {
         global $config;
         if (!isset($root)) {
@@ -495,17 +495,17 @@ class Thread
             );
         }
     }
-    public function link($pre = '')
+    public function link(string $pre = ''): string
     {
         global $config, $board;
 
         return $this->root . $board['dir'] . $config['dir']['res'] . sprintf($config['file_page'], $this->id) . '#' . $pre . $this->id;
     }
-    public function add(Post $post)
+    public function add(Post $post): void
     {
         $this->posts[] = $post;
     }
-    public function postControls()
+    public function postControls(): string
     {
         global $board, $config;
 
@@ -589,12 +589,12 @@ class Thread
         return $built;
     }
 
-    public function ratio()
+    public function ratio(): string
     {
         return fraction($this->filewidth, $this->fileheight, ':');
     }
 
-    public function build($index = false)
+    public function build(bool $index = false): string
     {
         global $board, $config, $debug;
 
@@ -604,4 +604,4 @@ class Thread
 
         return $built;
     }
-};
+}

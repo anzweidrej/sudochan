@@ -1,57 +1,67 @@
 .box-wrap {
-	max-width: 670px;
-	min-width: 332px;
-	margin: 30px auto;
-	overflow: auto;
-	padding: 0;
+    max-width: 670px;
+    min-width: 332px;
+    margin: 30px auto;
+    overflow: auto;
+    padding: 0;
 }
+
 .box {
-	background: white;
-	border: 1px solid #98E;
-	width: 330px;
-	margin: 8px 0;
-	padding: 0;
+    background: white;
+    border: 1px solid #98e;
+    width: 330px;
+    margin: 8px 0;
+    padding: 0;
 }
+
 .box ul {
-	padding: 2px 15px;
+    padding: 2px 15px;
 }
+
 .box ul li {
-	list-style: none;
-	margin: 0;
+    list-style: none;
+    margin: 0;
 }
+
 .box.left {
-    background: #FDF6AF;
-    color: #9E914F;
-    border: 1px solid #9E914F;
-	float: left;
+    background: #fdf6af;
+    color: #9e914f;
+    border: 1px solid #9e914f;
+    float: left;
 }
+
 .box.right {
-    background: #F2DCE5;
+    background: #f2dce5;
     color: #525;
-    border: 1px solid #CA759E;
-	float: right;
+    border: 1px solid #ca759e;
+    float: right;
 }
 
 .box h2 {
-	padding: 3px 7px;
-	font-size: 12pt;
+    padding: 3px 7px;
+    font-size: 12pt;
 }
+
 .box img {
-	float: none;
-	margin: 10px auto;
+    float: none;
+    margin: 10px auto;
 }
+
 .box.left h2 {
-    background: #FEE78F;
-    color: #9E914F;
+    background: #fee78f;
+    color: #9e914f;
 }
+
 .box.right h2 {
-    background: #EB81B4;
-    color: #F8F8F8;
+    background: #eb81b4;
+    color: #f8f8f8;
 }
 
 body {
-    background: #F7F8F9;
+    background: #f7f8f9;
 }
-header div.subtitle, h1 {
-    color: #888A8C;
+
+header div.subtitle,
+h1 {
+    color: #888a8c;
 }

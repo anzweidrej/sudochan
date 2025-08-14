@@ -6,7 +6,7 @@
 
 defined('TINYBOARD') or exit;
 
-function permission_to_edit_config_var($varname)
+function permission_to_edit_config_var(array|string $varname): bool
 {
     global $config, $mod;
 
@@ -48,7 +48,7 @@ function permission_to_edit_config_var($varname)
     return !$allow_only;
 }
 
-function config_vars()
+function config_vars(): array
 {
     global $config;
 
@@ -111,6 +111,7 @@ function config_vars()
             if (
                 isset($var['default']) && $var['default'] !== false &&
                 !preg_match('/^array|\[\]|function/', $var['default']) &&
+                !preg_match('/^\[/', trim($var['default'])) &&
                 !preg_match('/^Example: /', trim(implode(' ', $var['comment'])))
             ) {
                 $syntax_error = true;

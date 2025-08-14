@@ -6,7 +6,11 @@
 
 defined('TINYBOARD') or exit;
 
-function event(string $event, ...$args)
+/**
+ * Dispatch an event to registered handlers.
+ * Returns the first non-empty handler result, or false if none.
+ */
+function event(string $event, mixed ...$args): mixed
 {
     global $events;
 

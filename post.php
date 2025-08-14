@@ -315,7 +315,7 @@ if (isset($_POST['delete'])) {
         }
 
         $post['file_tmp'] = tempnam($config['tmp'], 'url');
-        function unlink_tmp_file($file)
+        function unlink_tmp_file(string $file): void
         {
             @unlink($file);
             fatal_error_handler();

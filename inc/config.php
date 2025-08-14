@@ -23,7 +23,8 @@ $config['check_updates_time'] = 43200; // 12 hours
 // Shows some extra information at the bottom of pages. Good for development/debugging.
 $config['debug'] = false;
 // For development purposes. Displays (and "dies" on) all errors and warnings. Turn on with the above.
-$config['verbose_errors'] = true;
+// CAUTION: When enabled, may increase memory usage!
+$config['verbose_errors'] = false;
 // EXPLAIN all SQL queries (when in debug mode).
 $config['debug_explain'] = false;
 
@@ -132,6 +133,9 @@ $config['cookies']['salt'] = 'abcdefghijklmnopqrstuvwxyz09123456789!@#$%^&*()';
 
 // Whether or not you can access the mod cookie in JavaScript. Most users should not need to change this.
 $config['cookies']['httponly'] = true;
+
+// Controls whether or not a cookie is sent with cross-site requests. Possible values: 'Lax', 'Strict', 'None'.
+$config['cookies']['samesite'] = 'Lax';
 
 // Used to salt secure tripcodes ("##trip") and poster IDs (if enabled).
 $config['secure_trip_salt'] = ')(*&^%$#@!98765432190zyxwvutsrqponmlkjihgfedcba';
@@ -417,7 +421,7 @@ $config['upload_by_url_timeout'] = 15;
 
 // For a normal string replacement:
 // $config['wordfilters'][] = array('cat', 'dog');
-// Advanced raplcement (regular expressions):
+// Advanced replacement (regular expressions):
 // $config['wordfilters'][] = array('/ca[rt]/', 'dog', true); // 'true' means it's a regular expression
 
 // Always act as if the user had typed "noko" into the email field.
@@ -1382,3 +1386,6 @@ $config['purge_timeout'] = 3;
 // Regex for board URIs. Don't add "`" character or any Unicode that MySQL can't handle. 58 characters
 // is the absolute maximum, because MySQL cannot handle table names greater than 64 characters.
 $config['board_regex'] = '[0-9a-zA-Z$_\x{0080}-\x{FFFF}]{1,58}';
+
+// Extra memory for heavy rebuild operations (e.g. '512M'). Leave empty to disable.
+$config['rebuild_memory_limit'] = '512M';

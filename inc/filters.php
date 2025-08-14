@@ -8,7 +8,7 @@ defined('TINYBOARD') or exit;
 
 class Filter
 {
-    public ?array $flood_check = null;
+    public array|false|null $flood_check = null;
     private array $condition;
 
     public function __construct(array $arr)
@@ -18,7 +18,7 @@ class Filter
         }
     }
 
-    public function match(array $post, $condition, $match)
+    public function match(array $post, string $condition, mixed $match): bool|int
     {
         $condition = strtolower($condition);
 
@@ -141,7 +141,7 @@ class Filter
         }
     }
 
-    public function action()
+    public function action(): void
     {
         global $board;
 
@@ -179,7 +179,7 @@ class Filter
         }
     }
 
-    public function check(array $post)
+    public function check(array $post): bool
     {
         foreach ($this->condition as $condition => $value) {
             $NOT = false;
@@ -195,7 +195,7 @@ class Filter
     }
 }
 
-function purge_flood_table()
+function purge_flood_table(): void
 {
     global $config;
 
@@ -219,7 +219,7 @@ function purge_flood_table()
     query("DELETE FROM ``flood`` WHERE `time` < $time") or error(db_error());
 }
 
-function do_filters(array $post)
+function do_filters(array $post): void
 {
     global $config;
 

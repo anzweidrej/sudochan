@@ -49,7 +49,7 @@ class Api
         }
     }
 
-    private static $ints = [
+    private static array $ints = [
         'no' => 1,
         'resto' => 1,
         'time' => 1,
@@ -64,7 +64,11 @@ class Api
         'locked' => 1,
     ];
 
-    private function translatePost($post)
+    /**
+     * @param object $post
+     * @return array<string,mixed>
+     */
+    private function translatePost(object $post): array
     {
         $apiPost = [];
         foreach ($this->postFields as $local => $translated) {
@@ -101,7 +105,10 @@ class Api
         return $apiPost;
     }
 
-    public function translateThread(Thread $thread)
+    /**
+     * @return array<string,mixed>
+     */
+    public function translateThread(Thread $thread): array
     {
         $apiPosts = [];
         $op = $this->translatePost($thread);
@@ -115,7 +122,11 @@ class Api
         return $apiPosts;
     }
 
-    public function translatePage(array $threads)
+    /**
+     * @param Thread[] $threads
+     * @return array<string,mixed>
+     */
+    public function translatePage(array $threads): array
     {
         $apiPage = [];
         foreach ($threads as $thread) {
@@ -124,7 +135,11 @@ class Api
         return $apiPage;
     }
 
-    public function translateCatalogPage(array $threads)
+    /**
+     * @param Thread[] $threads
+     * @return array<string,mixed>
+     */
+    public function translateCatalogPage(array $threads): array
     {
         $apiPage = [];
         foreach ($threads as $thread) {
@@ -134,7 +149,11 @@ class Api
         return $apiPage;
     }
 
-    public function translateCatalog($catalog)
+    /**
+     * @param array<int,Thread[]> $catalog
+     * @return array<int,array<string,mixed>>
+     */
+    public function translateCatalog(array $catalog): array
     {
         $apiCatalog = [];
         foreach ($catalog as $page => $threads) {

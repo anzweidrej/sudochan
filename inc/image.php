@@ -13,7 +13,7 @@ class Image
     public $image;
     public object $size;
 
-    public function __construct(string $src, $format = false, $size = false)
+    public function __construct(string $src, string|false $format = false, array|false $size = false)
     {
         global $config;
 
@@ -48,7 +48,7 @@ class Image
         }
     }
 
-    public function resize($extension, $max_width, $max_height)
+    public function resize(string $extension, int $max_width, int $max_height): ImageBase
     {
         global $config;
 
@@ -108,17 +108,17 @@ class Image
         return $thumb;
     }
 
-    public function to($dst)
+    public function to(string $dst): void
     {
         $this->image->to($dst);
     }
 
-    public function delete()
+    public function delete(): void
     {
         file_unlink($this->src);
     }
 
-    public function destroy()
+    public function destroy(): void
     {
         $this->image->_destroy();
     }
@@ -126,12 +126,12 @@ class Image
 
 class ImageGD
 {
-    public function GD_create()
+    public function GD_create(): void
     {
         $this->image = imagecreatetruecolor($this->width, $this->height);
     }
 
-    public function GD_copyresampled()
+    public function GD_copyresampled(): void
     {
         imagecopyresampled(
             $this->image,
@@ -147,7 +147,7 @@ class ImageGD
         );
     }
 
-    public function GD_resize()
+    public function GD_resize(): void
     {
         $this->GD_create();
         $this->GD_copyresampled();
@@ -169,7 +169,7 @@ class ImageBase extends ImageGD
         return (bool) $this->image;
     }
 
-    public function __construct($img, $size = false)
+    public function __construct(Image|false $img, array|false $size = false)
     {
         if (method_exists($this, 'init')) {
             $this->init();
@@ -186,7 +186,7 @@ class ImageBase extends ImageGD
         }
     }
 
-    public function _width()
+    public function _width(): int
     {
         if (method_exists($this, 'width')) {
             return $this->width();
@@ -195,7 +195,7 @@ class ImageBase extends ImageGD
         return imagesx($this->image);
     }
 
-    public function _height()
+    public function _height(): int
     {
         if (method_exists($this, 'height')) {
             return $this->height();
@@ -204,7 +204,7 @@ class ImageBase extends ImageGD
         return imagesy($this->image);
     }
 
-    public function _destroy()
+    public function _destroy(): bool
     {
         if (method_exists($this, 'destroy')) {
             return $this->destroy();
@@ -213,7 +213,7 @@ class ImageBase extends ImageGD
         return imagedestroy($this->image);
     }
 
-    public function _resize($original, $width, $height)
+    public function _resize(mixed $original, int $width, int $height): void
     {
         $this->original = &$original;
         $this->width = $width;
@@ -230,13 +230,13 @@ class ImageBase extends ImageGD
 
 class ImageImagick extends ImageBase
 {
-    public function init()
+    public function init(): void
     {
         $this->image = new Imagick();
         $this->image->setBackgroundColor(new ImagickPixel('transparent'));
     }
 
-    public function from()
+    public function from(): void
     {
         try {
             $this->image->readImage($this->src);
@@ -246,7 +246,7 @@ class ImageImagick extends ImageBase
         }
     }
 
-    public function to($src)
+    public function to(string $src): void
     {
         global $config;
         if ($config['strip_exif']) {
@@ -259,22 +259,22 @@ class ImageImagick extends ImageBase
         }
     }
 
-    public function width()
+    public function width(): int
     {
         return $this->image->getImageWidth();
     }
 
-    public function height()
+    public function height(): int
     {
         return $this->image->getImageHeight();
     }
 
-    public function destroy()
+    public function destroy(): bool
     {
         return $this->image->destroy();
     }
 
-    public function resize()
+    public function resize(): void
     {
         global $config;
 
@@ -319,7 +319,7 @@ class ImageConvert extends ImageBase
     public bool $gm = false;
     public bool $gifsicle = false;
 
-    public function init()
+    public function init(): void
     {
         global $config;
 
@@ -333,7 +333,7 @@ class ImageConvert extends ImageBase
         $this->temp = false;
     }
 
-    public function get_size($src, $try_gd_first = true)
+    public function get_size(string $src, bool $try_gd_first = true): array|false
     {
         if ($try_gd_first) {
             if ($size = @getimagesize($src)) {
@@ -347,7 +347,7 @@ class ImageConvert extends ImageBase
         return false;
     }
 
-    public function from()
+    public function from(): void
     {
         if ($this->width > 0 && $this->height > 0) {
             $this->image = true;
@@ -365,7 +365,7 @@ class ImageConvert extends ImageBase
         }
     }
 
-    public function to($src)
+    public function to(string $src): void
     {
         global $config;
 
@@ -389,23 +389,23 @@ class ImageConvert extends ImageBase
         }
     }
 
-    public function width()
+    public function width(): int
     {
         return $this->width;
     }
 
-    public function height()
+    public function height(): int
     {
         return $this->height;
     }
 
-    public function destroy()
+    public function destroy(): void
     {
         @unlink($this->temp);
         $this->temp = false;
     }
 
-    public function resize()
+    public function resize(): void
     {
         global $config;
 
@@ -481,7 +481,7 @@ class ImageConvert extends ImageBase
     }
 
     // For when -auto-orient doesn't exist (older versions)
-    public static function jpeg_exif_orientation($src, $exif = false)
+    public static function jpeg_exif_orientation(string $src, array|false $exif = false): string|false
     {
         if (!$exif) {
             $exif = @exif_read_data($src);
@@ -541,17 +541,17 @@ class ImageConvert extends ImageBase
 
 class ImagePNG extends ImageBase
 {
-    public function from()
+    public function from(): void
     {
         $this->image = @imagecreatefrompng($this->src);
     }
 
-    public function to($src)
+    public function to(string $src): void
     {
         imagepng($this->image, $src);
     }
 
-    public function resize()
+    public function resize(): void
     {
         $this->GD_create();
         imagecolortransparent($this->image, imagecolorallocatealpha($this->image, 0, 0, 0, 0));
@@ -563,17 +563,17 @@ class ImagePNG extends ImageBase
 
 class ImageGIF extends ImageBase
 {
-    public function from()
+    public function from(): void
     {
         $this->image = @imagecreatefromgif($this->src);
     }
 
-    public function to($src)
+    public function to(string $src): void
     {
         imagegif($this->image, $src);
     }
 
-    public function resize()
+    public function resize(): void
     {
         $this->GD_create();
         imagecolortransparent($this->image, imagecolorallocatealpha($this->image, 0, 0, 0, 0));
@@ -584,28 +584,29 @@ class ImageGIF extends ImageBase
 
 class ImageJPG extends ImageBase
 {
-    public function from()
+    public function from(): void
     {
         $this->image = @imagecreatefromjpeg($this->src);
     }
 
-    public function to($src)
+    public function to(string $src): void
     {
         imagejpeg($this->image, $src);
     }
 }
+
 class ImageJPEG extends ImageJPG {}
 
 class ImageBMP extends ImageBase
 {
-    public function from()
+    public function from(): void
     {
-        $this->image = @imagecreatefrombmp($this->src);
+        $this->image = @_imagecreatefrombmp($this->src);
     }
 
-    public function to($src)
+    public function to(string $src): void
     {
-        imagebmp($this->image, $src);
+        _imagebmp($this->image, $src);
     }
 }
 
@@ -617,7 +618,7 @@ class ImageBMP extends ImageBase
 /* Version:  2.0B                            */
 /*********************************************/
 
-function imagecreatefrombmp($filename)
+function _imagecreatefrombmp(string $filename): mixed
 {
     if (! $f1 = fopen($filename, "rb")) {
         return false;
@@ -707,7 +708,7 @@ function imagecreatefrombmp($filename)
     return $res;
 }
 
-function imagebmp(&$img, $filename = '')
+function _imagebmp(mixed &$img, string $filename = ''): void
 {
     $widthOrig = imagesx($img);
     $widthFloor = ((floor($widthOrig / 16)) * 16);
@@ -780,12 +781,14 @@ function imagebmp(&$img, $filename = '')
         fclose($file);
     }
 }
+
 // imagebmp helpers
-function int_to_dword($n)
+function int_to_dword(int $n): string
 {
     return chr($n & 255) . chr(($n >> 8) & 255) . chr(($n >> 16) & 255) . chr(($n >> 24) & 255);
 }
-function int_to_word($n)
+
+function int_to_word(int $n): string
 {
     return chr($n & 255) . chr(($n >> 8) & 255);
 }

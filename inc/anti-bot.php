@@ -14,7 +14,7 @@ class AntiBot
     public array $inputs = [];
     public int $index = 0;
 
-    public static function randomString($length, $uppercase = false, $special_chars = false, $unicode_chars = false)
+    public static function randomString(int $length, bool $uppercase = false, bool $special_chars = false, bool $unicode_chars = false): string
     {
         $chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
         if ($uppercase) {
@@ -53,7 +53,7 @@ class AntiBot
         return implode('', $chars);
     }
 
-    public static function make_confusing($string)
+    public static function make_confusing(string $string): string
     {
         $chars = preg_split('//u', $string, -1, PREG_SPLIT_NO_EMPTY);
 
@@ -87,7 +87,7 @@ class AntiBot
         for ($x = 0; $x < $input_count ; $x++) {
             if ($hidden_input_names_x === false || mt_rand(0, 2) == 0) {
                 // Use an obscure name
-                $name = $this->randomString(mt_rand(10, 40), false, false, $config['spam']['unicode']);
+                $name = self::randomString(mt_rand(10, 40), false, false, $config['spam']['unicode']);
             } else {
                 // Use a pre-defined confusing name
                 $name = $config['spam']['hidden_input_names'][$hidden_input_names_x++];
@@ -104,12 +104,12 @@ class AntiBot
                 $this->inputs[$name] = (string) mt_rand(0, 100000);
             } else {
                 // Obscure value
-                $this->inputs[$name] = $this->randomString(mt_rand(5, 100), true, true, $config['spam']['unicode']);
+                $this->inputs[$name] = self::randomString(mt_rand(5, 100), true, true, $config['spam']['unicode']);
             }
         }
     }
 
-    public static function space()
+    public static function space(): string
     {
         if (mt_rand(0, 3) != 0) {
             return ' ';
@@ -117,7 +117,7 @@ class AntiBot
         return str_repeat(' ', mt_rand(1, 3));
     }
 
-    public function html($count = false)
+    public function html(int|bool $count = false): string
     {
         global $config;
 
@@ -167,7 +167,7 @@ class AntiBot
             $element = str_replace('%name%', utf8tohtml($name), $element);
 
             if (mt_rand(0, 2) == 0) {
-                $value = $this->make_confusing($value);
+                $value = self::make_confusing($value);
             } else {
                 $value = utf8tohtml($value);
             }
@@ -184,12 +184,12 @@ class AntiBot
         return $html;
     }
 
-    public function reset()
+    public function reset(): void
     {
         $this->index = 0;
     }
 
-    public function hash()
+    public function hash(): string
     {
         global $config;
 
@@ -210,7 +210,7 @@ class AntiBot
     }
 }
 
-function _create_antibot($board, $thread)
+function _create_antibot(string $board, ?int $thread): AntiBot
 {
     global $config, $purged_old_antispam;
 
@@ -243,7 +243,7 @@ function _create_antibot($board, $thread)
     return $antibot;
 }
 
-function checkSpam(array $extra_salt = [])
+function checkSpam(array $extra_salt = []): bool|string
 {
     global $config, $pdo;
 
@@ -301,7 +301,7 @@ function checkSpam(array $extra_salt = [])
     return $hash;
 }
 
-function incrementSpamHash($hash)
+function incrementSpamHash(string $hash): void
 {
     $query = prepare('UPDATE ``antispam`` SET `passed` = `passed` + 1 WHERE `hash` = :hash');
     $query->bindValue(':hash', $hash);

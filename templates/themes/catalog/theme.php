@@ -2,7 +2,12 @@
 
 require 'info.php';
 
-function catalog_build($action, $settings, $board)
+/**
+ * @param 'all'|'news'|'boards'|'post'|'post-thread'|'post-delete' $action
+ * @param array<string, mixed> $settings
+ * @param mixed $board
+ */
+function catalog_build(string $action, array $settings, mixed $board): void
 {
     global $config;
 
@@ -31,7 +36,10 @@ function catalog_build($action, $settings, $board)
 // Wrap functions in a class so they don't interfere with normal Tinyboard operations
 class Catalog
 {
-    public function build($settings, $board_name)
+    /**
+     * @param array<string, mixed> $settings
+     */
+    public function build(array $settings, string $board_name): void
     {
         global $config, $board;
 

@@ -2,7 +2,12 @@
 
 require 'info.php';
 
-function basic_build($action, $settings, $board)
+/**
+ * @param 'all'|'news'|'boards' $action
+ * @param array<string, mixed> $settings
+ * @param mixed $board
+ */
+function basic_build(string $action, array $settings, mixed $board): void
 {
     // Possible values for $action:
     //	- all (rebuild everything, initialization)
@@ -15,7 +20,11 @@ function basic_build($action, $settings, $board)
 // Wrap functions in a class so they don't interfere with normal Tinyboard operations
 class Basic
 {
-    public static function build($action, $settings)
+    /**
+     * @param 'all'|'news'|'boards' $action
+     * @param array<string, mixed> $settings
+     */
+    public static function build(string $action, array $settings): void
     {
         global $config;
 
@@ -24,8 +33,12 @@ class Basic
         }
     }
 
-    // Build news page
-    public static function homepage($settings)
+    /**
+     * Build news page
+     *
+     * @param array<string, mixed> $settings
+     */
+    public static function homepage(array $settings): string
     {
         global $config;
 
@@ -41,4 +54,4 @@ class Basic
             'news' => $news,
         ]);
     }
-};
+}

@@ -6,7 +6,7 @@
 
 defined('TINYBOARD') or exit;
 
-function mod_page($title, $template, $args, $subtitle = false)
+function mod_page(string $title, string $template, array $args, string|false $subtitle = false): void
 {
     global $config, $mod;
 
@@ -30,7 +30,7 @@ function mod_page($title, $template, $args, $subtitle = false)
     );
 }
 
-function mod_login($redirect = false)
+function mod_login(string|false $redirect = false): void
 {
     global $config;
 
@@ -68,12 +68,12 @@ function mod_login($redirect = false)
     mod_page(_('Login'), 'mod/login.html', $args);
 }
 
-function mod_confirm($request)
+function mod_confirm(string $request): void
 {
     mod_page(_('Confirm action'), 'mod/confirm.html', ['request' => $request, 'token' => make_secure_link_token($request)]);
 }
 
-function mod_logout()
+function mod_logout(): void
 {
     global $config;
     destroyCookies();
@@ -81,7 +81,7 @@ function mod_logout()
     header('Location: ?/', true, $config['redirect_http']);
 }
 
-function mod_dashboard()
+function mod_dashboard(): void
 {
     global $config, $mod;
 
@@ -179,7 +179,7 @@ function mod_dashboard()
     mod_page(_('Dashboard'), 'mod/dashboard.html', $args);
 }
 
-function mod_search_redirect()
+function mod_search_redirect(): void
 {
     global $config;
 
@@ -204,7 +204,7 @@ function mod_search_redirect()
     }
 }
 
-function mod_search($type, $search_query_escaped, $page_no = 1)
+function mod_search(string $type, string $search_query_escaped, int $page_no = 1): void
 {
     global $pdo, $config;
 
@@ -375,7 +375,7 @@ function mod_search($type, $search_query_escaped, $page_no = 1)
     ]);
 }
 
-function mod_edit_board($boardName)
+function mod_edit_board(string $boardName): void
 {
     global $board, $config;
 
@@ -483,7 +483,7 @@ function mod_edit_board($boardName)
     }
 }
 
-function mod_new_board()
+function mod_new_board(): void
 {
     global $config, $board;
 
@@ -562,7 +562,7 @@ function mod_new_board()
     mod_page(_('New board'), 'mod/board.html', ['new' => true, 'token' => make_secure_link_token('new-board')]);
 }
 
-function mod_noticeboard($page_no = 1)
+function mod_noticeboard(int $page_no = 1): void
 {
     global $config, $pdo, $mod;
 
@@ -584,7 +584,7 @@ function mod_noticeboard($page_no = 1)
 
         $query = prepare('INSERT INTO ``noticeboard`` VALUES (NULL, :mod, :time, :subject, :body)');
         $query->bindValue(':mod', $mod['id']);
-        $query->bindvalue(':time', time());
+        $query->bindValue(':time', time());
         $query->bindValue(':subject', $_POST['subject']);
         $query->bindValue(':body', $_POST['body']);
         $query->execute() or error(db_error($query));
@@ -623,7 +623,7 @@ function mod_noticeboard($page_no = 1)
     ]);
 }
 
-function mod_noticeboard_delete($id)
+function mod_noticeboard_delete(int $id): void
 {
     global $config;
 
@@ -644,7 +644,7 @@ function mod_noticeboard_delete($id)
     header('Location: ?/noticeboard', true, $config['redirect_http']);
 }
 
-function mod_news($page_no = 1)
+function mod_news(int $page_no = 1): void
 {
     global $config, $pdo, $mod;
 
@@ -662,7 +662,7 @@ function mod_news($page_no = 1)
 
         $query = prepare('INSERT INTO ``news`` VALUES (NULL, :name, :time, :subject, :body)');
         $query->bindValue(':name', isset($_POST['name']) && hasPermission($config['mod']['news_custom']) ? $_POST['name'] : $mod['username']);
-        $query->bindvalue(':time', time());
+        $query->bindValue(':time', time());
         $query->bindValue(':subject', $_POST['subject']);
         $query->bindValue(':body', $_POST['body']);
         $query->execute() or error(db_error($query));
@@ -695,7 +695,7 @@ function mod_news($page_no = 1)
     mod_page(_('News'), 'mod/news.html', ['news' => $news, 'count' => $count, 'token' => make_secure_link_token('news')]);
 }
 
-function mod_news_delete($id)
+function mod_news_delete(int $id): void
 {
     global $config;
 
@@ -712,7 +712,7 @@ function mod_news_delete($id)
     header('Location: ?/news', true, $config['redirect_http']);
 }
 
-function mod_log($page_no = 1)
+function mod_log(int $page_no = 1): void
 {
     global $config;
 
@@ -741,7 +741,7 @@ function mod_log($page_no = 1)
     mod_page(_('Moderation log'), 'mod/log.html', ['logs' => $logs, 'count' => $count]);
 }
 
-function mod_user_log($username, $page_no = 1)
+function mod_user_log(string $username, int $page_no = 1): void
 {
     global $config;
 
@@ -772,7 +772,7 @@ function mod_user_log($username, $page_no = 1)
     mod_page(_('Moderation log'), 'mod/log.html', ['logs' => $logs, 'count' => $count, 'username' => $username]);
 }
 
-function mod_view_board($boardName, $page_no = 1)
+function mod_view_board(string $boardName, int $page_no = 1): void
 {
     global $config, $mod;
 
@@ -793,7 +793,7 @@ function mod_view_board($boardName, $page_no = 1)
     echo element('index.html', $page);
 }
 
-function mod_view_thread($boardName, $thread)
+function mod_view_thread(string $boardName, int $thread): void
 {
     global $config, $mod;
 
@@ -805,7 +805,7 @@ function mod_view_thread($boardName, $thread)
     echo $page;
 }
 
-function mod_ip_remove_note($ip, $id)
+function mod_ip_remove_note(string $ip, int $id): void
 {
     global $config, $mod;
 
@@ -827,7 +827,7 @@ function mod_ip_remove_note($ip, $id)
     header('Location: ?/IP/' . $ip . '#notes', true, $config['redirect_http']);
 }
 
-function mod_page_ip($ip)
+function mod_page_ip(string $ip): void
 {
     global $config, $mod;
 
@@ -927,7 +927,7 @@ function mod_page_ip($ip)
     mod_page(sprintf('%s: %s', _('IP'), $ip), 'mod/view_ip.html', $args, $args['hostname']);
 }
 
-function mod_ban()
+function mod_ban(): void
 {
     global $config;
 
@@ -951,7 +951,7 @@ function mod_ban()
     }
 }
 
-function mod_bans($page_no = 1)
+function mod_bans(int $page_no = 1): void
 {
     global $config;
 
@@ -1004,7 +1004,7 @@ function mod_bans($page_no = 1)
     ]);
 }
 
-function mod_ban_appeals()
+function mod_ban_appeals(): void
 {
     global $config, $board;
 
@@ -1082,7 +1082,7 @@ function mod_ban_appeals()
     ]);
 }
 
-function mod_lock($board, $unlock, $post)
+function mod_lock(string $board, bool $unlock, int $post): void
 {
     global $config;
 
@@ -1120,7 +1120,7 @@ function mod_lock($board, $unlock, $post)
     }
 }
 
-function mod_sticky($board, $unsticky, $post)
+function mod_sticky(string $board, bool $unsticky, int $post): void
 {
     global $config;
 
@@ -1145,7 +1145,7 @@ function mod_sticky($board, $unsticky, $post)
     header('Location: ?/' . sprintf($config['board_path'], $board) . $config['file_index'], true, $config['redirect_http']);
 }
 
-function mod_bumplock($board, $unbumplock, $post)
+function mod_bumplock(string $board, bool $unbumplock, int $post): void
 {
     global $config;
 
@@ -1170,7 +1170,7 @@ function mod_bumplock($board, $unbumplock, $post)
     header('Location: ?/' . sprintf($config['board_path'], $board) . $config['file_index'], true, $config['redirect_http']);
 }
 
-function mod_move($originBoard, $postID)
+function mod_move(string $originBoard, int $postID): void
 {
     global $board, $config, $mod, $pdo;
 
@@ -1372,7 +1372,7 @@ function mod_move($originBoard, $postID)
     mod_page(_('Move thread'), 'mod/move.html', ['post' => $postID, 'board' => $originBoard, 'boards' => $boards, 'token' => $security_token]);
 }
 
-function mod_ban_post($board, $delete, $post, $token = false)
+function mod_ban_post(string $board, bool $delete, int $post, string|false $token = false): void
 {
     global $config, $mod;
 
@@ -1454,7 +1454,7 @@ function mod_ban_post($board, $delete, $post, $token = false)
     mod_page(_('New ban'), 'mod/ban_form.html', $args);
 }
 
-function mod_edit_post($board, $edit_raw_html, $postID)
+function mod_edit_post(string $board, bool $edit_raw_html, int $postID): void
 {
     global $config, $mod;
 
@@ -1523,7 +1523,7 @@ function mod_edit_post($board, $edit_raw_html, $postID)
     }
 }
 
-function mod_delete($board, $post)
+function mod_delete(string $board, int $post): void
 {
     global $config, $mod;
 
@@ -1547,7 +1547,7 @@ function mod_delete($board, $post)
     header('Location: ?/' . sprintf($config['board_path'], $board) . $config['file_index'], true, $config['redirect_http']);
 }
 
-function mod_deletefile($board, $post)
+function mod_deletefile(string $board, int $post): void
 {
     global $config, $mod;
 
@@ -1573,7 +1573,7 @@ function mod_deletefile($board, $post)
     header('Location: ?/' . sprintf($config['board_path'], $board) . $config['file_index'], true, $config['redirect_http']);
 }
 
-function mod_spoiler_image($board, $post)
+function mod_spoiler_image(string $board, int $post): void
 {
     global $config, $mod;
 
@@ -1617,7 +1617,7 @@ function mod_spoiler_image($board, $post)
     header('Location: ?/' . sprintf($config['board_path'], $board) . $config['file_index'], true, $config['redirect_http']);
 }
 
-function mod_deletebyip($boardName, $post, $global = false)
+function mod_deletebyip(string $boardName, int $post, bool $global = false): void
 {
     global $config, $mod, $board;
 
@@ -1698,7 +1698,7 @@ function mod_deletebyip($boardName, $post, $global = false)
     header('Location: ?/' . sprintf($config['board_path'], $boardName) . $config['file_index'], true, $config['redirect_http']);
 }
 
-function mod_user($uid)
+function mod_user(int $uid): void
 {
     global $config, $mod;
 
@@ -1833,7 +1833,7 @@ function mod_user($uid)
     ]);
 }
 
-function mod_user_new()
+function mod_user_new(): void
 {
     global $pdo, $config;
 
@@ -1893,7 +1893,7 @@ function mod_user_new()
 }
 
 
-function mod_users()
+function mod_users(): void
 {
     global $config;
 
@@ -1916,7 +1916,7 @@ function mod_users()
     mod_page(sprintf('%s (%d)', _('Manage users'), count($users)), 'mod/users.html', ['users' => $users]);
 }
 
-function mod_user_promote($uid, $action)
+function mod_user_promote(int $uid, string $action): void
 {
     global $config;
 
@@ -1964,7 +1964,7 @@ function mod_user_promote($uid, $action)
     header('Location: ?/users', true, $config['redirect_http']);
 }
 
-function mod_pm($id, $reply = false)
+function mod_pm(int $id, bool $reply = false): void
 {
     global $mod, $config;
 
@@ -2023,7 +2023,7 @@ function mod_pm($id, $reply = false)
     }
 }
 
-function mod_inbox()
+function mod_inbox(): void
 {
     global $config, $mod;
 
@@ -2048,7 +2048,7 @@ function mod_inbox()
 }
 
 
-function mod_new_pm($username)
+function mod_new_pm(string $username): void
 {
     global $config, $mod;
 
@@ -2099,7 +2099,7 @@ function mod_new_pm($username)
     ]);
 }
 
-function mod_rebuild()
+function mod_rebuild(): void
 {
     global $config, $twig;
 
@@ -2122,7 +2122,17 @@ function mod_rebuild()
 
             $log[] = 'Clearing template cache';
             load_twig();
-            $twig->clearCacheFiles();
+            // Recursively clear Twig template cache directory
+            $cache = $twig->getCache();
+            if (is_string($cache) && is_dir($cache)) {
+                $it = new \RecursiveIteratorIterator(
+                    new \RecursiveDirectoryIterator($cache, \FilesystemIterator::SKIP_DOTS),
+                    \RecursiveIteratorIterator::CHILD_FIRST,
+                );
+                foreach ($it as $fs) {
+                    $fs->isDir() ? @rmdir($fs->getPathname()) : @unlink($fs->getPathname());
+                }
+            }
         }
 
         if (isset($_POST['rebuild_themes'])) {
@@ -2174,7 +2184,7 @@ function mod_rebuild()
     ]);
 }
 
-function mod_reports()
+function mod_reports(): void
 {
     global $config, $mod;
 
@@ -2260,7 +2270,7 @@ function mod_reports()
     mod_page(sprintf('%s (%d)', _('Report queue'), $count), 'mod/reports.html', ['reports' => $body, 'count' => $count]);
 }
 
-function mod_report_dismiss($id, $all = false)
+function mod_report_dismiss(int $id, bool $all = false): void
 {
     global $config;
 
@@ -2303,7 +2313,7 @@ function mod_report_dismiss($id, $all = false)
 }
 
 
-function mod_config($board_config = false)
+function mod_config(string|false $board_config = false): void
 {
     global $config, $mod, $board;
 
@@ -2446,7 +2456,7 @@ function mod_config($board_config = false)
     );
 }
 
-function mod_themes_list()
+function mod_themes_list(): void
 {
     global $config;
 
@@ -2484,7 +2494,7 @@ function mod_themes_list()
     ]);
 }
 
-function mod_theme_configure($theme_name)
+function mod_theme_configure(string $theme_name): void
 {
     global $config;
 
@@ -2566,7 +2576,7 @@ function mod_theme_configure($theme_name)
     ]);
 }
 
-function mod_theme_uninstall($theme_name)
+function mod_theme_uninstall(string $theme_name): void
 {
     global $config;
 
@@ -2581,7 +2591,7 @@ function mod_theme_uninstall($theme_name)
     header('Location: ?/themes', true, $config['redirect_http']);
 }
 
-function mod_theme_rebuild($theme_name)
+function mod_theme_rebuild(string $theme_name): void
 {
     global $config;
 
@@ -2596,7 +2606,7 @@ function mod_theme_rebuild($theme_name)
     ]);
 }
 
-function mod_debug_antispam()
+function mod_debug_antispam(): void
 {
     global $pdo, $config;
 
@@ -2635,7 +2645,7 @@ function mod_debug_antispam()
     mod_page(_('Debug: Anti-spam'), 'mod/debug/antispam.html', $args);
 }
 
-function mod_debug_recent_posts()
+function mod_debug_recent_posts(): void
 {
     global $pdo, $config;
 
@@ -2671,7 +2681,7 @@ function mod_debug_recent_posts()
     mod_page(_('Debug: Recent posts'), 'mod/debug/recent_posts.html', ['posts' => $posts, 'flood_posts' => $flood_posts]);
 }
 
-function mod_debug_sql()
+function mod_debug_sql(): void
 {
     global $config;
 
@@ -2698,7 +2708,7 @@ function mod_debug_sql()
     mod_page(_('Debug: SQL'), 'mod/debug/sql.html', $args);
 }
 
-function mod_debug_apc()
+function mod_debug_apc(): void
 {
     global $config;
 

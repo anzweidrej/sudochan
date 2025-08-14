@@ -4,7 +4,7 @@ use Lifo\IP\CIDR;
 
 class Bans
 {
-    public static function range_to_string($mask)
+    public static function range_to_string(array $mask): string
     {
         list($ipstart, $ipend) = $mask;
 
@@ -26,7 +26,7 @@ class Bans
         return '???';
     }
 
-    private static function calc_cidr($mask)
+    private static function calc_cidr(string $mask): array
     {
         $cidr = new CIDR($mask);
         $range = $cidr->getRange();
@@ -34,7 +34,7 @@ class Bans
         return [inet_pton($range[0]), inet_pton($range[1])];
     }
 
-    public static function parse_time($str)
+    public static function parse_time(string $str): int|false
     {
         if (empty($str)) {
             return false;
@@ -82,7 +82,7 @@ class Bans
         return time() + $expire;
     }
 
-    public static function parse_range($mask)
+    public static function parse_range(string $mask): array|false
     {
         $ipstart = false;
         $ipend = false;
@@ -126,7 +126,7 @@ class Bans
         return [$ipstart, $ipend];
     }
 
-    public static function find($ip, $board = false, $get_mod_info = false)
+    public static function find(string $ip, string|false $board = false, bool $get_mod_info = false): array
     {
         global $config;
 
@@ -161,7 +161,7 @@ class Bans
         return $ban_list;
     }
 
-    public static function list_all($offset = 0, $limit = 9001)
+    public static function list_all(int $offset = 0, int $limit = 9001): array
     {
         $offset = (int) $offset;
         $limit = (int) $limit;
@@ -178,23 +178,23 @@ class Bans
         return $bans;
     }
 
-    public static function count()
+    public static function count(): int
     {
         $query = query("SELECT COUNT(*) FROM ``bans``") or error(db_error());
         return (int) $query->fetchColumn();
     }
 
-    public static function seen($ban_id)
+    public static function seen(int|string $ban_id): void
     {
         $query = query("UPDATE ``bans`` SET `seen` = 1 WHERE `id` = " . (int) $ban_id) or error(db_error());
     }
 
-    public static function purge()
+    public static function purge(): void
     {
         $query = query("DELETE FROM ``bans`` WHERE `expires` IS NOT NULL AND `expires` < " . time() . " AND `seen` = 1") or error(db_error());
     }
 
-    public static function delete($ban_id, $modlog = false)
+    public static function delete(int|string $ban_id, bool $modlog = false): bool
     {
         if ($modlog) {
             $query = query("SELECT `ipstart`, `ipend` FROM ``bans`` WHERE `id` = " . (int) $ban_id) or error(db_error());
@@ -214,8 +214,14 @@ class Bans
         return true;
     }
 
-    public static function new_ban($mask, $reason, $length = false, $ban_board = false, $mod_id = false, $post = false)
-    {
+    public static function new_ban(
+        string $mask,
+        string $reason,
+        int|string|false $length = false,
+        string|false $ban_board = false,
+        int|false $mod_id = false,
+        array|false $post = false,
+    ): string {
         global $mod, $pdo, $board;
 
         if ($mod_id === false) {

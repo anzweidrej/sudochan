@@ -11,7 +11,7 @@ $twig = false;
 /**
  * Loads Twig and sets up the environment.
  */
-function load_twig()
+function load_twig(): void
 {
     global $twig, $config;
 
@@ -28,7 +28,7 @@ function load_twig()
 /**
  * Renders a template file with Twig.
  */
-function element($templateFile, array $options)
+function element(string $templateFile, array $options): string
 {
     global $config, $debug, $twig, $build_pages;
 
@@ -84,7 +84,7 @@ function element($templateFile, array $options)
  */
 class TinyboardExtension extends Twig\Extension\AbstractExtension
 {
-    public function getFilters()
+    public function getFilters(): array
     {
         return [
             new Twig\TwigFilter('filesize', 'format_bytes'),
@@ -107,7 +107,7 @@ class TinyboardExtension extends Twig\Extension\AbstractExtension
         ];
     }
 
-    public function getFunctions()
+    public function getFunctions(): array
     {
         return [
             new Twig\TwigFunction('time', 'time'),
@@ -118,39 +118,45 @@ class TinyboardExtension extends Twig\Extension\AbstractExtension
         ];
     }
 
-    public function getName()
+    public function getName(): string
     {
         return 'tinyboard';
     }
 }
 
-function twig_timezone_function()
+function twig_timezone_function(): string
 {
     return 'Z';
 }
 
-function twig_push_filter($array, $value)
+/**
+ * @template T
+ * @param array<int,T> $array
+ * @param T $value
+ * @return array<int,T>
+ */
+function twig_push_filter(array $array, mixed $value): array
 {
     array_push($array, $value);
     return $array;
 }
 
-function twig_remove_whitespace_filter($data)
+function twig_remove_whitespace_filter(string $data): string
 {
     return preg_replace('/[\t\r\n]/', '', $data);
 }
 
-function twig_date_filter($date, $format)
+function twig_date_filter(int|string $date, string $format): string
 {
     return gmdate($format, (int) $date);
 }
 
-function twig_hasPermission_filter($mod, $permission, $board = null)
+function twig_hasPermission_filter(mixed $mod, mixed $permission, string|null $board = null): bool
 {
     return hasPermission($permission, $board, $mod);
 }
 
-function twig_extension_filter($value, $case_insensitive = true)
+function twig_extension_filter(string $value, bool $case_insensitive = true): string
 {
     $ext = mb_substr($value, mb_strrpos($value, '.') + 1);
     if ($case_insensitive) {
@@ -159,12 +165,12 @@ function twig_extension_filter($value, $case_insensitive = true)
     return $ext;
 }
 
-function twig_sprintf_filter($value, $var)
+function twig_sprintf_filter(string $value, mixed $var): string
 {
     return sprintf($value, $var);
 }
 
-function twig_truncate_filter($value, $length = 30, $preserve = false, $separator = '…')
+function twig_truncate_filter(string $value, int $length = 30, bool $preserve = false, string $separator = '…'): string
 {
     if (mb_strlen($value) > $length) {
         if ($preserve) {
@@ -177,7 +183,7 @@ function twig_truncate_filter($value, $length = 30, $preserve = false, $separato
     return $value;
 }
 
-function twig_filename_truncate_filter($value, $length = 30, $separator = '…')
+function twig_filename_truncate_filter(string $value, int $length = 30, string $separator = '…'): string
 {
     if (mb_strlen($value) > $length) {
         $value = strrev($value);
@@ -194,17 +200,19 @@ function twig_filename_truncate_filter($value, $length = 30, $separator = '…')
     return $value;
 }
 
-function twig_ratio_function($w, $h)
+function twig_ratio_function(int $w, int $h): string
 {
     return fraction($w, $h, ':');
 }
-function twig_secure_link_confirm($text, $title, $confirm_message, $href)
+
+function twig_secure_link_confirm(string $text, string $title, string $confirm_message, string $href): string
 {
     global $config;
 
     return '<a onclick="if (event.which==2) return true;if (confirm(\'' . htmlentities(addslashes($confirm_message)) . '\')) document.location=\'?/' . htmlspecialchars(addslashes($href . '/' . make_secure_link_token($href))) . '\';return false;" title="' . htmlentities($title) . '" href="?/' . $href . '">' . $text . '</a>';
 }
-function twig_secure_link($href)
+
+function twig_secure_link(string $href): string
 {
     return $href . '/' . make_secure_link_token($href);
 }

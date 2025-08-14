@@ -8,9 +8,9 @@ defined('TINYBOARD') or exit;
 
 class Cache
 {
-    private static $cache;
+    private static mixed $cache = null;
 
-    public static function init()
+    public static function init(): void
     {
         global $config;
 
@@ -37,7 +37,7 @@ class Cache
         }
     }
 
-    public static function get($key)
+    public static function get(string $key): mixed
     {
         global $config, $debug;
 
@@ -72,7 +72,8 @@ class Cache
 
         return $data;
     }
-    public static function set($key, $value, $expires = false)
+
+    public static function set(string $key, mixed $value, int|false $expires = false): void
     {
         global $config, $debug;
 
@@ -110,7 +111,8 @@ class Cache
             $debug['cached'][] = $key . ' (set)';
         }
     }
-    public static function delete($key)
+
+    public static function delete(string $key): void
     {
         global $config, $debug;
 
@@ -139,7 +141,8 @@ class Cache
             $debug['cached'][] = $key . ' (deleted)';
         }
     }
-    public static function flush()
+
+    public static function flush(): bool
     {
         global $config;
 
