@@ -693,15 +693,15 @@ $config['banner_height'] = 100;
 // available stylesheets (or create your own).
 $config['stylesheets']['Yotsuba B'] = ''; // Default; there is no additional/custom stylesheet for this.
 $config['stylesheets']['Yotsuba'] = 'yotsuba.css';
-$config['stylesheets']['Futaba'] = 'futaba.css';
-$config['stylesheets']['Dark'] = 'dark.css';
-// $config['stylesheets']['Futaba + Vichan'] = 'futaba+vichan.css';
-// $config['stylesheets']['Futaba Light'] = 'futaba-light.css';
-// $config['stylesheets']['Gentoochan'] = 'gentoochan.css';
+// $config['stylesheets']['Futaba'] = 'futaba.css';
+// $config['stylesheets']['Dark'] = 'dark.css';
+$config['stylesheets']['Futaba + Vichan'] = 'futaba+vichan.css';
+$config['stylesheets']['Futaba Light'] = 'futaba-light.css';
+$config['stylesheets']['Gentoochan'] = 'gentoochan.css';
 // $config['stylesheets']['Jungle'] = 'jungle.css';
 // $config['stylesheets']['Luna'] = 'luna.css';
-// $config['stylesheets']['Miku'] = 'miku.css';
-// $config['stylesheets']['Notsuba'] = 'notsuba.css';
+$config['stylesheets']['Miku'] = 'miku.css';
+$config['stylesheets']['Notsuba'] = 'notsuba.css';
 // $config['stylesheets']['Photon'] = 'photon.css';
 // $config['stylesheets']['Piwnichan'] = 'piwnichan.css';
 // $config['stylesheets']['Ricechan'] = 'ricechan.css';
@@ -710,7 +710,7 @@ $config['stylesheets']['Dark'] = 'dark.css';
 // $config['stylesheets']['Szalet'] = 'szalet.css';
 // $config['stylesheets']['Terminal 2'] = 'terminal2.css';
 // $config['stylesheets']['Test Orange'] = 'testorange.css';
-// $config['stylesheets']['Wasabi'] = 'wasabi.css';
+$config['stylesheets']['Wasabi'] = 'wasabi.css';
 // $config['stylesheets']['Dark Roach'] = 'dark_roach.css';
 // $config['stylesheets']['Ferus'] = 'ferus.css';
 
@@ -789,11 +789,11 @@ $config['additional_javascript'][] = 'js/inline-expanding.js';
 // "js/inline-expanding.js" or else the inline-expanding script might not interact properly with other
 // scripts.
 // $config['additional_javascript'] = array();
-// $config['additional_javascript'][] = 'js/jquery.min.js';
+$config['additional_javascript'][] = 'js/jquery.min.js';
 // $config['additional_javascript'][] = 'js/inline-expanding.js';
 // $config['additional_javascript'][] = 'js/auto-reload.js';
 // $config['additional_javascript'][] = 'js/post-hover.js';
-// $config['additional_javascript'][] = 'js/style-select.js';
+$config['additional_javascript'][] = 'js/style-select.js';
 
 // Where these script files are located on the web. Defaults to $config['root'].
 // $config['additional_javascript_url'] = 'http://static.example.org/tinyboard-javascript-stuff/';

@@ -12,45 +12,45 @@
  *   $config['additional_javascript'][] = 'js/catalog-link.js';
  */
 
-function catalog() {
-var board = $("input[name='board']");
+import $ from 'jquery';
 
-if (board) { 
-var catalog_url = 'catalog.html';
-var pages = document.getElementsByClassName('pages')[0];
-var bottom = document.getElementsByClassName('boardlist bottom')[0]
-var subtitle = document.getElementsByClassName('subtitle')[0];
+$(document).ready(function catalog() {
+    var board = $("input[name='board']");
 
-var link = document.createElement('a');
-link.href = catalog_url;
+    if (board) {
+        var catalog_url = 'catalog.html';
+        var pages = document.querySelector('.pages');
+        var bottom = document.querySelector('.boardlist.bottom');
+        var subtitle = document.querySelector('.subtitle');
 
-if (pages) {
-	link.textContent = 'Catalog';
-	link.style.color = '#F10000';
-	link.style.padding = '4px';
-	link.style.paddingLeft = '9px';
-	link.style.borderLeft = '1px solid'
-	link.style.borderLeftColor = '#A8A8A8';
-	link.style.textDecoration = "underline";
+        var link = document.createElement('a');
+        link.href = catalog_url;
 
-	pages.appendChild(link)
-}
-else {
-	link.textContent = '[Catalog]';
-	link.style.paddingLeft = '10px';
-	link.style.textDecoration = "underline";
-	document.body.insertBefore(link, bottom);
-}
+        if (pages) {
+            link.textContent = 'Catalog';
+            link.style.color = '#F10000';
+            link.style.padding = '4px';
+            link.style.paddingLeft = '9px';
+            link.style.borderLeft = '1px solid';
+            link.style.borderLeftColor = '#A8A8A8';
+            link.style.textDecoration = 'underline';
 
-if (subtitle) { 
-	var link2 = document.createElement('a');
-	link2.textContent = 'Catalog';
-	link2.href = catalog_url;
+            pages.appendChild(link);
+        } else if (bottom) {
+            link.textContent = '[Catalog]';
+            link.style.paddingLeft = '10px';
+            link.style.textDecoration = 'underline';
+            document.body.insertBefore(link, bottom);
+        }
 
-	var br = document.createElement('br');
-	subtitle.appendChild(br);
-	subtitle.appendChild(link2);	
-}
-}
-}
-$(document).ready(catalog); 
+        if (subtitle) {
+            var link2 = document.createElement('a');
+            link2.textContent = 'Catalog';
+            link2.href = catalog_url;
+
+            var br = document.createElement('br');
+            subtitle.appendChild(br);
+            subtitle.appendChild(link2);
+        }
+    }
+});

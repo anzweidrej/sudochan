@@ -13,14 +13,17 @@
  *
  */
 
-$(document).ready(function(){
-	$('form[name="postcontrols"] div.delete input:not([type="checkbox"]):not([type="submit"]):not([type="hidden"])').keypress(function(e) {
-		if(e.which == 13) {
-			e.preventDefault();
-			$(this).next().click();
-			return false;
-		}
-		return true;
-	});
-});
+import $ from 'jquery';
 
+$(document).ready(function () {
+    $(
+        'form[name="postcontrols"] div.delete input:not([type="checkbox"]):not([type="submit"]):not([type="hidden"])',
+    ).on('keypress', function (e) {
+        if (e.which == 13) {
+            e.preventDefault();
+            $(this).next().trigger('click');
+            return false;
+        }
+        return true;
+    });
+});
