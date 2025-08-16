@@ -217,7 +217,8 @@ if (isset($_POST['delete'])) {
     }
 
     if ($post['mod'] = isset($_POST['mod']) && $_POST['mod']) {
-        require 'inc/mod/auth.php';
+        require_once 'inc/mod/auth.php';
+        authenticate();
         if (!$mod) {
             // Liar. You're not a mod.
             error($config['error']['notamod']);

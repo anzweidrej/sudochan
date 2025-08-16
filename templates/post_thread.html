@@ -1,6 +1,4 @@
-{% filter remove_whitespace %}
-{# tabs and new lines will be ignored #}
-
+{% apply spaceless %}
 <div id="thread_{{ post.id }}">
 
 {% if post.embed %}
@@ -67,7 +65,7 @@
 			{# start email #}
 			<a class="email" href="mailto:{{ post.email }}">
 		{% endif %}
-		{% set capcode = post.capcode|capcode %}
+		{% set capcode = post.capcode|default(false)|capcode %}
 		<span {% if capcode.name %}style="{{ capcode.name }}" {% endif %}class="name">{{ post.name|bidi_cleanup }}</span>
 		{% if post.trip|length > 0 %}
 			<span {% if capcode.trip %}style="{{ capcode.trip }}" {% endif %}class="trip">{{ post.trip }}</span>
@@ -123,7 +121,7 @@
 	{{ post.postControls }}
 	</p>
 	<div class="body">
-		{% endfilter %}{% if index %}{{ post.body|truncate_body(post.link) }}{% else %}{{ post.body }}{% endif %}{% filter remove_whitespace %}
+		{% endapply %}{% if index %}{{ post.body|truncate_body(post.link) }}{% else %}{{ post.body }}{% endif %}{% apply spaceless %}
 		{% if post.modifiers['ban message'] %}
 			{{ config.mod.ban_message|sprintf(post.modifiers['ban message']) }}
 		{% endif %}
@@ -151,7 +149,7 @@
 	{% endif %}
 {% if not index %}
 {% endif %}
-</div>{% endfilter %}
+</div>{% endapply %}
 {% set hr = post.hr %}
 {% for post in post.posts %}
 	{% include 'post_reply.html' %}

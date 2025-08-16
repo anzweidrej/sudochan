@@ -340,7 +340,38 @@ function embed_html(string $link): string
 
 class Post
 {
-    public function __construct(object|array $post, ?string $root = null, bool $mod = false)
+    public int $id;
+    public ?int $thread;
+    public ?string $subject;
+    public ?string $name;
+    public string $body;
+    public string $body_nomarkup;
+    public ?string $embed;
+    public array|bool $mod;
+    public string $root;
+    public array $modifiers;
+    public bool $hr;
+    public string $file;
+    public string $thumb;
+    public int $time;
+    public int $filewidth;
+    public int $fileheight;
+    public ?string $email = null;
+    public ?string $trip = null;
+    public ?string $capcode = null;
+    public ?int $bump = null;
+    public ?int $thumbwidth = null;
+    public ?int $thumbheight = null;
+    public ?int $filesize = null;
+    public ?string $filename = null;
+    public ?string $filehash = null;
+    public ?string $password = null;
+    public ?string $ip = null;
+    public ?bool $sticky = null;
+    public ?bool $locked = null;
+    public ?bool $sage = null;
+
+    public function __construct(object|array $post, ?string $root = null, array|bool $mod = false)
     {
         global $config;
         if (!isset($root)) {
@@ -351,8 +382,8 @@ class Post
             $this->{$key} = $value;
         }
 
-        $this->subject = utf8tohtml($this->subject);
-        $this->name = utf8tohtml($this->name);
+        $this->subject = utf8tohtml($this->subject ?? '');
+        $this->name = utf8tohtml($this->name ?? '');
         $this->mod = $mod;
         $this->root = $root;
 
@@ -449,11 +480,46 @@ class Post
 
         return element('post_reply.html', ['config' => $config, 'board' => $board, 'post' => &$this, 'index' => $index]);
     }
-};
+}
 
 class Thread
 {
-    public function __construct(object|array $post, ?string $root = null, bool $mod = false, bool $hr = true)
+    public ?int $thread;
+    public ?string $subject;
+    public string $email;
+    public string $name;
+    public ?string $trip;
+    public ?string $capcode;
+    public string $body;
+    public string $body_nomarkup;
+    public int $time;
+    public int $bump;
+    public string $thumb;
+    public int $thumbwidth;
+    public int $thumbheight;
+    public string $file;
+    public int $filewidth;
+    public int $fileheight;
+    public int $filesize;
+    public string $filename;
+    public string $filehash;
+    public string $password;
+    public string $ip;
+    public bool $sticky;
+    public bool $locked;
+    public bool $sage;
+    public ?string $embed;
+    public array|bool $mod;
+    public string $root;
+    public bool $hr;
+    /** @var Post[] */
+    public array $posts;
+    public int $omitted;
+    public int $omitted_images;
+    public array $modifiers;
+    public int $id;
+
+    public function __construct(object|array $post, ?string $root = null, array|bool $mod = false, bool $hr = true)
     {
         global $config;
         if (!isset($root)) {
@@ -464,8 +530,8 @@ class Thread
             $this->{$key} = $value;
         }
 
-        $this->subject = utf8tohtml($this->subject);
-        $this->name = utf8tohtml($this->name);
+        $this->subject = utf8tohtml($this->subject ?? '');
+        $this->name = utf8tohtml($this->name ?? '');
         $this->mod = $mod;
         $this->root = $root;
         $this->hr = $hr;
@@ -495,16 +561,19 @@ class Thread
             );
         }
     }
+
     public function link(string $pre = ''): string
     {
         global $config, $board;
 
         return $this->root . $board['dir'] . $config['dir']['res'] . sprintf($config['file_page'], $this->id) . '#' . $pre . $this->id;
     }
+
     public function add(Post $post): void
     {
         $this->posts[] = $post;
     }
+
     public function postControls(): string
     {
         global $board, $config;

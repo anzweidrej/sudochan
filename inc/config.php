@@ -658,11 +658,11 @@ $config['locale'] = 'en'; // (en, ru_RU.UTF-8, fi_FI.UTF-8, pl_PL.UTF-8)
 
 // Timezone to use for displaying dates/tiems.
 $config['timezone'] = 'America/Los_Angeles';
-// The format string passed to strftime() for displaying dates.
-// http://www.php.net/manual/en/function.strftime.php
-$config['post_date'] = '%m/%d/%y (%a) %H:%M:%S';
+// The format string passed to gmdate() for displaying dates.
+// https://www.php.net/manual/en/function.gmdate.php
+$config['post_date'] = 'm/d/y (D) H:i:s';
 // Same as above, but used for "you are banned' pages.
-$config['ban_date'] = '%A %e %B, %Y';
+$config['ban_date'] = 'l j F, Y';
 
 // The names on the post buttons. (On most imageboards, these are both just "Post").
 $config['button_newtopic'] = _('New Topic');

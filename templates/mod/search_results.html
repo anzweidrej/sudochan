@@ -223,7 +223,7 @@
 							{# start email #}
 							<a class="email" href="mailto:{{ post.email }}">
 						{% endif %}
-						{% set capcode = post.capcode|capcode %}
+						{% set capcode = post.capcode|default(false)|capcode %}
 						<span {% if capcode.name %}style="{{ capcode.name }}" {% endif %}class="name">{{ post.name }}</span>
 						{% if post.trip|length > 0 %}
 							<span {% if capcode.trip %}style="{{ capcode.trip }}" {% endif %}class="trip">{{ post.trip }}</span>

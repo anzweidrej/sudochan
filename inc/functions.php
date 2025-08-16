@@ -766,6 +766,8 @@ function checkBan(string|false $board = false): ?bool
     if ($config['cache']['enabled']) {
         Cache::set('purged_bans_last', time());
     }
+
+    return null;
 }
 
 function threadLocked(int $id): bool
@@ -956,6 +958,8 @@ function bumpThread(int $id): bool
     $query->bindValue(':time', time(), PDO::PARAM_INT);
     $query->bindValue(':id', $id, PDO::PARAM_INT);
     $query->execute() or error(db_error($query));
+
+    return true;
 }
 
 // Remove file from post
@@ -2023,7 +2027,7 @@ function strip_combining_chars(string $str): string
     return $str;
 }
 
-function buildThread(int $id, bool $return = false, bool $mod = false): ?string
+function buildThread(int $id, bool $return = false, array|bool $mod = false): ?string
 {
     global $board, $config, $build_pages;
     $id = round($id);
