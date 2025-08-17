@@ -52,7 +52,7 @@ function loadConfig(): void
 
     require 'inc/config.php';
     if (!file_exists('inc/instance-config.php')) {
-        $error('Tinyboard is not configured! Create inc/instance-config.php.');
+        $error('Sudochan is not configured! Create inc/instance-config.php.');
         return;
     }
     require 'inc/instance-config.php';
@@ -2088,6 +2088,8 @@ function buildThread(int $id, bool $return = false, array|bool $mod = false): ?s
         $jsonFilename = $board['dir'] . $config['dir']['res'] . $id . '.json';
         file_write($jsonFilename, $json);
     }
+
+    return null;
 }
 
 function rrmdir(string $dir): void

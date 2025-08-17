@@ -158,6 +158,7 @@ class ImageBase extends ImageGD
 {
     public $image;
     public string $src;
+    public string $format;
     public $original;
     public int $original_width;
     public int $original_height;

@@ -56,7 +56,7 @@ jobs:
         run: composer validate --strict
 
       - name: Install dependencies
-        run: composer install --prefer-dist --no-progress --no-interaction
+        run: composer install --ansi --prefer-dist --no-progress --no-interaction
 
       - name: Run basic syntax scan
         run: |

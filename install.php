@@ -543,11 +543,11 @@ if (file_exists($config['has_installed'])) {
             break;
         default:
             $page['title'] = 'Unknown version';
-            $page['body'] = '<p style="text-align:center">Tinyboard was unable to determine what version is currently installed.</p>';
+            $page['body'] = '<p style="text-align:center">Sudochan was unable to determine what version is currently installed.</p>';
             break;
         case VERSION:
             $page['title'] = 'Already installed';
-            $page['body'] = '<p style="text-align:center">It appears that Tinyboard is already installed (' . $version . ') and there is nothing to upgrade! Delete <strong>' . $config['has_installed'] . '</strong> to reinstall.</p>';
+            $page['body'] = '<p style="text-align:center">It appears that Sudochan is already installed (' . $version . ') and there is nothing to upgrade! Delete <strong>' . $config['has_installed'] . '</strong> to reinstall.</p>';
             break;
     }
 
@@ -608,14 +608,14 @@ if ($step == 0) {
             'name' => 'PHP &ge; 8.3',
             'result' => PHP_VERSION_ID >= 80300,
             'required' => true,
-            'message' => 'Tinyboard requires PHP 8.3 or better.',
+            'message' => 'Sudochan requires PHP 8.3 or better.',
         ],
         [
             'category' => 'PHP',
             'name' => 'PHP &ge; 8.4',
             'result' => PHP_VERSION_ID >= 80400,
             'required' => false,
-            'message' => 'PHP &ge; 8.4, though not required, is recommended to make the most out of Tinyboard configuration files.',
+            'message' => 'PHP &ge; 8.4, though not required, is recommended to make the most out of Sudochan configuration files.',
         ],
         [
             'category' => 'PHP',
@@ -713,21 +713,21 @@ if ($step == 0) {
             'name' => getcwd(),
             'result' => is_writable('.'),
             'required' => true,
-            'message' => 'Tinyboard does not have permission to create directories (boards) here. You will need to <code>chmod</code> (or operating system equivalent) appropriately.',
+            'message' => 'Sudochan does not have permission to create directories (boards) here. You will need to <code>chmod</code> (or operating system equivalent) appropriately.',
         ],
         [
             'category' => 'File permissions',
             'name' => getcwd() . '/tmp/cache',
             'result' => is_writable('tmp') && (!is_dir('tmp/cache') || is_writable('tmp/cache')),
             'required' => true,
-            'message' => 'You must give Tinyboard permission to create (and write to) the <code>tmp/cache</code> directory or performance will be drastically reduced.',
+            'message' => 'You must give Sudochan permission to create (and write to) the <code>tmp/cache</code> directory or performance will be drastically reduced.',
         ],
         [
             'category' => 'File permissions',
             'name' => getcwd() . '/inc/instance-config.php',
             'result' => is_writable('inc/instance-config.php'),
             'required' => false,
-            'message' => 'Tinyboard does not have permission to make changes to <code>inc/instance-config.php</code>. To complete the installation, you will be asked to manually copy and paste code into the file instead.',
+            'message' => 'Sudochan does not have permission to make changes to <code>inc/instance-config.php</code>. To complete the installation, you will be asked to manually copy and paste code into the file instead.',
         ],
         [
             'category' => 'Misc',
@@ -739,10 +739,10 @@ if ($step == 0) {
         ],
         [
             'category' => 'Misc',
-            'name' => 'Tinyboard installed using git',
+            'name' => 'Sudochan installed using git',
             'result' => is_dir('.git'),
             'required' => false,
-            'message' => 'Tinyboard is still beta software and it\'s not going to come out of beta any time soon. As there are often many months between releases yet changes and bug fixes are very frequent, it\'s recommended to use the git repository to maintain your Tinyboard installation. Using git makes upgrading much easier.',
+            'message' => 'Sudochan is still beta software and it\'s not going to come out of beta any time soon. As there are often many months between releases yet changes and bug fixes are very frequent, it\'s recommended to use the git repository to maintain your Sudochan installation. Using git makes upgrading much easier.',
         ],
     ];
 
@@ -847,10 +847,10 @@ if ($step == 0) {
     }
 
     $page['title'] = 'Installation complete';
-    $page['body'] = '<p style="text-align:center">Thank you for using Tinyboard. Please remember to report any bugs you discover. <a href="http://tinyboard.org/docs/?p=Config">How do I edit the config files?</a></p>';
+    $page['body'] = '<p style="text-align:center">Thank you for using Sudochan. Please remember to report any bugs you discover. <a href="http://tinyboard.org/docs/?p=Config">How do I edit the config files?</a></p>';
 
     if (!empty($sql_errors)) {
-        $page['body'] .= '<div class="ban"><h2>SQL errors</h2><p>SQL errors were encountered when trying to install the database. This may be the result of using a database which is already occupied with a Tinyboard installation; if so, you can probably ignore this.</p><p>The errors encountered were:</p><ul>' . $sql_errors . '</ul><p><a href="?step=5">Ignore errors and complete installation.</a></p></div>';
+        $page['body'] .= '<div class="ban"><h2>SQL errors</h2><p>SQL errors were encountered when trying to install the database. This may be the result of using a database which is already occupied with a Sudochan installation; if so, you can probably ignore this.</p><p>The errors encountered were:</p><ul>' . $sql_errors . '</ul><p><a href="?step=5">Ignore errors and complete installation.</a></p></div>';
     } else {
         $boards = listBoards();
         foreach ($boards as &$_board) {
@@ -865,7 +865,7 @@ if ($step == 0) {
     echo element('page.html', $page);
 } elseif ($step == 5) {
     $page['title'] = 'Installation complete';
-    $page['body'] = '<p style="text-align:center">Thank you for using Tinyboard. Please remember to report any bugs you discover.</p>';
+    $page['body'] = '<p style="text-align:center">Thank you for using Sudochan. Please remember to report any bugs you discover.</p>';
 
     $boards = listBoards();
     foreach ($boards as &$_board) {

@@ -2429,7 +2429,7 @@ function mod_config(string|false $board_config = false): void
                 $page['title'] = 'Cannot write to file!';
                 $page['config'] = $config;
                 $page['body'] = '
-					<p style="text-align:center">Tinyboard could not write to <strong>' . $config_file . '</strong> with the ammended configuration, probably due to a permissions error.</p>
+					<p style="text-align:center">Sudochan could not write to <strong>' . $config_file . '</strong> with the ammended configuration, probably due to a permissions error.</p>
 					<p style="text-align:center">You may proceed with these changes manually by copying and pasting the following code to the end of <strong>' . $config_file . '</strong>:</p>
 					<textarea style="width:700px;height:370px;margin:auto;display:block;background:white;color:black" readonly>' . $config_append . '</textarea>
 				';
