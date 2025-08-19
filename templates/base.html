@@ -9,7 +9,7 @@
         {% block stylesheets %}{% endblock %}
         {% block javascripts %}{% endblock %}
     </head>
-    <body>
+    <body id="{% block body_id %}{% endblock %}">
         {{ boardlist.top }}
 
         {% if pm %}
@@ -22,21 +22,11 @@
             <hr />
         {% endif %}
 
-        {% block banner %}
-            {% if config.url_banner %}
-                <img class="banner"
-                    src="{{ config.url_banner }}"
-                    {% if config.banner_width or config.banner_height %}
-                        style="
-                            {% if config.banner_width %}width:{{ config.banner_width }}px;{% endif %}
-                            {% if config.banner_height %}height:{{ config.banner_height }}px;{% endif %}
-                        "
-                    {% endif %}
-                    alt="" />
-            {% endif %}
-        {% endblock %}
+        {% block banner %}{% endblock %}
 
-        {% block header %}{% endblock %}
+        <header>
+            {% block header %}{% endblock %}
+        </header>
 
         {% block body %}
             <main>

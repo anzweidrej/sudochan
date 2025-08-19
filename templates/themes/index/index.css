@@ -1,0 +1,110 @@
+.wrapper {
+    max-width: 670px;
+    min-width: 300px;
+    margin: 30px auto;
+    padding: 0;
+}
+
+img {
+    float: none !important;
+    margin: auto;
+    margin-bottom: 12px;
+    max-height: 150px;
+    max-width: 200px;
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.55);
+    border: 2px solid rgba(153, 153, 153, 0%);
+
+    &:hover {
+        border: 2px solid rgba(153, 153, 153, 0.27);
+    }
+}
+
+.icon {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 100px;
+}
+
+div.thread {
+    display: inline-block;
+    vertical-align: top;
+    margin: 0 15px 25px 20px;
+    text-align: center;
+    font-weight: normal;
+    width: 205px;
+    overflow: hidden;
+    position: relative;
+    font-size: 11px;
+    padding: 15px;
+    background: rgba(182, 182, 182, 0.12);
+    border: 2px solid rgba(111, 111, 111, 0.34);
+    max-height: 300px;
+    transition:
+        background 0.2s,
+        border-color 0.2s;
+
+    &:hover {
+        background: #d6daf0;
+        border-color: #b7c5d9;
+    }
+}
+
+.box-wrap {
+    max-width: 670px;
+    min-width: 332px;
+    margin: 30px auto;
+    overflow: auto;
+    padding: 0;
+}
+
+.box {
+    background: #fff;
+    border: 1px solid #98e;
+    width: 330px;
+    margin: 8px 0;
+    padding: 0;
+}
+
+.box ul {
+    padding: 2px 15px;
+}
+
+.box ul li {
+    list-style: none;
+    margin: 0;
+}
+
+.box.left {
+    background: #efe;
+    color: #060;
+    border: 1px solid #060;
+    float: left;
+}
+
+.box.right {
+    background: #eef;
+    color: #006;
+    border: 1px solid #006;
+    float: right;
+}
+
+.box h2 {
+    padding: 3px 7px;
+    font-size: 12pt;
+}
+
+.box.left h2 {
+    background: #9c6;
+    color: #060;
+}
+
+.box.right h2 {
+    background: #59a;
+    color: #fff;
+}
+
+.box img {
+    float: none;
+    margin: 10px auto;
+}

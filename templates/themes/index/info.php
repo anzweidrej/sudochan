@@ -2,20 +2,40 @@
 
 $theme = [];
 
-// Theme name
-$theme['name'] = 'RecentPosts';
-// Description (you can use Tinyboard markup here)
-$theme['description'] = 'Show recent posts and images, like 4chan.';
-$theme['version'] = 'v1.0';
+$theme['name'] = 'Index';
+$theme['description'] = 'Extremely basic imageboard homepage. Enabling boardlinks is recommended for this theme.';
+$theme['version'] = 'v0.1';
 
-// Theme configuration
 $theme['config'] = [];
 
 $theme['config'][] = [
-    'title' => 'Title',
+    'title' => 'Icon',
+    'name' => 'icon',
+    'type' => 'text',
+    'default' => '../templates/themes/index/',
+    'size' => 50,
+];
+
+$theme['config'][] = [
+    'title' => 'Site title',
     'name' => 'title',
     'type' => 'text',
-    'default' => 'Recent Posts',
+];
+
+$theme['config'][] = [
+    'title' => 'Slogan',
+    'name' => 'subtitle',
+    'type' => 'text',
+    'comment' => '(optional)',
+];
+
+$theme['config'][] = [
+    'title' => '# of recent entries',
+    'name' => 'no_recent',
+    'type' => 'text',
+    'default' => 0,
+    'size' => 3,
+    'comment' => '(number of recent news entries to display; "0" is infinite)',
 ];
 
 $theme['config'][] = [
@@ -45,44 +65,33 @@ $theme['config'][] = [
     'title' => 'HTML file',
     'name' => 'html',
     'type' => 'text',
-    'default' => 'recent.html',
-    'comment' => '(eg. "recent.html")',
+    'default' => 'index.html',
+    'comment' => '(eg. "index.html")',
 ];
 
 $theme['config'][] = [
     'title' => 'CSS file',
     'name' => 'css',
     'type' => 'text',
-    'default' => 'recent.css',
-    'comment' => '(eg. "recent.css")',
-];
-
-$theme['config'][] = [
-    'title' => 'CSS stylesheet name',
-    'name' => 'basecss',
-    'type' => 'text',
-    'default' => 'recent.css',
-    'comment' => '(eg. "recent.css" - see templates/themes/recent for details)',
+    'default' => 'index.css',
+    'comment' => '(eg. "index.css")',
 ];
 
 // Unique function name for building everything
-$theme['build_function'] = 'recentposts_build';
-$theme['install_callback'] = 'recentposts_install';
+$theme['build_function'] = 'index_build';
+$theme['install_callback'] = 'build_install';
 
-if (!function_exists('recentposts_install')) {
-    /**
-     * @param array<string, mixed> $settings
-     * @return array{0: bool, 1: string}|null Returns [false, message] on failure, null on success
-     */
-    function recentposts_install(array $settings): ?array
+if (!function_exists('build_install')) {
+    function build_install($settings)
     {
+        if (!is_numeric($settings['no_recent']) || $settings['no_recent'] < 0) {
+            return [false, '<strong>' . utf8tohtml($settings['no_recent']) . '</strong> is not a non-negative integer.'];
+        }
         if (!is_numeric($settings['limit_images']) || $settings['limit_images'] < 0) {
             return [false, '<strong>' . utf8tohtml($settings['limit_images']) . '</strong> is not a non-negative integer.'];
         }
         if (!is_numeric($settings['limit_posts']) || $settings['limit_posts'] < 0) {
             return [false, '<strong>' . utf8tohtml($settings['limit_posts']) . '</strong> is not a non-negative integer.'];
         }
-
-        return null;
     }
 }

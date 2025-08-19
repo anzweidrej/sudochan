@@ -1,27 +1,41 @@
 {% extends 'base.html' %}
 
+{% block body_id 'index' %}
+
 {% block title %}
     {{ board.url }} - {{ board.title|e }}
 {% endblock %}
 
+{% block banner %}
+    {% if config.url_banner %}
+        <img class="banner"
+            src="{{ config.url_banner }}"
+            {% if config.banner_width or config.banner_height %}
+                style="
+                    {% if config.banner_width %}width:{{ config.banner_width }}px;{% endif %}
+                    {% if config.banner_height %}height:{{ config.banner_height }}px;{% endif %}
+                "
+            {% endif %}
+            alt="" />
+    {% endif %}
+{% endblock %}
+
 {% block header %}
-    <header>
-        <h1>{{ board.url }} - {{ board.title|e }}</h1>
-        <div class="subtitle">
-            {% if board.subtitle %}
-                {% if config.allow_subtitle_html %}
-                    {{ board.subtitle }}
-                {% else %}
-                    {{ board.subtitle|e }}
-                {% endif %}
+    <h1>{{ board.url }} - {{ board.title|e }}</h1>
+    <div class="subtitle">
+        {% if board.subtitle %}
+            {% if config.allow_subtitle_html %}
+                {{ board.subtitle }}
+            {% else %}
+                {{ board.subtitle|e }}
             {% endif %}
-            {% if mod %}
-                <p>
-                    <a href="?/">{% trans %}Return to dashboard{% endtrans %}</a>
-                </p>
-            {% endif %}
-        </div>
-    </header>
+        {% endif %}
+        {% if mod %}
+            <p>
+                <a href="?/">{% trans %}Return to dashboard{% endtrans %}</a>
+            </p>
+        {% endif %}
+    </div>
 {% endblock %}
 
 {% block content %}

@@ -1,26 +1,40 @@
 {% extends 'base.html' %}
 
+{% block body_id 'generic_page' %}
+
 {% block title %}
     {{ board.url }} - {{ board.name }}
 {% endblock %}
 
-{% block header %}
-    <header>
-        <h1>{{ board.url }} - {{ board.name }}</h1>
-        <div class="subtitle">
-            {% if board.title %}
-                {{ board.title|e }}
+{% block banner %}
+    {% if config.url_banner %}
+        <img class="banner"
+            src="{{ config.url_banner }}"
+            {% if config.banner_width or config.banner_height %}
+                style="
+                    {% if config.banner_width %}width:{{ config.banner_width }}px;{% endif %}
+                    {% if config.banner_height %}height:{{ config.banner_height }}px;{% endif %}
+                "
             {% endif %}
-            {% if mod %}
-                <p>
-                    <a href="?/">{% trans %}Return to dashboard{% endtrans %}</a>
-                </p>
-            {% endif %}
-        </div>
-    </header>
+            alt="" />
+    {% endif %}
 {% endblock %}
 
-{% block body %}
+{% block header %}
+    <h1>{{ board.url }} - {{ board.name }}</h1>
+    <div class="subtitle">
+        {% if board.title %}
+            {{ board.title|e }}
+        {% endif %}
+        {% if mod %}
+            <p>
+                <a href="?/">{% trans %}Return to dashboard{% endtrans %}</a>
+            </p>
+        {% endif %}
+    </div>
+{% endblock %}
+
+{% block content %}
     {% include 'post_form.html' %}
 
     {% if config.global_message %}

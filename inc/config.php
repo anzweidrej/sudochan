@@ -151,22 +151,22 @@ $config['secure_trip_salt'] = ')(*&^%$#@!98765432190zyxwvutsrqponmlkjihgfedcba';
 $config['dnsbl'][] = ['tor.dnsbl.sectoor.de', 1];
 
 // http://www.sorbs.net/using.shtml
-// $config['dnsbl'][] = array('dnsbl.sorbs.net', array(2, 3, 4, 5, 6, 7, 8, 9));
+// $config['dnsbl'][] = ['dnsbl.sorbs.net', [2, 3, 4, 5, 6, 7, 8, 9]];
 
 // http://www.projecthoneypot.org/httpbl.php
-// $config['dnsbl'][] = array('<your access key>.%.dnsbl.httpbl.org', function($ip) {
-//	$octets = explode('.', $ip);
-//
-//	// days since last activity
-//	if ($octets[1] > 14)
-//		return false;
-//
-//	// "threat score" (http://www.projecthoneypot.org/threat_info.php)
-//	if ($octets[2] < 5)
-//		return false;
-//
-//	return true;
-// }, 'dnsbl.httpbl.org'); // hide our access key
+// $config['dnsbl'][] = ['<your access key>.%.dnsbl.httpbl.org', function($ip) {
+//     $octets = explode('.', $ip);
+
+//     // days since last activity
+//     if ($octets[1] > 14)
+//         return false;
+
+//     // "threat score" (http://www.projecthoneypot.org/threat_info.php)
+//     if ($octets[2] < 5)
+//         return false;
+
+//     return true;
+// }, 'dnsbl.httpbl.org']; // hide our access key
 
 // Skip checking certain IP addresses against blacklists (for troubleshooting or whatever)
 $config['dnsbl_exceptions'][] = '127.0.0.1';
@@ -269,57 +269,57 @@ $config['filters'][] = [
 ];
 
 // Example: Minimum time between posts with the same file hash.
-// $config['filters'][] = array(
-// 	'condition' => array(
-// 		'flood-match' => array('file'), // Match file hash
-// 		'flood-time' => 60 * 2 // 2 minutes minimum
-// 	),
-// 	'action' => 'reject',
-// 	'message' => &$config['error']['flood']
-// );
+// $config['filters'][] = [
+//     'condition' => [
+//         'flood-match' => ['file'], // Match file hash
+//         'flood-time' => 60 * 2 // 2 minutes minimum
+//     ],
+//     'action' => 'reject',
+//     'message' => &$config['error']['flood']
+// ];
 
 // Example: Use the "flood-count" condition to only match if the user has made at least two posts with
 // the same content and IP address in the past 2 minutes.
-// $config['filters'][] = array(
-// 	'condition' => array(
-// 		'flood-match' => array('ip', 'body'), // Match IP address and post body
+// $config['filters'][] = [
+// 	'condition' => [
+// 		'flood-match' => ['ip', 'body'], // Match IP address and post body
 // 		'flood-time' => 60 * 2, // 2 minutes
 // 		'flood-count' => 2 // At least two recent posts
-// 	),
+// 	],
 // 	'!body' => '/^$/',
 // 	'action' => 'reject',
 // 	'message' => &$config['error']['flood']
-// );
+// ];
 
 // Example: Blocking an imaginary known spammer, who keeps posting a reply with the name "surgeon",
 // ending his posts with "regards, the surgeon" or similar.
-// $config['filters'][] = array(
-// 	'condition' => array(
-// 		'name' => '/^surgeon$/',
-// 		'body' => '/regards,\s+(the )?surgeon$/i',
-// 		'OP' => false
-// 	),
-// 	'action' => 'reject',
-// 	'message' => 'Go away, spammer.'
-// );
+// $config['filters'][] = [
+//     'condition' => [
+//         'name' => '/^surgeon$/',
+//         'body' => '/regards,\s+(the )?surgeon$/i',
+//         'OP' => false
+//     ],
+//     'action' => 'reject',
+//     'message' => 'Go away, spammer.'
+// ];
 
 // Example: Same as above, but issuing a 3-hour ban instead of just reject the post.
-// $config['filters'][] = array(
-// 	'condition' => array(
-// 		'name' => '/^surgeon$/',
-// 		'body' => '/regards,\s+(the )?surgeon$/i',
-// 		'OP' => false
-// 	),
-// 	'action' => 'ban',
-// 	'expires' => 60 * 60 * 3, // 3 hours
-// 	'reason' => 'Go away, spammer.'
-// );
+// $config['filters'][] = [
+//     'condition' => [
+//         'name' => '/^surgeon$/',
+//         'body' => '/regards,\s+(the )?surgeon$/i',
+//         'OP' => false
+//     ],
+//     'action' => 'ban',
+//     'expires' => 60 * 60 * 3, // 3 hours
+//     'reason' => 'Go away, spammer.'
+// ];
 
 // Example: PHP 5.3+ (anonymous functions)
 // There is also a "custom" condition, making the possibilities of this feature pretty much endless.
 // This is a bad example, because there is already a "name" condition built-in.
-// $config['filters'][] = array(
-// 	'condition' => array(
+// $config['filters'][] = [
+// 	'condition' => [
 // 		'body' => '/h$/i',
 // 		'OP' => false,
 // 		'custom' => function($post) {
@@ -328,9 +328,9 @@ $config['filters'][] = [
 // 			else
 // 				return false;
 // 		}
-// 	),
+// 	],
 // 	'action' => 'reject'
-// );
+// ];
 
 // Filter flood prevention conditions ("flood-match") depend on a table which contains a cache of recent
 // posts across all boards. This table is automatically purged of older posts, determining the maximum
@@ -420,9 +420,9 @@ $config['upload_by_url_timeout'] = 15;
 // as they are submitted and changes or censors particular words or phrases.
 
 // For a normal string replacement:
-// $config['wordfilters'][] = array('cat', 'dog');
+// $config['wordfilters'][] = ['cat', 'dog'];
 // Advanced replacement (regular expressions):
-// $config['wordfilters'][] = array('/ca[rt]/', 'dog', true); // 'true' means it's a regular expression
+// $config['wordfilters'][] = ['/ca[rt]/', 'dog', true]; // 'true' means it's a regular expression
 
 // Always act as if the user had typed "noko" into the email field.
 $config['always_noko'] = false;
@@ -489,15 +489,15 @@ $config['ban_appeals_max'] = 1;
 $config['markup'][] = ["/'''(.+?)'''/", "<strong>\$1</strong>"];
 $config['markup'][] = ["/''(.+?)''/", "<em>\$1</em>"];
 $config['markup'][] = ["/\*\*(.+?)\*\*/", "<span class=\"spoiler\">\$1</span>"];
-// $config['markup'][] = array("/^[ |\t]*==(.+?)==[ |\t]*$/m", "<span class=\"heading\">\$1</span>");
+// $config['markup'][] = ["/^[ |\t]*==(.+?)==[ |\t]*$/m", "<span class=\"heading\">\$1</span>"];
 
 // Highlight PHP code wrapped in <code> tags (PHP 5.3+)
-// $config['markup'][] = array(
+// $config['markup'][] = [
 // 	'/^&lt;code&gt;(.+)&lt;\/code&gt;/ms',
 // 	function($matches) {
 // 		return highlight_string(html_entity_decode($matches[1]), true);
 // 	}
-// );
+// ];
 
 // Repair markup with HTML Tidy. This may be slower, but it solves nesting mistakes. Tinyboad, at the
 // time of writing this, can not prevent out-of-order markup tags (eg. "**''test**'') without help from
@@ -729,13 +729,13 @@ $config['stylesheets_board'] = false;
 $config['font_awesome'] = true;
 $config['font_awesome_css'] = 'vendor/fortawesome/font-awesome/css/all.min.css';
 
-// $config['boards'] = array(
-// 	array('a', 'b'),
-// 	array('c', 'd', 'e', 'f', 'g'),
-// 	array('h', 'i', 'j'),
-// 	array('k', array('l', 'm')),
-// 	array('status' => 'http://status.example.org/')
-// );
+// $config['boards'] = [
+//     ['a', 'b'],
+//     ['c', 'd', 'e', 'f', 'g'],
+//     ['h', 'i', 'j'],
+//     ['k', ['l', 'm']],
+//     ['status' => 'http://status.example.org/']
+// ];
 
 // Whether or not to put brackets around the whole board list
 $config['boardlist_wrap_bracket'] = true;
@@ -744,21 +744,21 @@ $config['boardlist_wrap_bracket'] = true;
 $config['page_nav_top'] = false;
 
 // Show "Catalog" link in page navigation. Use with the Catalog theme.
-$config['catalog_link'] = 'catalog.html';
+// $config['catalog_link'] = 'catalog.html';
 
 // Board categories. Only used in the "Categories" theme.
-// $config['categories'] = array(
-// 	'Group Name' => array('a', 'b', 'c'),
-// 	'Another Group' => array('d')
-// );
+// $config['categories'] = [
+//     'Group Name' => ['a', 'b', 'c'],
+//     'Another Group' => ['d'],
+// ];
 // Optional for the Categories theme. This is an array of name => (title, url) groups for categories
 // with non-board links.
-// $config['custom_categories'] = array(
-// 	'Links' => array(
-// 		'Tinyboard' => 'http://tinyboard.org',
-// 		'Donate' => 'donate.html'
-// 	)
-// );
+// $config['custom_categories'] = [
+//     'Links' => [
+//         'Tinyboard' => 'http://tinyboard.org',
+//         'Donate' => 'donate.html'
+//     ]
+// ];
 
 // Automatically remove unnecessary whitespace when compiling HTML files from templates.
 $config['minify_html'] = true;
@@ -788,7 +788,7 @@ $config['additional_javascript'][] = 'js/inline-expanding.js';
 // jQuery, you should first empty the array so that "js/query.min.js" can be the first, and then re-add
 // "js/inline-expanding.js" or else the inline-expanding script might not interact properly with other
 // scripts.
-// $config['additional_javascript'] = array();
+// $config['additional_javascript'] = [];
 $config['additional_javascript'][] = 'js/jquery.min.js';
 // $config['additional_javascript'][] = 'js/inline-expanding.js';
 // $config['additional_javascript'][] = 'js/auto-reload.js';
@@ -1029,18 +1029,18 @@ $config['capcode'] = ' <span class="capcode">## %s</span>';
 //$config['custom_capcode']['Custom'] ='<span class="capcode" style="color:lightgreen;font-style:italic;font-weight:bold"> ## %s</span>';
 
 // "## Mod" makes everything purple, including the name and tripcode:
-//$config['custom_capcode']['Mod'] = array(
+//$config['custom_capcode']['Mod'] = [
 //	'<span class="capcode" style="color:purple"> ## %s</span>',
 //	'color:purple', // Change name style; optional
 //	'color:purple' // Change tripcode style; optional
-//);
+//];
 
 // "## Admin" makes everything red and bold, including the name and tripcode:
-//$config['custom_capcode']['Admin'] = array(
+//$config['custom_capcode']['Admin'] = [
 //	'<span class="capcode" style="color:red;font-weight:bold"> ## %s</span>',
 //	'color:red;font-weight:bold', // Change name style; optional
 //	'color:red;font-weight:bold' // Change tripcode style; optional
-//);
+//];
 
 // How often (minimum) to purge the ban list of expired bans (which have been seen). Only works when
 //  $config['cache'] is enabled and working.
@@ -1125,7 +1125,7 @@ define_groups();
 
 // Capcode permissions.
 $config['mod']['capcode'] = [
-    //	JANITOR		=> array('Janitor'),
+    //	JANITOR		=> ['Janitor'],
     MOD		=> ['Mod'],
     ADMIN		=> true,
 ];
@@ -1293,15 +1293,15 @@ $config['mod']['config'][MOD] = [
 ];
 
 // Example: Disallow ADMIN from editing (and viewing) $config['db']['password'].
-// $config['mod']['config'][ADMIN] = array(
+// $config['mod']['config'][ADMIN] = [
 // 	'db>password',
-// );
+// ];
 
 // Example: Allow ADMIN to edit anything other than $config['db']
 // (and $config['mod']['config'][DISABLED]).
-// $config['mod']['config'][ADMIN] = array(
+// $config['mod']['config'][ADMIN] = [
 // 	'db',
-// );
+// ];
 
 /*
  * ====================
@@ -1335,7 +1335,7 @@ $config['api']['enabled'] = false;
 // Extra fields in to be shown in the array that are not in the 4chan-API. You can get these by taking a
 // look at the schema for posts_ tables. The array should be formatted as $db_column => $translated_name.
 // Example: Adding the pre-markup post body to the API as "com_nomarkup".
-// $config['api']['extra_fields'] = array('body_nomarkup' => 'com_nomarkup');
+// $config['api']['extra_fields'] = ['body_nomarkup' => 'com_nomarkup'];
 
 /*
  * ====================
@@ -1353,10 +1353,10 @@ $config['google_analytics_domain'] = 'www.example.org';
 
 // If you use Varnish, Squid, or any similar caching reverse-proxy in front of Tinyboard, you can
 // configure Tinyboard to PURGE files when they're written to.
-// $config['purge'] = array(
-// 	array('127.0.0.1', 80)
-// 	array('127.0.0.1', 80, 'example.org')
-// );
+// $config['purge'] = [
+// 	['127.0.0.1', 80],
+// 	['127.0.0.1', 80, 'example.org']
+// ];
 
 // Connection timeout for $config['purge'], in seconds.
 $config['purge_timeout'] = 3;
@@ -1373,15 +1373,15 @@ $config['purge_timeout'] = 3;
 // $config['mod']['dashboard_links']['Something'] = '?/something';
 
 // Remote servers. I'm not even sure if this code works anymore. It might. Haven't tried it in a while.
-// $config['remote']['static'] = array(
+// $config['remote']['static'] = [
 // 	'host' => 'static.example.org',
-// 	'auth' => array(
+// 	'auth' => [
 // 		'method' => 'plain',
 // 		'username' => 'username',
 // 		'password' => 'password!123'
-// 	),
+// 	],
 // 	'type' => 'scp'
-// );
+// ];
 
 // Regex for board URIs. Don't add "`" character or any Unicode that MySQL can't handle. 58 characters
 // is the absolute maximum, because MySQL cannot handle table names greater than 64 characters.

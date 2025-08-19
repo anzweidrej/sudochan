@@ -1,7 +1,7 @@
 .DS_Store
 .env
 .idea/
-/.installed
+.installed
 .vscode/
 Icon?
 Thumbs.db
@@ -13,6 +13,16 @@ megalinter-reports/
 tmp/*
 !tmp/.gitkeep
 vendor/
+/*.css
 /*.html
-*.log
+/*.log
 *.cache
+/*/
+!docker/
+!.github/
+!inc/
+!js/
+!static/
+!stylesheets/
+!templates/
+!tmp/

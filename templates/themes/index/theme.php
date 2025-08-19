@@ -2,66 +2,107 @@
 
 require 'info.php';
 
-/**
- * @param 'all'|'news'|'boards'|'post'|'post-thread'|'post-delete' $action
- * @param array<string, mixed> $settings
- * @param mixed $board
- */
-function recentposts_build(string $action, array $settings, mixed $board): void
+function index_build($action, $settings, $board)
 {
     // Possible values for $action:
     //	- all (rebuild everything, initialization)
     //	- news (news has been updated)
     //	- boards (board list changed)
-    //	- post (a post has been made)
-    //	- post-thread (a thread has been made)
 
-    $b = new RecentPosts();
-    $b->build($action, $settings);
+    Index::build($action, $settings);
 }
 
 // Wrap functions in a class so they don't interfere with normal Tinyboard operations
-class RecentPosts
+class Index
 {
-    private array $excluded = [];
-
-    /**
-     * @param 'all'|'news'|'boards'|'post'|'post-thread'|'post-delete' $action
-     * @param array<string, mixed> $settings
-     */
-    public function build(string $action, array $settings): void
+    public static function build($action, $settings)
     {
-        global $config, $_theme;
+        global $config;
+
+        $excluded = isset($settings['exclude']) ? explode(' ', $settings['exclude']) : [];
 
         if ($action == 'all') {
-            copy('templates/themes/recent/' . $settings['basecss'], $config['dir']['home'] . $settings['css']);
+            file_write($config['dir']['home'] . $settings['html'], self::categories($settings));
         }
-
-        $this->excluded = explode(' ', $settings['exclude']);
-
+        if ($action == 'all' || $action == 'news') {
+            file_write($config['dir']['home'] . $settings['html'], self::news($settings));
+        }
+        if ($action == 'all') {
+            copy('templates/themes/index/' . $settings['css'], $config['dir']['home'] . $settings['css']);
+        }
         if ($action == 'all' || $action == 'post' || $action == 'post-thread' || $action == 'post-delete') {
-            file_write($config['dir']['home'] . $settings['html'], $this->homepage($settings));
+            file_write($config['dir']['home'] . $settings['html'], self::recent($settings, $excluded));
         }
     }
 
-    /**
-     * Build news page
-     *
-     * @param array<string, mixed> $settings
-     */
-    public function homepage(array $settings): string
+    // Build news page
+    public static function news($settings)
+    {
+        global $config;
+
+        $settings['no_recent'] = (int) $settings['no_recent'];
+
+        $query = query("SELECT * FROM ``news`` ORDER BY `time` DESC" . ($settings['no_recent'] ? ' LIMIT ' . $settings['no_recent'] : '')) or error(db_error());
+        $news = $query->fetchAll(PDO::FETCH_ASSOC);
+
+        return Element('themes/index/index.html', [
+            'settings' => $settings,
+            'config' => $config,
+            'boardlist' => createBoardlist(),
+            'news' => $news,
+            'categories' => $config['categories'] ?? [],
+            'recent_images' => [],
+            'recent_posts' => [],
+            'stats' => ['total_posts' => 0, 'unique_posters' => 0, 'active_content' => 0],
+        ]);
+    }
+
+    // Build categories page
+    public static function categories($settings)
+    {
+        global $config, $board;
+
+        $categories = $config['categories'] ?? [];
+
+        foreach ($categories as &$boards) {
+            foreach ($boards as &$board) {
+                $title = boardTitle($board);
+                if (!$title) {
+                    $title = $board;
+                } // board doesn't exist, but for some reason you want to display it anyway
+                $board = [
+                    'title' => $title,
+                    'uri' => sprintf($config['board_path'], $board),
+                ];
+            }
+        }
+
+        return Element('themes/index/index.html', [
+            'settings' => $settings,
+            'config' => $config,
+            'boardlist' => createBoardlist(),
+            'news' => [],
+            'categories' => $categories,
+            'recent_images' => [],
+            'recent_posts' => [],
+            'stats' => ['total_posts' => 0, 'unique_posters' => 0, 'active_content' => 0],
+        ]);
+    }
+
+    // Build recent posts page
+    public static function recent($settings, $excluded)
     {
         global $config, $board;
 
         $recent_images = [];
         $recent_posts = [];
-        $stats = [];
+        $stats = ['total_posts' => 0, 'unique_posters' => 0, 'active_content' => 0];
 
         $boards = listBoards();
 
         $query = '';
         foreach ($boards as &$_board) {
-            if (in_array($_board['uri'], $this->excluded)) {
+            if (in_array($_board['uri'], $excluded)) {
                 continue;
             }
             $query .= sprintf("SELECT *, '%s' AS `board` FROM ``posts_%s`` WHERE `file` IS NOT NULL AND `file` != 'deleted' AND `thumb` != 'spoiler' UNION ALL ", $_board['uri'], $_board['uri']);
@@ -79,10 +120,9 @@ class RecentPosts
             $recent_images[] = $post;
         }
 
-
         $query = '';
         foreach ($boards as &$_board) {
-            if (in_array($_board['uri'], $this->excluded)) {
+            if (in_array($_board['uri'], $excluded)) {
                 continue;
             }
             $query .= sprintf("SELECT *, '%s' AS `board` FROM ``posts_%s`` UNION ALL ", $_board['uri'], $_board['uri']);
@@ -103,7 +143,7 @@ class RecentPosts
         // Total posts
         $query = 'SELECT SUM(`top`) FROM (';
         foreach ($boards as &$_board) {
-            if (in_array($_board['uri'], $this->excluded)) {
+            if (in_array($_board['uri'], $excluded)) {
                 continue;
             }
             $query .= sprintf("SELECT MAX(`id`) AS `top` FROM ``posts_%s`` UNION ALL ", $_board['uri']);
@@ -115,7 +155,7 @@ class RecentPosts
         // Unique IPs
         $query = 'SELECT COUNT(DISTINCT(`ip`)) FROM (';
         foreach ($boards as &$_board) {
-            if (in_array($_board['uri'], $this->excluded)) {
+            if (in_array($_board['uri'], $excluded)) {
                 continue;
             }
             $query .= sprintf("SELECT `ip` FROM ``posts_%s`` UNION ALL ", $_board['uri']);
@@ -127,7 +167,7 @@ class RecentPosts
         // Active content
         $query = 'SELECT SUM(`filesize`) FROM (';
         foreach ($boards as &$_board) {
-            if (in_array($_board['uri'], $this->excluded)) {
+            if (in_array($_board['uri'], $excluded)) {
                 continue;
             }
             $query .= sprintf("SELECT `filesize` FROM ``posts_%s`` UNION ALL ", $_board['uri']);
@@ -136,10 +176,12 @@ class RecentPosts
         $query = query($query) or error(db_error());
         $stats['active_content'] = $query->fetchColumn();
 
-        return element('themes/recent/recent.html', [
+        return Element('themes/index/index.html', [
             'settings' => $settings,
             'config' => $config,
             'boardlist' => createBoardlist(),
+            'news' => [],
+            'categories' => $config['categories'] ?? [],
             'recent_images' => $recent_images,
             'recent_posts' => $recent_posts,
             'stats' => $stats,

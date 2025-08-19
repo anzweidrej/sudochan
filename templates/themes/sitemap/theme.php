@@ -2,12 +2,7 @@
 
 require 'info.php';
 
-/**
- * @param 'all'|'news'|'boards'|'post'|'post-thread'|'post-delete' $action
- * @param array<string, mixed> $settings
- * @param mixed $board
- */
-function sitemap_build(string $action, array $settings, mixed $board): void
+function sitemap_build(string $action, array $settings, string $board): void
 {
     global $config;
 
@@ -26,7 +21,7 @@ function sitemap_build(string $action, array $settings, mixed $board): void
         if ($last_gen = @filemtime($settings['path'])) {
             if (time() - $last_gen < (int) $settings['regen_time']) {
                 return;
-            } // Too soon
+            }
         }
     }
 
@@ -39,7 +34,7 @@ function sitemap_build(string $action, array $settings, mixed $board): void
         $threads[$board] = $query->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    file_write($settings['path'], element('themes/sitemap/sitemap.xml', [
+    file_write($settings['path'], Element('themes/sitemap/sitemap.xml', [
         'settings' => $settings,
         'config' => $config,
         'threads' => $threads,

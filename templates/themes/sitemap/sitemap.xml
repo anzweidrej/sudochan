@@ -1,19 +1,21 @@
-{% apply spaceless %}
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-	{% for board in boards %}
-		<url>
-			<loc>{{ settings.url ~ (config.board_path | format(board)) ~ config.file_index }}</loc>
-		</url>
-	{% endfor %}
-	{% for board, thread_list in threads %}
-		{% for thread in thread_list %}
-			<url>
-				<loc>{{ settings.url ~ (config.board_path | format(board)) ~ config.dir.res ~ (config.file_page | format(thread.thread_id)) }}</loc>
-				<lastmod>{{ thread.lastmod | date('%Y-%m-%dT%H:%M:%S') }}{{ timezone() }}</lastmod>
-				<changefreq>{{ settings.changefreq }}</changefreq>
-			</url>
-		{% endfor %}
-	{% endfor %}
+    {% for board in boards %}
+    <url>
+        <loc>{{ (settings.url ~ (config.board_path | format(board)) ~ config.file_index) | escape }}</loc>
+    </url>
+    {% endfor %}
+    {% for board, thread_list in threads %}
+        {% for thread in thread_list %}
+        <url>
+            <loc>{{ (settings.url ~ (config.board_path | format(board)) ~ config.dir.res ~ (config.file_page | format(thread.thread_id))) | escape }}</loc>
+            {% if thread.lastmod %}
+                <lastmod>{{ thread.lastmod | date('%Y-%m-%dT%H:%M:%S') }}{{ timezone() }}</lastmod>
+            {% endif %}
+            {% if settings.changefreq %}
+                <changefreq>{{ settings.changefreq }}</changefreq>
+            {% endif %}
+        </url>
+        {% endfor %}
+    {% endfor %}
 </urlset>
-{% endapply %}

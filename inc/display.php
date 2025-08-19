@@ -27,13 +27,12 @@ function doBoardListPart(array $list, string $root): string
     global $config;
 
     $body = '';
-    foreach ($list as $board) {
+    // Build board list
+    foreach ($list as $key => $board) {
         if (is_array($board)) {
-            $body .= ' [' . doBoardListPart($board, $root) . '] ';
-        }
-        // $body .= ' <span class="sub">[' . doBoardListPart($board, $root) . ']</span> ';
-        else {
-            if (($key = array_search($board, $list)) && gettype($key) == 'string') {
+            $body .= ' <span class="sub">[' . doBoardListPart($board, $root) . ']</span> ';
+        } else {
+            if (is_string($key)) {
                 $body .= ' <a href="' . $board . '">' . $key . '</a> /';
             } else {
                 $body .= ' <a href="' . $root . $board . '/' . $config['file_index'] . '">' . $board . '</a> /';
@@ -49,11 +48,25 @@ function createBoardlist(bool|array $mod = false): array
 {
     global $config;
 
-    if (!isset($config['boards'])) {
-        return ['top' => '','bottom' => ''];
+    // Get boards from database
+    $boards = listBoards();
+
+    // Use config boards if set and not empty, else use database boards
+    if (!empty($config['boards']) && is_array($config['boards'])) {
+        $board_list = $config['boards'];
+    } else {
+        $board_list = [];
+        foreach ($boards as $b) {
+            $board_list[] = $b['uri'];
+        }
     }
 
-    $body = doBoardListPart($config['boards'], $mod ? '?/' : $config['root']);
+    // If no boards available, return empty strings
+    if (empty($board_list)) {
+        return ['top' => '', 'bottom' => ''];
+    }
+
+    $body = doBoardListPart($board_list, $mod ? '?/' : $config['root']);
     if ($config['boardlist_wrap_bracket'] && !preg_match('/\] $/', $body)) {
         $body = '[' . $body . ']';
     }
