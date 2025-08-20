@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Run MegaLinter
         uses: oxsecurity/megalinter/flavors/php@v8.8.0
@@ -33,7 +33,7 @@ jobs:
         php-version: ["8.3", "8.4"]
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
