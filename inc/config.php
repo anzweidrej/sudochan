@@ -1140,7 +1140,6 @@ $config['mod']['capcode'] = [
 // Don't worry about per-board moderators. Let all mods moderate any board.
 $config['mod']['skip_per_board'] = false;
 
-/* Post Controls */
 // View IP addresses
 $config['mod']['show_ip'] = MOD;
 // Delete a post
@@ -1182,8 +1181,6 @@ $config['mod']['bypass_filters'] = ADMIN;
 $config['mod']['flood'] = &$config['mod']['bypass_filters'];
 // Raw HTML posting
 $config['mod']['rawhtml'] = ADMIN;
-
-/* Administration */
 // View the report queue
 $config['mod']['reports'] = JANITOR;
 // Dismiss an abuse report

@@ -29,7 +29,9 @@
             "inc/events.php",
             "inc/api.php",
             "inc/mod/auth.php",
-            "inc/functions.php"
+            "inc/functions.php",
+            "inc/post.php",
+            "inc/thread.php"
         ]
     },
     "minimum-stability": "stable",

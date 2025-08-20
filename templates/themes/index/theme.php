@@ -2,7 +2,7 @@
 
 require 'info.php';
 
-function index_build($action, $settings, $board)
+function index_build(string $action, array $settings, $board): void
 {
     // Possible values for $action:
     //	- all (rebuild everything, initialization)
@@ -15,53 +15,38 @@ function index_build($action, $settings, $board)
 // Wrap functions in a class so they don't interfere with normal Tinyboard operations
 class Index
 {
-    public static function build($action, $settings)
+    public static function build(string $action, array $settings): void
     {
         global $config;
 
         $excluded = isset($settings['exclude']) ? explode(' ', $settings['exclude']) : [];
 
-        if ($action == 'all') {
-            file_write($config['dir']['home'] . $settings['html'], self::categories($settings));
-        }
-        if ($action == 'all' || $action == 'news') {
-            file_write($config['dir']['home'] . $settings['html'], self::news($settings));
+        if (
+            $action == 'all' ||
+            $action == 'news' ||
+            $action == 'boards' ||
+            $action == 'post' ||
+            $action == 'post-thread' ||
+            $action == 'post-delete'
+        ) {
+            file_write($config['dir']['home'] . $settings['html'], self::homepage($settings, $excluded));
         }
         if ($action == 'all') {
             copy('templates/themes/index/' . $settings['css'], $config['dir']['home'] . $settings['css']);
         }
-        if ($action == 'all' || $action == 'post' || $action == 'post-thread' || $action == 'post-delete') {
-            file_write($config['dir']['home'] . $settings['html'], self::recent($settings, $excluded));
-        }
     }
 
-    // Build news page
-    public static function news($settings)
+    public static function homepage(array $settings, array $excluded): string
     {
-        global $config;
+        global $config, $board;
 
+        // Build news page
         $settings['no_recent'] = (int) $settings['no_recent'];
 
         $query = query("SELECT * FROM ``news`` ORDER BY `time` DESC" . ($settings['no_recent'] ? ' LIMIT ' . $settings['no_recent'] : '')) or error(db_error());
         $news = $query->fetchAll(PDO::FETCH_ASSOC);
 
-        return Element('themes/index/index.html', [
-            'settings' => $settings,
-            'config' => $config,
-            'boardlist' => createBoardlist(),
-            'news' => $news,
-            'categories' => $config['categories'] ?? [],
-            'recent_images' => [],
-            'recent_posts' => [],
-            'stats' => ['total_posts' => 0, 'unique_posters' => 0, 'active_content' => 0],
-        ]);
-    }
-
-    // Build categories page
-    public static function categories($settings)
-    {
-        global $config, $board;
-
+        // Build categories page
         $categories = $config['categories'] ?? [];
 
         foreach ($categories as &$boards) {
@@ -77,23 +62,7 @@ class Index
             }
         }
 
-        return Element('themes/index/index.html', [
-            'settings' => $settings,
-            'config' => $config,
-            'boardlist' => createBoardlist(),
-            'news' => [],
-            'categories' => $categories,
-            'recent_images' => [],
-            'recent_posts' => [],
-            'stats' => ['total_posts' => 0, 'unique_posters' => 0, 'active_content' => 0],
-        ]);
-    }
-
-    // Build recent posts page
-    public static function recent($settings, $excluded)
-    {
-        global $config, $board;
-
+        // Build recent posts page
         $recent_images = [];
         $recent_posts = [];
         $stats = ['total_posts' => 0, 'unique_posters' => 0, 'active_content' => 0];
@@ -180,8 +149,8 @@ class Index
             'settings' => $settings,
             'config' => $config,
             'boardlist' => createBoardlist(),
-            'news' => [],
-            'categories' => $config['categories'] ?? [],
+            'news' => $news,
+            'categories' => $categories,
             'recent_images' => $recent_images,
             'recent_posts' => $recent_posts,
             'stats' => $stats,
