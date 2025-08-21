@@ -4,7 +4,11 @@
  *  Copyright (c) 2010-2013 Tinyboard Development Group
  */
 
+namespace Sudochan;
+
 defined('TINYBOARD') or exit;
+
+use Sudochan\Entity\Thread;
 
 /**
  * Class for generating json API compatible with 4chan API

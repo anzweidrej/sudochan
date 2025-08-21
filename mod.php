@@ -4,12 +4,12 @@
  *  Copyright (c) 2010-2014 Tinyboard Development Group
  */
 
-require_once 'inc/bootstrap.php';
-require_once 'inc/mod/pages.php';
-require_once 'inc/mod/auth.php';
+require_once 'bootstrap.php';
+
+use Sudochan\Mod\Auth;
 
 // Authenticate the mode user
-authenticate();
+Auth::authenticate();
 
 if ($config['debug']) {
     $parse_start_time = microtime(true);
@@ -17,19 +17,19 @@ if ($config['debug']) {
 
 $query = isset($_SERVER['QUERY_STRING']) ? rawurldecode($_SERVER['QUERY_STRING']) : '';
 
-$pages = require 'inc/routes.php';
+$pages = require 'etc/routes.php';
 
 $pages += [
-    '/(\%b)/' => 'view_board',
-    '/(\%b)/' . preg_quote($config['file_index'], '!') => 'view_board',
-    '/(\%b)/' . str_replace('%d', '(\d+)', preg_quote($config['file_page'], '!')) => 'view_board',
+    '/(\%b)/' => 'BoardController@mod_view_board',
+    '/(\%b)/' . preg_quote($config['file_index'], '!') => 'BoardController@mod_view_board',
+    '/(\%b)/' . str_replace('%d', '(\d+)', preg_quote($config['file_page'], '!')) => 'BoardController@mod_view_board',
     '/(\%b)/' . preg_quote($config['dir']['res'], '!') .
-        str_replace('%d', '(\d+)', preg_quote($config['file_page'], '!')) => 'view_thread',
+        str_replace('%d', '(\d+)', preg_quote($config['file_page'], '!')) => 'BoardController@mod_view_thread',
 ];
 
 // If not logged in as mod, redirect to login
 if (!$mod) {
-    $pages = ['!^(.+)?$!' => 'login'];
+    $pages = ['!^(.+)?$!' => 'AuthController@mod_login'];
 } elseif (isset($_GET['status'], $_GET['r'])) {
     header('Location: ' . $_GET['r'], true, (int) $_GET['status']);
     exit;
@@ -90,7 +90,7 @@ foreach ($pages as $uri => $handler) {
 
                 // CSRF-protected page; validate security token
                 $actual_query = preg_replace('!/([a-f0-9]{8})$!', '', $query);
-                if ($token != make_secure_link_token(substr($actual_query, 1))) {
+                if ($token != Auth::make_secure_link_token(substr($actual_query, 1))) {
                     error($config['error']['csrf']);
                 }
             }
@@ -112,6 +112,15 @@ foreach ($pages as $uri => $handler) {
         if (is_string($handler)) {
             if ($handler[0] == ':') {
                 header('Location: ' . substr($handler, 1), true, $config['redirect_http']);
+            } elseif (strpos($handler, '@') !== false) {
+                list($class, $method) = explode('@', $handler, 2);
+                $fqcn = "Sudochan\\Controller\\$class";
+                if (class_exists($fqcn) && method_exists($fqcn, $method)) {
+                    $instance = new $fqcn();
+                    call_user_func_array([$instance, $method], $matches);
+                } else {
+                    error("Controller '$fqcn@$method' not found!");
+                }
             } elseif (is_callable("mod_page_$handler")) {
                 call_user_func_array("mod_page_$handler", $matches);
             } elseif (is_callable("mod_$handler")) {

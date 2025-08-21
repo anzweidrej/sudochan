@@ -4,6 +4,8 @@
  *  Copyright (c) 2010-2013 Tinyboard Development Group
  */
 
+namespace Sudochan;
+
 defined('TINYBOARD') or exit;
 
 class Cache
@@ -20,11 +22,11 @@ class Cache
 
         switch ($config['cache']['enabled']) {
             case 'memcached':
-                self::$cache = new Memcached();
+                self::$cache = new \Memcached();
                 self::$cache->addServers($config['cache']['memcached']);
                 break;
             case 'redis':
-                self::$cache = new Redis();
+                self::$cache = new \Redis();
                 self::$cache->connect($config['cache']['redis'][0], $config['cache']['redis'][1]);
                 if (!empty($config['cache']['redis'][2])) {
                     self::$cache->auth($config['cache']['redis'][2]);

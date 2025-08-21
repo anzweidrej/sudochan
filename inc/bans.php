@@ -1,6 +1,13 @@
 <?php
 
+/*
+ *  Copyright (c) 2010-2013 Tinyboard Development Group
+ */
+
+namespace Sudochan;
+
 use Lifo\IP\CIDR;
+use Sudochan\Mod\Auth;
 
 class Bans
 {
@@ -146,7 +153,7 @@ class Bans
 
         $ban_list = [];
 
-        while ($ban = $query->fetch(PDO::FETCH_ASSOC)) {
+        while ($ban = $query->fetch(\PDO::FETCH_ASSOC)) {
             if ($ban['expires'] && ($ban['seen'] || !$config['require_ban_view']) && $ban['expires'] < time()) {
                 self::delete($ban['id']);
             } else {
@@ -169,7 +176,7 @@ class Bans
         $query = query("SELECT ``bans``.*, `username` FROM ``bans``
 			LEFT JOIN ``mods`` ON ``mods``.`id` = `creator`
 			ORDER BY `created` DESC LIMIT $offset, $limit") or error(db_error());
-        $bans = $query->fetchAll(PDO::FETCH_ASSOC);
+        $bans = $query->fetchAll(\PDO::FETCH_ASSOC);
 
         foreach ($bans as &$ban) {
             $ban['mask'] = self::range_to_string([$ban['ipstart'], $ban['ipend']]);
@@ -198,14 +205,14 @@ class Bans
     {
         if ($modlog) {
             $query = query("SELECT `ipstart`, `ipend` FROM ``bans`` WHERE `id` = " . (int) $ban_id) or error(db_error());
-            if (!$ban = $query->fetch(PDO::FETCH_ASSOC)) {
+            if (!$ban = $query->fetch(\PDO::FETCH_ASSOC)) {
                 // Ban doesn't exist
                 return false;
             }
 
             $mask = self::range_to_string([$ban['ipstart'], $ban['ipend']]);
 
-            modLog("Removed ban #{$ban_id} for " .
+            Auth::modLog("Removed ban #{$ban_id} for " .
                 (filter_var($mask, FILTER_VALIDATE_IP) !== false ? "<a href=\"?/IP/$mask\">$mask</a>" : $mask));
         }
 
@@ -237,7 +244,7 @@ class Bans
         if ($range[1] !== false && $range[1] != $range[0]) {
             $query->bindValue(':ipend', $range[1]);
         } else {
-            $query->bindValue(':ipend', null, PDO::PARAM_NULL);
+            $query->bindValue(':ipend', null, \PDO::PARAM_NULL);
         }
 
         $query->bindValue(':mod', $mod_id);
@@ -248,7 +255,7 @@ class Bans
             markup($reason);
             $query->bindValue(':reason', $reason);
         } else {
-            $query->bindValue(':reason', null, PDO::PARAM_NULL);
+            $query->bindValue(':reason', null, \PDO::PARAM_NULL);
         }
 
         if ($length) {
@@ -259,26 +266,26 @@ class Bans
             }
             $query->bindValue(':expires', $length);
         } else {
-            $query->bindValue(':expires', null, PDO::PARAM_NULL);
+            $query->bindValue(':expires', null, \PDO::PARAM_NULL);
         }
 
         if ($ban_board) {
             $query->bindValue(':board', $ban_board);
         } else {
-            $query->bindValue(':board', null, PDO::PARAM_NULL);
+            $query->bindValue(':board', null, \PDO::PARAM_NULL);
         }
 
         if ($post) {
             $post['board'] = $board['uri'];
             $query->bindValue(':post', json_encode($post));
         } else {
-            $query->bindValue(':post', null, PDO::PARAM_NULL);
+            $query->bindValue(':post', null, \PDO::PARAM_NULL);
         }
 
         $query->execute() or error(db_error($query));
 
         if (isset($mod['id']) && $mod['id'] == $mod_id) {
-            modLog('Created a new ' .
+            Auth::modLog('Created a new ' .
                 ($length > 0 ? preg_replace('/^(\d+) (\w+?)s?$/', '$1-$2', until($length)) : 'permanent') .
                 ' ban on ' .
                 ($ban_board ? '/' . $ban_board . '/' : 'all boards') .

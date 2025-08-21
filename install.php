@@ -1,9 +1,13 @@
 <?php
 
+/*
+ *  Copyright (c) 2010-2013 Tinyboard Development Group
+ */
+
 // Installation/upgrade file
 define('VERSION', 'v0.9.6-dev-22');
 
-require 'inc/bootstrap.php';
+require_once 'bootstrap.php';
 loadConfig();
 
 $step = isset($_GET['step']) ? round($_GET['step']) : 0;
@@ -274,7 +278,7 @@ if (file_exists($config['has_installed'])) {
             query("ALTER TABLE  `mods` CHANGE  `password`  `password` CHAR( 64 ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL COMMENT  'SHA256'") or error(db_error());
             query("ALTER TABLE  `mods` ADD  `salt` CHAR( 32 ) NOT NULL AFTER  `password`") or error(db_error());
             $query = query("SELECT `id`,`password` FROM `mods`") or error(db_error());
-            while ($user = $query->fetch(PDO::FETCH_ASSOC)) {
+            while ($user = $query->fetch(\PDO::FETCH_ASSOC)) {
                 if (strlen($user['password']) == 40) {
                     mt_srand(microtime(true) * 100000 + memory_get_usage(true));
                     $salt = md5(uniqid(mt_rand(), true));
@@ -475,7 +479,7 @@ if (file_exists($config['has_installed'])) {
 				KEY `ipstart` (`ipstart`,`ipend`)
 				) ENGINE=MyISAM  DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1") or error(db_error());
             $listquery = query("SELECT * FROM ``bans`` ORDER BY `id`") or error(db_error());
-            while ($ban = $listquery->fetch(PDO::FETCH_ASSOC)) {
+            while ($ban = $listquery->fetch(\PDO::FETCH_ASSOC)) {
                 $query = prepare("INSERT INTO ``bans_new_temp`` VALUES 
 					(NULL, :ipstart, :ipend, :created, :expires, :board, :creator, :reason, :seen, NULL)");
 
@@ -489,7 +493,7 @@ if (file_exists($config['has_installed'])) {
                 if ($range[1] !== false && $range[1] != $range[0]) {
                     $query->bindValue(':ipend', $range[1]);
                 } else {
-                    $query->bindValue(':ipend', null, PDO::PARAM_NULL);
+                    $query->bindValue(':ipend', null, \PDO::PARAM_NULL);
                 }
 
                 $query->bindValue(':created', $ban['set']);
@@ -497,7 +501,7 @@ if (file_exists($config['has_installed'])) {
                 if ($ban['expires']) {
                     $query->bindValue(':expires', $ban['expires']);
                 } else {
-                    $query->bindValue(':expires', null, PDO::PARAM_NULL);
+                    $query->bindValue(':expires', null, \PDO::PARAM_NULL);
                 }
 
                 if ($ban['board']) {
@@ -511,7 +515,7 @@ if (file_exists($config['has_installed'])) {
                 if ($ban['reason']) {
                     $query->bindValue(':reason', $ban['reason']);
                 } else {
-                    $query->bindValue(':reason', null, PDO::PARAM_NULL);
+                    $query->bindValue(':reason', null, \PDO::PARAM_NULL);
                 }
 
                 $query->bindValue(':seen', $ban['seen']);
@@ -641,7 +645,7 @@ if ($step == 0) {
         [
             'category' => 'Database',
             'name' => 'MySQL PDO driver installed',
-            'result' => extension_loaded('pdo') && in_array('mysql', PDO::getAvailableDrivers()),
+            'result' => extension_loaded('pdo') && in_array('mysql', \PDO::getAvailableDrivers()),
             'required' => true,
             'message' => 'The required <a href="http://www.php.net/manual/en/ref.pdo-mysql.php">PDO MySQL driver</a> is not installed.',
         ],
@@ -724,10 +728,10 @@ if ($step == 0) {
         ],
         [
             'category' => 'File permissions',
-            'name' => getcwd() . '/inc/instance-config.php',
-            'result' => is_writable('inc/instance-config.php'),
+            'name' => getcwd() . 'instance-config.php',
+            'result' => is_writable('instance-config.php'),
             'required' => false,
-            'message' => 'Sudochan does not have permission to make changes to <code>inc/instance-config.php</code>. To complete the installation, you will be asked to manually copy and paste code into the file instead.',
+            'message' => 'Sudochan does not have permission to make changes to <code>instance-config.php</code>. To complete the installation, you will be asked to manually copy and paste code into the file instead.',
         ],
         [
             'category' => 'Misc',
@@ -799,13 +803,13 @@ if ($step == 0) {
 
     $instance_config .= "\n";
 
-    if (@file_put_contents('inc/instance-config.php', $instance_config)) {
+    if (@file_put_contents('instance-config.php', $instance_config)) {
         header('Location: ?step=4', true, $config['redirect_http']);
     } else {
         $page['title'] = 'Manual installation required';
         $page['body'] = '
-			<p>I couldn\'t write to <strong>inc/instance-config.php</strong> with the new configuration, probably due to a permissions error.</p>
-			<p>Please complete the installation manually by copying and pasting the following code into the contents of <strong>inc/instance-config.php</strong>:</p>
+			<p>I couldn\'t write to <strong>instance-config.php</strong> with the new configuration, probably due to a permissions error.</p>
+			<p>Please complete the installation manually by copying and pasting the following code into the contents of <strong>instance-config.php</strong>:</p>
 			<textarea style="width:700px;height:370px;margin:auto;display:block;background:white;color:black">' . htmlentities($instance_config) . '</textarea>
 			<p style="text-align:center">
 				<a href="?step=4">Once complete, click here to complete installation.</a>

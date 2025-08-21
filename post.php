@@ -4,7 +4,7 @@
  *  Copyright (c) 2010-2014 Tinyboard Development Group
  */
 
-require_once 'inc/bootstrap.php';
+require_once 'bootstrap.php';
 
 if (isset($_POST['delete'])) {
     // Delete
@@ -42,10 +42,10 @@ if (isset($_POST['delete'])) {
 
     foreach ($delete as &$id) {
         $query = prepare(sprintf("SELECT `thread`, `time`,`password` FROM ``posts_%s`` WHERE `id` = :id", $board['uri']));
-        $query->bindValue(':id', $id, PDO::PARAM_INT);
+        $query->bindValue(':id', $id, \PDO::PARAM_INT);
         $query->execute() or error(db_error($query));
 
-        if ($post = $query->fetch(PDO::FETCH_ASSOC)) {
+        if ($post = $query->fetch(\PDO::FETCH_ASSOC)) {
             if ($password != '' && $post['password'] != $password) {
                 error($config['error']['invalidpassword']);
             }
@@ -118,7 +118,7 @@ if (isset($_POST['delete'])) {
 
     foreach ($report as &$id) {
         $query = prepare(sprintf("SELECT `thread` FROM ``posts_%s`` WHERE `id` = :id", $board['uri']));
-        $query->bindValue(':id', $id, PDO::PARAM_INT);
+        $query->bindValue(':id', $id, \PDO::PARAM_INT);
         $query->execute() or error(db_error($query));
 
         $thread = $query->fetchColumn();
@@ -132,11 +132,11 @@ if (isset($_POST['delete'])) {
             );
         }
         $query = prepare("INSERT INTO ``reports`` VALUES (NULL, :time, :ip, :board, :post, :reason)");
-        $query->bindValue(':time', time(), PDO::PARAM_INT);
-        $query->bindValue(':ip', $_SERVER['REMOTE_ADDR'], PDO::PARAM_STR);
-        $query->bindValue(':board', $board['uri'], PDO::PARAM_INT);
-        $query->bindValue(':post', $id, PDO::PARAM_INT);
-        $query->bindValue(':reason', $reason, PDO::PARAM_STR);
+        $query->bindValue(':time', time(), \PDO::PARAM_INT);
+        $query->bindValue(':ip', $_SERVER['REMOTE_ADDR'], \PDO::PARAM_STR);
+        $query->bindValue(':board', $board['uri'], \PDO::PARAM_INT);
+        $query->bindValue(':post', $id, \PDO::PARAM_INT);
+        $query->bindValue(':reason', $reason, \PDO::PARAM_STR);
         $query->execute() or error(db_error($query));
     }
 
@@ -218,7 +218,7 @@ if (isset($_POST['delete'])) {
 
     if ($post['mod'] = isset($_POST['mod']) && $_POST['mod']) {
         require_once 'inc/mod/auth.php';
-        authenticate();
+        Auth::authenticate();
         if (!$mod) {
             // Liar. You're not a mod.
             error($config['error']['notamod']);
@@ -253,10 +253,10 @@ if (isset($_POST['delete'])) {
     //Check if thread exists
     if (!$post['op']) {
         $query = prepare(sprintf("SELECT `sticky`,`locked`,`sage` FROM ``posts_%s`` WHERE `id` = :id AND `thread` IS NULL LIMIT 1", $board['uri']));
-        $query->bindValue(':id', $post['thread'], PDO::PARAM_INT);
+        $query->bindValue(':id', $post['thread'], \PDO::PARAM_INT);
         $query->execute() or error(db_error());
 
-        if (!$thread = $query->fetch(PDO::FETCH_ASSOC)) {
+        if (!$thread = $query->fetch(\PDO::FETCH_ASSOC)) {
             // Non-existant
             error($config['error']['nonexistant']);
         }
@@ -739,7 +739,7 @@ if (isset($_POST['delete'])) {
     }
 
     $post = (object) $post;
-    if ($error = event('post', $post)) {
+    if ($error = EventDispatcher::event('post', $post)) {
         undoImage((array) $post);
         error($error);
     }
@@ -777,7 +777,7 @@ if (isset($_POST['delete'])) {
         clean();
     }
 
-    event('post-after', $post);
+    EventDispatcher::event('post-after', $post);
 
     buildIndex();
 
@@ -848,7 +848,7 @@ if (isset($_POST['delete'])) {
     }
 
     $query = query("SELECT `denied` FROM ``ban_appeals`` WHERE `ban_id` = $ban_id") or error(db_error());
-    $ban_appeals = $query->fetchAll(PDO::FETCH_COLUMN);
+    $ban_appeals = $query->fetchAll(\PDO::FETCH_COLUMN);
 
     if (count($ban_appeals) >= $config['ban_appeals_max']) {
         error(_("You cannot appeal this ban again."));
@@ -861,8 +861,8 @@ if (isset($_POST['delete'])) {
     }
 
     $query = prepare("INSERT INTO ``ban_appeals`` VALUES (NULL, :ban_id, :time, :message, 0)");
-    $query->bindValue(':ban_id', $ban_id, PDO::PARAM_INT);
-    $query->bindValue(':time', time(), PDO::PARAM_INT);
+    $query->bindValue(':ban_id', $ban_id, \PDO::PARAM_INT);
+    $query->bindValue(':time', time(), \PDO::PARAM_INT);
     $query->bindValue(':message', $_POST['appeal']);
     $query->execute() or error(db_error($query));
 

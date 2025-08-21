@@ -20,19 +20,9 @@
         }
     ],
     "autoload": {
-        "classmap": ["inc/"],
-        "files": [
-            "inc/bootstrap.php",
-            "inc/display.php",
-            "inc/template.php",
-            "inc/database.php",
-            "inc/events.php",
-            "inc/api.php",
-            "inc/mod/auth.php",
-            "inc/functions.php",
-            "inc/post.php",
-            "inc/thread.php"
-        ]
+        "psr-4": {
+            "Sudochan\\": "inc/"
+        }
     },
     "minimum-stability": "stable",
     "prefer-stable": true,

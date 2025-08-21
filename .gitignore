@@ -7,7 +7,7 @@ Icon?
 Thumbs.db
 b/
 composer.lock
-/inc/instance-config.php
+/instance-config.php
 /main.js
 megalinter-reports/
 tmp/*
@@ -20,8 +20,10 @@ vendor/
 /*/
 !docker/
 !.github/
+!etc/
 !inc/
 !js/
+!locales/
 !static/
 !stylesheets/
 !templates/

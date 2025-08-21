@@ -1,0 +1,137 @@
+<?php
+
+/*
+ *  Copyright (c) 2010-2013 Tinyboard Development Group
+ */
+
+namespace Sudochan\Controller;
+
+use Sudochan\Mod\Auth;
+use Sudochan\Entity\Thread;
+use Sudochan\Entity\Post;
+use Sudochan\Bans;
+
+class IpNoteController
+{
+    public function mod_ip_remove_note(string $ip, int $id): void
+    {
+        global $config, $mod;
+
+        if (!hasPermission($config['mod']['remove_notes'])) {
+            error($config['error']['noaccess']);
+        }
+
+        if (filter_var($ip, FILTER_VALIDATE_IP) === false) {
+            error("Invalid IP address.");
+        }
+
+        $query = prepare('DELETE FROM ``ip_notes`` WHERE `ip` = :ip AND `id` = :id');
+        $query->bindValue(':ip', $ip);
+        $query->bindValue(':id', $id);
+        $query->execute() or error(db_error($query));
+
+        Auth::modLog("Removed a note for <a href=\"?/IP/{$ip}\">{$ip}</a>");
+
+        header('Location: ?/IP/' . $ip . '#notes', true, $config['redirect_http']);
+    }
+
+    public function mod_page_ip(string $ip): void
+    {
+        global $config, $mod;
+
+        if (filter_var($ip, FILTER_VALIDATE_IP) === false) {
+            error("Invalid IP address.");
+        }
+
+        if (isset($_POST['ban_id'], $_POST['unban'])) {
+            if (!hasPermission($config['mod']['unban'])) {
+                error($config['error']['noaccess']);
+            }
+
+            Bans::delete($_POST['ban_id'], true);
+
+            header('Location: ?/IP/' . $ip . '#bans', true, $config['redirect_http']);
+            return;
+        }
+
+        if (isset($_POST['note'])) {
+            if (!hasPermission($config['mod']['create_notes'])) {
+                error($config['error']['noaccess']);
+            }
+
+            $_POST['note'] = escape_markup_modifiers($_POST['note']);
+            markup($_POST['note']);
+            $query = prepare('INSERT INTO ``ip_notes`` VALUES (NULL, :ip, :mod, :time, :body)');
+            $query->bindValue(':ip', $ip);
+            $query->bindValue(':mod', $mod['id']);
+            $query->bindValue(':time', time());
+            $query->bindValue(':body', $_POST['note']);
+            $query->execute() or error(db_error($query));
+
+            Auth::modLog("Added a note for <a href=\"?/IP/{$ip}\">{$ip}</a>");
+
+            header('Location: ?/IP/' . $ip . '#notes', true, $config['redirect_http']);
+            return;
+        }
+
+        $args = [];
+        $args['ip'] = $ip;
+        $args['posts'] = [];
+
+        if ($config['mod']['dns_lookup']) {
+            $args['hostname'] = rDNS($ip);
+        }
+
+        $boards = listBoards();
+        foreach ($boards as $board) {
+            openBoard($board['uri']);
+            if (!hasPermission($config['mod']['show_ip'], $board['uri'])) {
+                continue;
+            }
+            $query = prepare(sprintf('SELECT * FROM ``posts_%s`` WHERE `ip` = :ip ORDER BY `sticky` DESC, `id` DESC LIMIT :limit', $board['uri']));
+            $query->bindValue(':ip', $ip);
+            $query->bindValue(':limit', $config['mod']['ip_recentposts'], \PDO::PARAM_INT);
+            $query->execute() or error(db_error($query));
+
+            while ($post = $query->fetch(\PDO::FETCH_ASSOC)) {
+                if (!$post['thread']) {
+                    $po = new Thread($post, '?/', $mod, false);
+                } else {
+                    $po = new Post($post, '?/', $mod);
+                }
+
+                if (!isset($args['posts'][$board['uri']])) {
+                    $args['posts'][$board['uri']] = ['board' => $board, 'posts' => []];
+                }
+                $args['posts'][$board['uri']]['posts'][] = $po->build(true);
+            }
+        }
+
+        $args['boards'] = $boards;
+        $args['token'] = Auth::make_secure_link_token('ban');
+
+        if (hasPermission($config['mod']['view_ban'])) {
+            $args['bans'] = Bans::find($ip, false, true);
+        }
+
+        if (hasPermission($config['mod']['view_notes'])) {
+            $query = prepare("SELECT ``ip_notes``.*, `username` FROM ``ip_notes`` LEFT JOIN ``mods`` ON `mod` = ``mods``.`id` WHERE `ip` = :ip ORDER BY `time` DESC");
+            $query->bindValue(':ip', $ip);
+            $query->execute() or error(db_error($query));
+            $args['notes'] = $query->fetchAll(\PDO::FETCH_ASSOC);
+        }
+
+        if (hasPermission($config['mod']['modlog_ip'])) {
+            $query = prepare("SELECT `username`, `mod`, `ip`, `board`, `time`, `text` FROM ``modlogs`` LEFT JOIN ``mods`` ON `mod` = ``mods``.`id` WHERE `text` LIKE :search ORDER BY `time` DESC LIMIT 50");
+            $query->bindValue(':search', '%' . $ip . '%');
+            $query->execute() or error(db_error($query));
+            $args['logs'] = $query->fetchAll(\PDO::FETCH_ASSOC);
+        } else {
+            $args['logs'] = [];
+        }
+
+        $args['security_token'] = Auth::make_secure_link_token('IP/' . $ip);
+
+        mod_page(sprintf('%s: %s', _('IP'), $ip), 'mod/view_ip.html', $args, $args['hostname']);
+    }
+}

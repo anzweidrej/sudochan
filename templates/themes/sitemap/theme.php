@@ -31,7 +31,7 @@ function sitemap_build(string $action, array $settings, string $board): void
 
     foreach ($boards as $board) {
         $query = query(sprintf("SELECT `id` AS `thread_id`, (SELECT `time` FROM ``posts_%s`` WHERE `thread` = `thread_id` OR `id` = `thread_id` ORDER BY `time` DESC LIMIT 1) AS `lastmod` FROM ``posts_%s`` WHERE `thread` IS NULL", $board, $board)) or error(db_error());
-        $threads[$board] = $query->fetchAll(PDO::FETCH_ASSOC);
+        $threads[$board] = $query->fetchAll(\PDO::FETCH_ASSOC);
     }
 
     file_write($settings['path'], Element('themes/sitemap/sitemap.xml', [

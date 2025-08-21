@@ -44,7 +44,7 @@ class Index
         $settings['no_recent'] = (int) $settings['no_recent'];
 
         $query = query("SELECT * FROM ``news`` ORDER BY `time` DESC" . ($settings['no_recent'] ? ' LIMIT ' . $settings['no_recent'] : '')) or error(db_error());
-        $news = $query->fetchAll(PDO::FETCH_ASSOC);
+        $news = $query->fetchAll(\PDO::FETCH_ASSOC);
 
         // Build categories page
         $categories = $config['categories'] ?? [];
@@ -79,7 +79,7 @@ class Index
         $query = preg_replace('/UNION ALL $/', 'ORDER BY `time` DESC LIMIT ' . (int) $settings['limit_images'], $query);
         $query = query($query) or error(db_error());
 
-        while ($post = $query->fetch(PDO::FETCH_ASSOC)) {
+        while ($post = $query->fetch(\PDO::FETCH_ASSOC)) {
             openBoard($post['board']);
 
             // board settings won't be available in the template file, so generate links now
@@ -99,7 +99,7 @@ class Index
         $query = preg_replace('/UNION ALL $/', 'ORDER BY `time` DESC LIMIT ' . (int) $settings['limit_posts'], $query);
         $query = query($query) or error(db_error());
 
-        while ($post = $query->fetch(PDO::FETCH_ASSOC)) {
+        while ($post = $query->fetch(\PDO::FETCH_ASSOC)) {
             openBoard($post['board']);
 
             $post['link'] = $config['root'] . $board['dir'] . $config['dir']['res'] . sprintf($config['file_page'], ($post['thread'] ? $post['thread'] : $post['id'])) . '#' . $post['id'];
