@@ -13,6 +13,7 @@ Sudochan is a free, lightweight, fast, highly configurable, and user-friendly im
 - ImageMagick or GraphicsMagick (command-line)
 - OpenSSL
 - APCu, XCache, Redis, or Memcached
+- xgettext
 
 ### Contributing
 You can contribute to Sudochan by:

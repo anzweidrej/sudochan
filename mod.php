@@ -8,7 +8,7 @@ require_once 'bootstrap.php';
 
 use Sudochan\Mod\Auth;
 
-// Authenticate the mode user
+// Authenticate the mod user
 Auth::authenticate();
 
 if ($config['debug']) {

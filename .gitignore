@@ -18,8 +18,8 @@ vendor/
 /*.log
 *.cache
 /*/
-!docker/
 !.github/
+!docker/
 !etc/
 !inc/
 !js/
@@ -28,3 +28,4 @@ vendor/
 !stylesheets/
 !templates/
 !tmp/
+!tools/

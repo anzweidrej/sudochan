@@ -28,7 +28,6 @@ function loadConfig(): void
 
     $error = function_exists('error') ? 'error' : 'basic_error_function_because_the_other_isnt_loaded_yet';
 
-    require_once 'inc/EventDispatcher.php';
     EventDispatcher::reset_events();
 
     if (!isset($_SERVER['REMOTE_ADDR'])) {
@@ -272,9 +271,9 @@ function define_groups(): void
 
 function create_antibot(string $board, ?int $thread = null): object
 {
-    require_once __DIR__ . '/AntiBot.php';
+    require_once __DIR__ . '/../inc/AntiBot.php';
 
-    return _create_antibot($board, $thread);
+    return \Sudochan\_create_antibot($board, $thread);
 }
 
 function rebuildThemes(string $action, string|false $board = false): void
