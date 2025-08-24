@@ -47,7 +47,7 @@ foreach ($locales as $loc) {
     $poFile = "$locdir/LC_MESSAGES/javascript.po";
     $jsFile = "$locdir/LC_MESSAGES/javascript.js";
     if (file_exists($poFile)) {
-        $loader = new Gettext\Loader\PoLoader();
+        $loader = new \Gettext\Loader\PoLoader();
         $translations = $loader->loadFile($poFile);
         $js = "var l10n = " . json_encode($translations->toArray('translation'), JSON_UNESCAPED_UNICODE) . ";";
         file_put_contents($jsFile, $js);

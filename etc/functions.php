@@ -171,12 +171,12 @@ function loadConfig(): void
             $error('The specified locale (' . $config['locale'] . ') does not exist on your platform!');
         }
         if (extension_loaded('gettext')) {
-            bindtextdomain('sudochan', './locales/' . $locale . '/LC_MESSAGES/' . $domain . '.mo');
+            bindtextdomain('sudochan', './locales/');
             bind_textdomain_codeset('sudochan', 'UTF-8');
             textdomain('sudochan');
         } else {
             // @phpstan-ignore-next-line
-            _bindtextdomain('sudochan', './locales/' . $locale . '/LC_MESSAGES/' . $domain . '.mo');
+            _bindtextdomain('sudochan', './locales/');
             // @phpstan-ignore-next-line
             _bind_textdomain_codeset('sudochan', 'UTF-8');
             // @phpstan-ignore-next-line
@@ -486,7 +486,6 @@ function file_write(string $path, string $data, bool $simple = false, bool $skip
 
     if (preg_match('/^remote:\/\/(.+)\:(.+)$/', $path, $m)) {
         if (isset($config['remote'][$m[1]])) {
-            require_once 'inc/remote.php';
 
             $remote = new Remote($config['remote'][$m[1]]);
             $remote->write($data, $m[2]);

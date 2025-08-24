@@ -4,9 +4,9 @@
  *  Copyright (c) 2010-2014 Tinyboard Development Group
  */
 
-require_once 'bootstrap.php';
-
 use Sudochan\Mod\Auth;
+
+require_once 'bootstrap.php';
 
 // Authenticate the mod user
 Auth::authenticate();

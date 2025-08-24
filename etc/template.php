@@ -6,7 +6,13 @@
 
 defined('TINYBOARD') or exit;
 
+use PhpMyAdmin\Twig\Extensions\I18nExtension;
 use Sudochan\Mod\Auth;
+use Sudochan\Twig\TinyboardExtension;
+use Sudochan\Twig\TinyboardRuntime;
+use Twig\Environment;
+use Twig\Loader\FilesystemLoader;
+use Twig\RuntimeLoader\FactoryRuntimeLoader;
 
 $twig = false;
 
@@ -17,19 +23,19 @@ function load_twig(): void
 {
     global $twig, $config;
 
-    $loader = new Twig\Loader\FilesystemLoader($config['dir']['template']);
-    $twig = new Twig\Environment($loader, [
+    $loader = new FilesystemLoader($config['dir']['template']);
+    $twig = new Environment($loader, [
         'autoescape' => false,
         'cache' => (is_writable('tmp') && (!is_dir('tmp/cache') || is_writable('tmp/cache'))) ? 'tmp/cache' : false,
         'debug' => $config['debug'],
     ]);
-    $twig->addExtension(new Sudochan\Twig\TinyboardExtension());
-    $twig->addExtension(new PhpMyAdmin\Twig\Extensions\I18nExtension());
+    $twig->addExtension(new TinyboardExtension());
+    $twig->addExtension(new I18nExtension());
 
     // Register runtime loader for TinyboardRuntime
-    $twig->addRuntimeLoader(new \Twig\RuntimeLoader\FactoryRuntimeLoader([
-        Sudochan\Twig\TinyboardRuntime::class => function () {
-            return new Sudochan\Twig\TinyboardRuntime();
+    $twig->addRuntimeLoader(new FactoryRuntimeLoader([
+        TinyboardRuntime::class => function () {
+            return new TinyboardRuntime();
         },
     ]));
 }
