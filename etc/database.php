@@ -6,6 +6,8 @@
 
 defined('TINYBOARD') or exit;
 
+use Sudochan\PreparedQueryDebug;
+
 /**
  * Opens a PDO connection if not already open.
  */

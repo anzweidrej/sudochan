@@ -10,7 +10,7 @@ defined('TINYBOARD') or exit;
 
 class ConfigEditor
 {
-    public function permission_to_edit_config_var(array|string $varname): bool
+    public static function permission_to_edit_config_var(array|string $varname): bool
     {
         global $config, $mod;
 
@@ -52,7 +52,7 @@ class ConfigEditor
         return !$allow_only;
     }
 
-    public function config_vars(): array
+    public static function config_vars(): array
     {
         global $config;
 
@@ -150,7 +150,7 @@ class ConfigEditor
                         }
                         if (
                             !$already_exists &&
-                            $this->permission_to_edit_config_var($var['name'])
+                            self::permission_to_edit_config_var($var['name'])
                         ) {
                             foreach ($var['comment'] as &$comment) {
                                 $comment = preg_replace_callback(

@@ -6,6 +6,8 @@
 
 namespace Sudochan\Controller;
 
+use Sudochan\Mod\Auth;
+
 class DebugController
 {
     public function mod_debug_antispam(): void

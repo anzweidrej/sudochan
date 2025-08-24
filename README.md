@@ -33,7 +33,7 @@ cd sudochan
 composer install
 ```
 
-3. Create a basic instance-config.php in the /inc folder.
+3. Create a basic instance-config.php in the root directory.
 4. Navigate to /install.php in your web browser and follow the prompts.
 5. Sudochan should now be installed. Log in to /mod.php with the default username and password combination: admin / password.
 

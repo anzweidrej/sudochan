@@ -19,11 +19,11 @@ class Post
     public string $root;
     public array $modifiers;
     public bool $hr;
-    public string $file;
-    public string $thumb;
+    public ?string $file;
+    public ?string $thumb;
     public int $time;
-    public int $filewidth;
-    public int $fileheight;
+    public ?int $filewidth = null;
+    public ?int $fileheight = null;
     public ?string $email = null;
     public ?string $trip = null;
     public ?string $capcode = null;
@@ -76,12 +76,14 @@ class Post
             );
         }
     }
+
     public function link(string $pre = ''): string
     {
         global $config, $board;
 
         return $this->root . $board['dir'] . $config['dir']['res'] . sprintf($config['file_page'], $this->thread) . '#' . $pre . $this->id;
     }
+
     public function postControls(): string
     {
         global $board, $config;

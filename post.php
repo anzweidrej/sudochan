@@ -4,11 +4,17 @@
  *  Copyright (c) 2010-2014 Tinyboard Development Group
  */
 
+use Sudochan\Mod\Auth;
+use Sudochan\Image;
+use Sudochan\ImageConvert;
+use Sudochan\EventDispatcher;
+use Sudochan\Bans;
+
 require_once 'bootstrap.php';
 
 if (isset($_POST['delete'])) {
-    // Delete
 
+    // Delete
     if (!isset($_POST['board'], $_POST['password'])) {
         error($config['error']['bot']);
     }
@@ -217,7 +223,6 @@ if (isset($_POST['delete'])) {
     }
 
     if ($post['mod'] = isset($_POST['mod']) && $_POST['mod']) {
-        require_once 'inc/mod/auth.php';
         Auth::authenticate();
         if (!$mod) {
             // Liar. You're not a mod.
@@ -537,8 +542,6 @@ if (isset($_POST['delete'])) {
     }
 
     if (!hasPermission($config['mod']['bypass_filters'], $board['uri'])) {
-        require_once 'inc/filters.php';
-
         do_filters($post);
     }
 
@@ -551,8 +554,6 @@ if (isset($_POST['delete'])) {
                 error($config['error']['mime_exploit']);
             }
 
-            require_once 'inc/image.php';
-
             // find dimensions of an image using GD
             if (!$size = @getimagesize($upload)) {
                 error($config['error']['invalidimg']);
@@ -560,7 +561,6 @@ if (isset($_POST['delete'])) {
             if ($size[0] > $config['max_width'] || $size[1] > $config['max_height']) {
                 error($config['error']['maxsize']);
             }
-
 
             if ($config['convert_auto_orient'] && ($post['extension'] == 'jpg' || $post['extension'] == 'jpeg')) {
                 // The following code corrects the image orientation.

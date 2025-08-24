@@ -64,7 +64,7 @@ class ThemeController
             // Check if everything is submitted
             foreach ($theme['config'] as &$conf) {
                 if (!isset($_POST[$conf['name']]) && $conf['type'] != 'checkbox') {
-                    error(sprintf($config['error']['required'], $c['title']));
+                    error(sprintf($config['error']['required'], $config['title']));
                 }
             }
 

@@ -128,6 +128,13 @@ class Image
 
 class ImageGD
 {
+    public $image;
+    public $original;
+    public int $width;
+    public int $height;
+    public int $original_width;
+    public int $original_height;
+
     public function GD_create(): void
     {
         $this->image = imagecreatetruecolor($this->width, $this->height);
@@ -189,6 +196,9 @@ class ImageBase extends ImageGD
         }
     }
 
+    // fallback method to satisfy static analysis
+    public function from(): void {}
+
     public function _width(): int
     {
         if (method_exists($this, 'width')) {
@@ -235,15 +245,15 @@ class ImageImagick extends ImageBase
 {
     public function init(): void
     {
-        $this->image = new Imagick();
-        $this->image->setBackgroundColor(new ImagickPixel('transparent'));
+        $this->image = new \Imagick();
+        $this->image->setBackgroundColor(new \ImagickPixel('transparent'));
     }
 
     public function from(): void
     {
         try {
             $this->image->readImage($this->src);
-        } catch (ImagickException $e) {
+        } catch (\ImagickException $e) {
             // invalid image
             $this->image = false;
         }
@@ -282,7 +292,7 @@ class ImageImagick extends ImageBase
         global $config;
 
         if ($this->format === 'gif' && ($config['thumb_ext'] === 'gif' || $config['thumb_ext'] === '')) {
-            $this->image = new Imagick();
+            $this->image = new \Imagick();
             $this->image->setFormat('gif');
 
             $keep_frames = [];

@@ -483,7 +483,7 @@ if (file_exists($config['has_installed'])) {
                 $query = prepare("INSERT INTO ``bans_new_temp`` VALUES 
 					(NULL, :ipstart, :ipend, :created, :expires, :board, :creator, :reason, :seen, NULL)");
 
-                $range = Bans::parse_range($ban['ip']);
+                $range = Sudochan\Bans::parse_range($ban['ip']);
                 if ($range === false) {
                     // Invalid retard ban; just skip it.
                     continue;

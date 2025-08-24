@@ -52,9 +52,7 @@ class ConfigController
             return;
         }
 
-        require_once 'inc/mod/ConfigEditor.php';
-
-        $conf = (new ConfigEditor())->config_vars();
+        $conf = ConfigEditor::config_vars();
 
         foreach ($conf as &$var) {
             if (is_array($var['name'])) {

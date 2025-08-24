@@ -48,16 +48,31 @@ class AuthController
         mod_page(_('Login'), 'mod/login.html', $args);
     }
 
-    public function mod_confirm(string $request): void
-    {
-        mod_page(_('Confirm action'), 'mod/confirm.html', ['request' => $request, 'token' => Auth::make_secure_link_token($request)]);
-    }
-
     public function mod_logout(): void
     {
         global $config;
         Auth::destroyCookies();
 
         header('Location: ?/', true, $config['redirect_http']);
+    }
+
+    public function loginForm(string|false $error = false, string|false $username = false, string|false $redirect = false): never
+    {
+        global $config;
+
+        die(element('page.html', [
+            'index' => $config['root'],
+            'title' => _('Login'),
+            'config' => $config,
+            'body' => element(
+                'login.html',
+                [
+                    'config' => $config,
+                    'error' => $error,
+                    'username' => utf8tohtml($username),
+                    'redirect' => $redirect,
+                ],
+            ),
+        ]));
     }
 }

@@ -13,6 +13,8 @@ class Remote
     public array $auth = [];
     /** @var resource|mixed|null */
     private $connection = null;
+    public string $host;
+    public string $type;
 
     /**
      * @param array<string,mixed> $config

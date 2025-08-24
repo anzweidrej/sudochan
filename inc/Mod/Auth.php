@@ -160,7 +160,7 @@ class Auth
         if (count($cookie) !== 3) {
             // Malformed cookies
             self::destroyCookies();
-            mod_login();
+            header('Location: ?/login');
             exit;
         }
 
@@ -173,7 +173,7 @@ class Auth
         if (!$user || $cookie[1] !== self::mkhash($cookie[0], $user['password'], $cookie[2])) {
             // Malformed cookies or user not found
             self::destroyCookies();
-            mod_login();
+            header('Location: ?/login');
             exit;
         }
 

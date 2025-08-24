@@ -9,9 +9,17 @@ if (realpath($_SERVER['SCRIPT_FILENAME']) == str_replace('\\', '/', __FILE__)) {
     exit;
 }
 
+use Sudochan\Api;
+use Sudochan\Bans;
+use Sudochan\Cache;
 use Sudochan\EventDispatcher;
-use Sudochan\Entity\Thread;
+use Sudochan\Filter;
 use Sudochan\Mod\Auth;
+use Sudochan\Remote;
+use Sudochan\Entity\{
+    Post,
+    Thread
+};
 
 $microtime_start = microtime(true);
 
@@ -21,6 +29,14 @@ $mod = false;
 register_shutdown_function('fatal_error_handler');
 mb_internal_encoding('UTF-8');
 loadConfig();
+
+// Ensure fallback translation function is always defined
+if (!function_exists('_')) {
+    function _($str)
+    {
+        return $str;
+    }
+}
 
 function loadConfig(): void
 {
@@ -32,14 +48,6 @@ function loadConfig(): void
 
     if (!isset($_SERVER['REMOTE_ADDR'])) {
         $_SERVER['REMOTE_ADDR'] = '0.0.0.0';
-    }
-
-    // Ensure fallback translation function is always defined
-    if (!function_exists('_')) {
-        function _($str)
-        {
-            return $str;
-        }
     }
 
     // Initialize config arrays
@@ -158,15 +166,22 @@ function loadConfig(): void
 
     // Load locale translations if not English
     if ($config['locale'] != 'en') {
-        $translator = new Gettext\Translator();
-        $locale = $config['locale'];
-        $domain = 'tinyboard';
-        $path = "./locales/$locale/LC_MESSAGES/$domain.mo";
-        if (!file_exists($path)) {
-            $error('The specified locale (' . $locale . ') does not exist on your platform!');
+        // @phpstan-ignore-next-line
+        if (_setlocale(LC_ALL, $config['locale']) === false) {
+            $error('The specified locale (' . $config['locale'] . ') does not exist on your platform!');
         }
-        $translator->loadTranslations($path);
-        $translator->register(); // Registers _(), gettext(), ngettext(), etc.
+        if (extension_loaded('gettext')) {
+            bindtextdomain('sudochan', './locales/' . $locale . '/LC_MESSAGES/' . $domain . '.mo');
+            bind_textdomain_codeset('sudochan', 'UTF-8');
+            textdomain('sudochan');
+        } else {
+            // @phpstan-ignore-next-line
+            _bindtextdomain('sudochan', './locales/' . $locale . '/LC_MESSAGES/' . $domain . '.mo');
+            // @phpstan-ignore-next-line
+            _bind_textdomain_codeset('sudochan', 'UTF-8');
+            // @phpstan-ignore-next-line
+            _textdomain('sudochan');
+        }
     }
 
     // Syslog
@@ -175,7 +190,7 @@ function loadConfig(): void
     }
 
     if (!empty($config['cache']['enabled'])) {
-        require_once 'inc/cache.php';
+        require_once 'inc/Cache.php';
     }
 
     EventDispatcher::event('load-config');
@@ -1365,7 +1380,7 @@ function checkRobot(string $body): bool
 function numPosts(int $id): array
 {
     global $board;
-    $query = prepare(sprintf("SELECT COUNT(*) AS `replies`, COUNT(NULLIF(`file`, 0)) AS `images` FROM ``posts_%s`` WHERE `thread` = :thread", $board['uri'], $board['uri']));
+    $query = prepare(sprintf("SELECT COUNT(*) AS `replies`, COUNT(NULLIF(`file`, 0)) AS `images` FROM ``posts_%s`` WHERE `thread` = :thread", $board['uri']));
     $query->bindValue(':thread', $id, \PDO::PARAM_INT);
     $query->execute() or error(db_error($query));
 
@@ -1540,8 +1555,7 @@ function buildJavascript(): void
     }
 
     if ($config['minify_js']) {
-        require_once 'inc/lib/minify/JSMin.php';
-        $script = JSMin::minify($script);
+        $script = \JSMin\JSMin::minify($script);
     }
 
     file_write($config['file_script'], $script);
@@ -2431,26 +2445,6 @@ function error(string $message, bool|int $priority = true, mixed $debug_stuff = 
     ]));
 }
 
-function loginForm(string|false $error = false, string|false $username = false, string|false $redirect = false): never
-{
-    global $config;
-
-    die(element('page.html', [
-        'index' => $config['root'],
-        'title' => _('Login'),
-        'config' => $config,
-        'body' => element(
-            'login.html',
-            [
-                'config' => $config,
-                'error' => $error,
-                'username' => utf8tohtml($username),
-                'redirect' => $redirect,
-            ],
-        ),
-    ]));
-}
-
 function pm_snippet(string $body, ?int $len = null): string
 {
     global $config;
@@ -2686,4 +2680,142 @@ function mod_page(string $title, string $template, array $args, string|false $su
             ),
         ],
     );
+}
+
+function checkSpam(array $extra_salt = []): bool|string
+{
+    global $config, $pdo;
+
+    if (!isset($_POST['hash'])) {
+        return true;
+    }
+
+    $hash = $_POST['hash'];
+
+    if (!empty($extra_salt)) {
+        // create a salted hash of the "extra salt"
+        $extra_salt = implode(':', $extra_salt);
+    } else {
+        $extra_salt = '';
+    }
+
+    // Reconstruct the $inputs array
+    $inputs = [];
+
+    foreach ($_POST as $name => $value) {
+        if (in_array($name, $config['spam']['valid_inputs'])) {
+            continue;
+        }
+        $inputs[$name] = $value;
+    }
+
+    // Sort the inputs in alphabetical order (A-Z)
+    ksort($inputs);
+
+    $_hash = '';
+    // Iterate through each input
+    foreach ($inputs as $name => $value) {
+        $_hash .= $name . '=' . $value;
+    }
+
+    // Add a salt to the hash
+    $_hash .= $config['cookies']['salt'];
+    // Use SHA1 for the hash
+    $_hash = sha1($_hash . $extra_salt);
+
+    if ($hash != $_hash) {
+        return true;
+    }
+
+    $query = prepare('SELECT `passed` FROM ``antispam`` WHERE `hash` = :hash');
+    $query->bindValue(':hash', $hash);
+    $query->execute() or error(db_error($query));
+    $passed = $query->fetchColumn(0);
+
+    if ($passed === false || $passed > $config['spam']['hidden_inputs_max_pass']) {
+        // there was no database entry for this hash. most likely expired.
+        return true;
+    }
+
+    return $hash;
+}
+
+function incrementSpamHash(string $hash): void
+{
+    $query = prepare('UPDATE ``antispam`` SET `passed` = `passed` + 1 WHERE `hash` = :hash');
+    $query->bindValue(':hash', $hash);
+    $query->execute() or error(db_error($query));
+}
+
+function purge_flood_table(): void
+{
+    global $config;
+
+    // Determine how long we need to keep a cache of posts for flood prevention. Unfortunately, it is not
+    // aware of flood filters in other board configurations. You can solve this problem by settings the
+    // config variable $config['flood_cache'] (seconds).
+
+    if (isset($config['flood_cache'])) {
+        $max_time = &$config['flood_cache'];
+    } else {
+        $max_time = 0;
+        foreach ($config['filters'] as $filter) {
+            if (isset($filter['condition']['flood-time'])) {
+                $max_time = max($max_time, $filter['condition']['flood-time']);
+            }
+        }
+    }
+
+    $time = time() - $max_time;
+
+    query("DELETE FROM ``flood`` WHERE `time` < $time") or error(db_error());
+}
+
+function do_filters(array $post): void
+{
+    global $config;
+
+    if (!isset($config['filters']) || empty($config['filters'])) {
+        return;
+    }
+
+    $has_flood = false;
+    foreach ($config['filters'] as $filter) {
+        if (isset($filter['condition']['flood-match'])) {
+            $has_flood = true;
+            break;
+        }
+    }
+
+    if ($has_flood) {
+        if ($post['has_file']) {
+            $query = prepare("SELECT * FROM ``flood`` WHERE `ip` = :ip OR `posthash` = :posthash OR `filehash` = :filehash");
+            $query->bindValue(':ip', $_SERVER['REMOTE_ADDR']);
+            $query->bindValue(':posthash', make_comment_hex($post['body_nomarkup']));
+            $query->bindValue(':filehash', $post['filehash']);
+        } else {
+            $query = prepare("SELECT * FROM ``flood`` WHERE `ip` = :ip OR `posthash` = :posthash");
+            $query->bindValue(':ip', $_SERVER['REMOTE_ADDR']);
+            $query->bindValue(':posthash', make_comment_hex($post['body_nomarkup']));
+        }
+        $query->execute() or error(db_error($query));
+        $flood_check = $query->fetchAll(\PDO::FETCH_ASSOC);
+    } else {
+        $flood_check = false;
+    }
+
+    foreach ($config['filters'] as $filter_array) {
+        $filter = new Filter($filter_array);
+        $filter->flood_check = $flood_check;
+        if ($filter->check($post)) {
+            $filter->action();
+        }
+    }
+
+    purge_flood_table();
+}
+
+function mod_confirm(string $request): void
+{
+    mod_page(_('Confirm action'), 'mod/confirm.html', ['request' => $request, 'token' => Auth::make_secure_link_token($request)]);
 }

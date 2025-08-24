@@ -14,6 +14,12 @@ class Filter
 {
     public array|false|null $flood_check = null;
     private array $condition;
+    public ?string $action = null;
+    public ?string $reason = null;
+    public int|false|null $expires = null;
+    public bool $reject = true;
+    public bool $all_boards = false;
+    public ?string $message = null;
 
     public function __construct(array $arr)
     {
@@ -197,72 +203,4 @@ class Filter
         }
         return true;
     }
-}
-
-function purge_flood_table(): void
-{
-    global $config;
-
-    // Determine how long we need to keep a cache of posts for flood prevention. Unfortunately, it is not
-    // aware of flood filters in other board configurations. You can solve this problem by settings the
-    // config variable $config['flood_cache'] (seconds).
-
-    if (isset($config['flood_cache'])) {
-        $max_time = &$config['flood_cache'];
-    } else {
-        $max_time = 0;
-        foreach ($config['filters'] as $filter) {
-            if (isset($filter['condition']['flood-time'])) {
-                $max_time = max($max_time, $filter['condition']['flood-time']);
-            }
-        }
-    }
-
-    $time = time() - $max_time;
-
-    query("DELETE FROM ``flood`` WHERE `time` < $time") or error(db_error());
-}
-
-function do_filters(array $post): void
-{
-    global $config;
-
-    if (!isset($config['filters']) || empty($config['filters'])) {
-        return;
-    }
-
-    $has_flood = false;
-    foreach ($config['filters'] as $filter) {
-        if (isset($filter['condition']['flood-match'])) {
-            $has_flood = true;
-            break;
-        }
-    }
-
-    if ($has_flood) {
-        if ($post['has_file']) {
-            $query = prepare("SELECT * FROM ``flood`` WHERE `ip` = :ip OR `posthash` = :posthash OR `filehash` = :filehash");
-            $query->bindValue(':ip', $_SERVER['REMOTE_ADDR']);
-            $query->bindValue(':posthash', make_comment_hex($post['body_nomarkup']));
-            $query->bindValue(':filehash', $post['filehash']);
-        } else {
-            $query = prepare("SELECT * FROM ``flood`` WHERE `ip` = :ip OR `posthash` = :posthash");
-            $query->bindValue(':ip', $_SERVER['REMOTE_ADDR']);
-            $query->bindValue(':posthash', make_comment_hex($post['body_nomarkup']));
-        }
-        $query->execute() or error(db_error($query));
-        $flood_check = $query->fetchAll(\PDO::FETCH_ASSOC);
-    } else {
-        $flood_check = false;
-    }
-
-    foreach ($config['filters'] as $filter_array) {
-        $filter = new Filter($filter_array);
-        $filter->flood_check = $flood_check;
-        if ($filter->check($post)) {
-            $filter->action();
-        }
-    }
-
-    purge_flood_table();
 }

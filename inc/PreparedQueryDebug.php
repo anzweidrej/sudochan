@@ -11,8 +11,8 @@ namespace Sudochan;
  */
 class PreparedQueryDebug
 {
-    protected PDOStatement $query;
-    protected PDOStatement|false $explain_query = false;
+    protected \PDOStatement $query;
+    protected \PDOStatement|false $explain_query = false;
 
     public function __construct(string $query)
     {
