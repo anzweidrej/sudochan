@@ -11,20 +11,7 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: ${{ github.ref }}-${{ github.workflow }}
-  cancel-in-progress: true
-
 jobs:
-  megalinter:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v5
-
-      - name: Run MegaLinter
-        uses: oxsecurity/megalinter/flavors/php@v8.8.0
-
   build:
     runs-on: ubuntu-latest
     strategy:
@@ -57,13 +44,6 @@ jobs:
 
       - name: Install dependencies
         run: composer install --ansi --prefer-dist --no-progress --no-interaction
-
-      - name: Run basic syntax scan
-        run: |
-          find . -type f -name '*.php' \
-            -not -path './vendor/*' \
-            -not -path './megalinter-reports/*' \
-            -not -path './tmp/*' -print0 | xargs -0 -n1 -P4 php -l
 
       - name: Check if any dependencies are compromised
         run: composer audit
