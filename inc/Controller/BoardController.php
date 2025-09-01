@@ -8,6 +8,7 @@ namespace Sudochan\Controller;
 
 use Sudochan\Mod\Auth;
 use Sudochan\Cache;
+use Sudochan\Service\BoardService;
 
 class BoardController
 {
@@ -15,7 +16,7 @@ class BoardController
     {
         global $board, $config;
 
-        if (!openBoard($boardName)) {
+        if (!BoardService::openBoard($boardName)) {
             error($config['error']['noboard']);
         }
 
@@ -61,7 +62,7 @@ class BoardController
                         if (!isset($tmp_board)) {
                             $tmp_board = $board;
                         }
-                        openBoard($cite['board']);
+                        BoardService::openBoard($cite['board']);
                         rebuildPost($cite['post']);
                     }
                 }
@@ -94,10 +95,11 @@ class BoardController
                 // Delete entire board directory
                 rrmdir($board['uri'] . '/');
             } else {
-                $query = prepare('UPDATE ``boards`` SET `title` = :title, `subtitle` = :subtitle WHERE `uri` = :uri');
+                $query = prepare('UPDATE ``boards`` SET `title` = :title, `subtitle` = :subtitle, `category` = :category WHERE `uri` = :uri');
                 $query->bindValue(':uri', $board['uri']);
                 $query->bindValue(':title', $_POST['title']);
                 $query->bindValue(':subtitle', $_POST['subtitle']);
+                $query->bindValue(':category', $_POST['category']);
                 $query->execute() or error(db_error($query));
 
                 Auth::modLog('Edited board information for ' . sprintf($config['board_abbreviation'], $board['uri']), false);
@@ -127,7 +129,7 @@ class BoardController
             error($config['error']['noaccess']);
         }
 
-        if (isset($_POST['uri'], $_POST['title'], $_POST['subtitle'])) {
+        if (isset($_POST['uri'], $_POST['title'], $_POST['subtitle'], $_POST['category'])) {
             if ($_POST['uri'] == '') {
                 error(sprintf($config['error']['required'], 'URI'));
             }
@@ -159,19 +161,20 @@ class BoardController
                 exit;
             }
 
-            if (openBoard($_POST['uri'])) {
+            if (BoardService::openBoard($_POST['uri'])) {
                 error(sprintf($config['error']['boardexists'], $board['url']));
             }
 
-            $query = prepare('INSERT INTO ``boards`` VALUES (:uri, :title, :subtitle)');
+            $query = prepare('INSERT INTO ``boards`` VALUES (:uri, :title, :subtitle, :category)');
             $query->bindValue(':uri', $_POST['uri']);
             $query->bindValue(':title', $_POST['title']);
             $query->bindValue(':subtitle', $_POST['subtitle']);
+            $query->bindValue(':category', $_POST['category']);
             $query->execute() or error(db_error($query));
 
             Auth::modLog('Created a new board: ' . sprintf($config['board_abbreviation'], $_POST['uri']));
 
-            if (!openBoard($_POST['uri'])) {
+            if (!BoardService::openBoard($_POST['uri'])) {
                 error(_("Couldn't open board after creation."));
             }
 
@@ -202,7 +205,7 @@ class BoardController
     {
         global $config, $mod;
 
-        if (!openBoard($boardName)) {
+        if (!BoardService::openBoard($boardName)) {
             error($config['error']['noboard']);
         }
 
@@ -223,7 +226,7 @@ class BoardController
     {
         global $config, $mod;
 
-        if (!openBoard($boardName)) {
+        if (!BoardService::openBoard($boardName)) {
             error($config['error']['noboard']);
         }
 

@@ -7,6 +7,8 @@
 // Installation/upgrade file
 define('VERSION', 'v0.9.6-dev-22');
 
+use Sudochan\Service\BoardService;
+
 require_once 'bootstrap.php';
 loadConfig();
 
@@ -40,7 +42,7 @@ if (file_exists($config['has_installed'])) {
         }
     }
 
-    $boards = listBoards();
+    $boards = BoardService::listBoards();
 
     switch ($version) {
         case 'v0.9':
@@ -538,6 +540,10 @@ if (file_exists($config['has_installed'])) {
 				  KEY `ban_id` (`ban_id`)
 				) ENGINE=MyISAM  DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;") or error(db_error());
             // no break
+        case 'v0.9.6-dev-22':
+            // Add category column to boards table
+            query("ALTER TABLE `boards` ADD COLUMN `category` VARCHAR(64) NOT NULL DEFAULT ''") or error(db_error());
+            // no break
         case false:
             // Update version number
             file_write($config['has_installed'], VERSION);
@@ -856,9 +862,9 @@ if ($step == 0) {
     if (!empty($sql_errors)) {
         $page['body'] .= '<div class="ban"><h2>SQL errors</h2><p>SQL errors were encountered when trying to install the database. This may be the result of using a database which is already occupied with a Sudochan installation; if so, you can probably ignore this.</p><p>The errors encountered were:</p><ul>' . $sql_errors . '</ul><p><a href="?step=5">Ignore errors and complete installation.</a></p></div>';
     } else {
-        $boards = listBoards();
+        $boards = BoardService::listBoards();
         foreach ($boards as &$_board) {
-            setupBoard($_board);
+            BoardService::setupBoard($_board);
             buildIndex();
         }
 
@@ -871,9 +877,9 @@ if ($step == 0) {
     $page['title'] = 'Installation complete';
     $page['body'] = '<p style="text-align:center">Thank you for using Sudochan. Please remember to report any bugs you discover.</p>';
 
-    $boards = listBoards();
+    $boards = BoardService::listBoards();
     foreach ($boards as &$_board) {
-        setupBoard($_board);
+        BoardService::setupBoard($_board);
         buildIndex();
     }
 

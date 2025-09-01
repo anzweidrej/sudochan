@@ -7,6 +7,7 @@
 namespace Sudochan\Controller;
 
 use Sudochan\Bans;
+use Sudochan\Service\BoardService;
 
 class SearchController
 {
@@ -118,13 +119,13 @@ class SearchController
 
         if ($type == 'posts') {
             $query = '';
-            $boards = listBoards();
+            $boards = BoardService::listBoards();
             if (empty($boards)) {
                 error(_('There are no boards to search!'));
             }
 
             foreach ($boards as $board) {
-                openBoard($board['uri']);
+                BoardService::openBoard($board['uri']);
                 if (!hasPermission($config['mod']['search_posts'], $board['uri'])) {
                     continue;
                 }

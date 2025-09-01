@@ -1,124 +1,156 @@
-{% extends 'themes/layout.html' %}
+<!DOCTYPE html>
+<html lang="{{ config.locale }}">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+        <title>{% block title %}{{ settings.title }}{% endblock %}</title>
+        {% include 'meta.html' %}
+        {% block stylesheets %}
+        {% endblock %}
+        {% block javascripts %}
+        {% endblock %}
+    </head>
+    <body>
+        <div id="site">
+            <!-- here starts header section -->
+            <div id="header">
+                <div id="logo">
+                    <a href="/index.html" title="Home">
+                        <img alt="{{ settings.alt }}"
+                             src="{{ settings.icon }}"
+                             width="120"
+                             height="120" />
+                    </a>
+                </div>
+                <h1>
+                    {{ settings.title }}
+                </h1>
+                <div id="description">
+                    {{ settings.subtitle }}
+                </div>
+            </div>
+            <!-- here starts content section -->
+            <div id="main">
+                <div class="box-outer" id="announce">
+                    <div class="box-inner">
+                        <div class="boxbar">
+                            <h2>
+                                About
+                            </h2>
+                        </div>
+                        <div class="boxcontent">
+                            <div id="about-cnt">
+                                {{ settings.description }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="box-outer top-box" id="boards">
+                    <div class="box-inner">
+                        <div class="boxbar">
+                            <h2>
+                                Boards
+                            </h2>
+                        </div>
+                        <div class="boxcontent">
+                            {% for category, boards in categories %}
+                                <div class="column">
+                                    <h3 style="text-decoration: underline; display: inline">
+                                        {{ category }}
+                                    </h3>
+                                    <ul>
+                                        {% for board in boards %}
+                                            <li>
+                                                <a href="{{ board.uri }}" class="boardlink">{{ board.title|e }}</a>
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            {% endfor %}
 
-{% block title %}
-    {{ settings.title }}
-{% endblock %}
-
-{% block header %}
-	<img class="icon" src="{{ settings.icon }}">
-	<h1>
-		{{ settings.title }}
-	</h1>
-	<div class="subtitle">
-		{{ settings.subtitle }}
-	</div>
-{% endblock %}
-
-{% block content %}
-    <div class="wrapper">
-        <div class="ban">
-            {% if news|count == 0 %}
-                <p style="text-align:center" class="unimportant">
-                    (No news to show.)
-                </p>
-            {% else %}
-                {% for entry in news %}
-                    <h2 id="{{ entry.id }}">
-                        {% if entry.subject %}
-                            {{ entry.subject }}
-                        {% else %}
-                            <em>no subject</em>
-                        {% endif %}
-                        <span class="unimportant"> &mdash; by {{ entry.name }} at {{ entry.time|date(config.post_date) }}</span>
-                    </h2>
-                    <p>
-                        {{ entry.body }}
-                    </p>
-                {% endfor %}
-            {% endif %}
+                            {% for category, links in config.custom_categories %}
+                                <div class="column">
+                                    <h3 style="text-decoration: underline; display: inline">
+                                        {{ category }}
+                                    </h3>
+                                    <ul>
+                                        {% for title, uri in links %}
+                                            <li>
+                                                <a href="{{ uri }}" class="boardlink">{{ title }}</a>
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            {% endfor %}
+                            <div style="clear: both; height: 0; line-height: 0;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="box-outer top-box" id="popular-threads">
+                    <div class="box-inner">
+                        <div class="boxbar">
+                            <h2>
+                                Popular Threads
+                            </h2>
+                        </div>
+                        <div class="boxcontent">
+                            <div id="threads">
+                                {% for thread in popular_threads %}
+                                    <div class="thread">
+                                        <div class="board">
+                                            {{ thread.board_name }}
+                                        </div>
+                                        <a href="{{ thread.link }}" class="boardlink">
+                                            <img alt=""
+                                                 class="thumb"
+                                                 src="{{ thread.src }}"
+                                                 width="{{ thread.thumbwidth }}"
+                                                 height="{{ thread.thumbheight }}" />
+                                        </a>
+                                        <div class="teaser">
+                                            {{ thread.snippet }}
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="box-outer top-box" id="site-stats">
+                    <div class="box-inner">
+                        <div class="boxbar">
+                            <h2>
+                                Stats
+                            </h2>
+                        </div>
+                        <div class="boxcontent">
+                            <div class="stat-cell">
+                                <b>Total Posts:</b> {{ stats.total_posts }}
+                            </div>
+                            <div class="stat-cell">
+                                <b>Unique posters:</b> {{ stats.unique_posters }}
+                            </div>
+                            <div class="stat-cell">
+                                <b>Active Content:</b> {{ stats.active_content|filesize }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- here starts footer section -->
+            <div id="footer">
+                <div id="resources">
+                </div>
+                <div id="copyright">
+                    Copyright &copy; 2010-{{ time() |date("Y") }} Powered by Sudochan | All rights reserved.
+                    <br />
+                    {% for footer in config.footer %}
+                        {{ footer }}
+                    {% endfor %}
+                </div>
+            </div>
         </div>
-
-        {% for category, boards in categories %}
-            <fieldset>
-                <legend>
-                    {{ category }}
-                </legend>
-                <ul>
-                    {% for board in boards %}
-                        <li>
-                            <a href="{{ board.uri }}">{{ board.title|e }}</a>
-                        </li>
-                    {% endfor %}
-                </ul>
-            </fieldset>
-        {% endfor %}
-
-        {% for category, links in config.custom_categories %}
-            <fieldset>
-                <legend>
-                    {{ category }}
-                </legend>
-                <ul>
-                    {% for title, uri in links %}
-                        <li>
-                            <a href="{{ uri }}">{{ title }}</a>
-                        </li>
-                    {% endfor %}
-                </ul>
-            </fieldset>
-        {% endfor %}
-
-        <div class="box-wrap">
-            <div class="box left">
-                <h2>
-                    Recent Images
-                </h2>
-                <ul>
-                    {% for post in recent_images %}
-                        <li>
-                            <a href="{{ post.link }}">
-                                <img src="{{ post.src }}"
-                                     style="width:{{ post.thumbwidth }}px;
-                                            height:{{ post.thumbheight }}px"
-                                     alt="">
-                            </a>
-                        </li>
-                    {% endfor %}
-                </ul>
-            </div>
-            <div class="box right">
-                <h2>
-                    Latest Posts
-                </h2>
-                <ul>
-                    {% for post in recent_posts %}
-                        <li>
-                            <strong>{{ post.board_name }}</strong>:
-                            <a href="{{ post.link }}">
-                                {{ post.snippet }}
-                            </a>
-                        </li>
-                    {% endfor %}
-                </ul>
-            </div>
-            <div class="box right">
-                <h2>
-                    Stats
-                </h2>
-                <ul>
-                    <li>
-                        Total posts: {{ stats.total_posts }}
-                    </li>
-                    <li>
-                        Unique posters: {{ stats.unique_posters }}
-                    </li>
-                    <li>
-                        Active content: {{ stats.active_content|filesize }}
-                    </li>
-                </ul>
-            </div>
-        </div>
-
-        <hr />
-    </div>
-{% endblock %}
+    </body>
+</html>

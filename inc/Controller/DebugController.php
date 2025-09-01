@@ -7,6 +7,7 @@
 namespace Sudochan\Controller;
 
 use Sudochan\Mod\Auth;
+use Sudochan\Service\BoardService;
 
 class DebugController
 {
@@ -55,7 +56,7 @@ class DebugController
 
         $limit = 500;
 
-        $boards = listBoards();
+        $boards = BoardService::listBoards();
 
         // Manually build an SQL query
         $query = 'SELECT * FROM (';

@@ -13,8 +13,6 @@
  *
  */
 
-import $ from 'jquery';
-
 $(document).ready(function () {
     var showOPLinks = function () {
         var OP;
@@ -24,6 +22,9 @@ $(document).ready(function () {
         } else {
             OP = $('div.post.op a.post_no:eq(1)').text();
         }
+
+        // trim whitespace so string comparison with postID works
+        OP = $.trim(OP);
 
         $(this)
             .find('div.body a:not([rel="nofollow"])')

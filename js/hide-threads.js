@@ -11,8 +11,6 @@
  *
  */
 
-import $ from 'jquery';
-
 $(document).ready(function () {
     if ($('div.banner').length != 0) return; // not index
 
@@ -21,7 +19,16 @@ $(document).ready(function () {
     if (!localStorage.hiddenthreads) localStorage.hiddenthreads = '{}';
 
     // Load data from HTML5 localStorage
-    var hidden_data = JSON.parse(localStorage.hiddenthreads);
+    var hidden_data;
+    try {
+        hidden_data = JSON.parse(localStorage.hiddenthreads);
+        if (typeof hidden_data !== 'object' || hidden_data === null) hidden_data = {};
+    } catch (e) {
+        hidden_data = {};
+        try {
+            localStorage.hiddenthreads = '{}';
+        } catch (e2) {}
+    }
 
     var store_data = function () {
         localStorage.hiddenthreads = JSON.stringify(hidden_data);
@@ -30,10 +37,7 @@ $(document).ready(function () {
     // Delete old hidden threads (7+ days old)
     for (var key in hidden_data) {
         for (var id in hidden_data[key]) {
-            if (
-                hidden_data[key][id] <
-                Math.round(Date.now() / 1000) - 60 * 60 * 24 * 7
-            ) {
+            if (hidden_data[key][id] < Math.round(Date.now() / 1000) - 60 * 60 * 24 * 7) {
                 delete hidden_data[key][id];
                 store_data();
             }
@@ -55,15 +59,9 @@ $(document).ready(function () {
                 hidden_data[board][id] = Math.round(Date.now() / 1000);
                 store_data();
 
-                thread_container
-                    .find(
-                        'div.post,div.video-container,img,p.fileinfo,a.hide-thread-link,br',
-                    )
-                    .hide();
+                thread_container.find('div.post,div.video-container,img,p.fileinfo,a.hide-thread-link,br').hide();
 
-                var hidden_div = thread_container
-                    .find('div.post.op > p.intro')
-                    .clone();
+                var hidden_div = thread_container.find('div.post.op > p.intro').clone();
                 hidden_div.addClass('thread-hidden');
                 hidden_div.find('a[href]:not([href$=".html"]),input').remove();
                 hidden_div.html(hidden_div.html().replace(' [] ', ' '));
@@ -77,20 +75,15 @@ $(document).ready(function () {
                         delete hidden_data[board][id];
                         store_data();
                         thread_container
-                            .find(
-                                'div.post,div.video-container,img,p.fileinfo,a.hide-thread-link,br',
-                            )
+                            .find('div.post,div.video-container,img,p.fileinfo,a.hide-thread-link,br')
                             .show();
                         $(this).remove();
                         hidden_div.remove();
                     });
 
-                hidden_div.insertAfter(
-                    thread_container.find(':not(h2,h2 *):first'),
-                );
+                hidden_div.insertAfter(thread_container.find(':not(h2,h2 *):first'));
             });
-        if (hidden_data[board][id])
-            thread_container.find('.hide-thread-link').trigger('click');
+        if (hidden_data[board][id]) thread_container.find('.hide-thread-link').trigger('click');
     };
 
     $('div.post.op').each(do_hide_threads);

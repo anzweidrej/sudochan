@@ -12,8 +12,6 @@
  *
  */
 
-import $ from 'jquery';
-
 $(window).ready(function () {
     var settings = new script_settings('ajax');
     var do_not_ajax = false;

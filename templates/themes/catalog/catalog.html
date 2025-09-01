@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="{{ config.locale }}">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+        <title>{% block title %}{{ settings.title }}{% endblock %}</title>
+        {% include 'meta.html' %}
+        {% block stylesheets %}
+        {% endblock %}
+        {% block javascripts %}
+        {% endblock %}
+    </head>
+    <body>
+        {{ boardlist.top }}
+
+        <header>
+            <h1>{{ settings.title }} (<a href="{{link}}">/{{ board }}/</a>)</h1>
+            <div class="subtitle">{{ settings.subtitle }}</div>
+        </header>
+
+        <ul>
+            {% for post in recent_posts %}
+                <div class="thread">
+                    <a href="{{post.link}}">
+                        <img src="{{post.file}}" class="{{post.board}}" title="{{post.bump|date('%b %d %H:%M')}}">
+                    </a>
+                    <span class="replies">
+                        <strong>{% trans %}1 reply{% plural post.reply_count %}{{ count }} replies{% endtrans %}</strong><br/>
+                        {{ post.body }}
+                    </span>
+                </div>
+            {% endfor %}
+        </ul>
+        
+        <hr/>
+
+        {{ boardlist.bottom }}
+
+        <footer>
+            <p class="unimportant" style="margin-top:20px;text-align:center;">
+                Powered by Sudochan {{ config.version }} |
+                &copy; 2010-{{ time()|date("Y") }}
+            </p>
+            {% for footer in config.footer %}
+                <p class="unimportant" style="text-align:center;">{{ footer }}</p>
+            {% endfor %}
+        </footer>
+    </body>
+</html>

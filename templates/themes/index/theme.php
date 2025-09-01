@@ -1,5 +1,7 @@
 <?php
 
+use Sudochan\Service\BoardService;
+
 require 'info.php';
 
 function index_build(string $action, array $settings, $board): void
@@ -47,19 +49,17 @@ class Index
         $news = $query->fetchAll(\PDO::FETCH_ASSOC);
 
         // Build categories page
-        $categories = $config['categories'] ?? [];
-
-        foreach ($categories as &$boards) {
-            foreach ($boards as &$board) {
-                $title = boardTitle($board);
-                if (!$title) {
-                    $title = $board;
-                } // board doesn't exist, but for some reason you want to display it anyway
-                $board = [
-                    'title' => $title,
-                    'uri' => sprintf($config['board_path'], $board),
-                ];
+        $boards = BoardService::listBoards();
+        $categories = [];
+        foreach ($boards as $board) {
+            $cat = $board['category'] ?: 'Uncategorized';
+            if (!isset($categories[$cat])) {
+                $categories[$cat] = [];
             }
+            $categories[$cat][] = [
+                'title' => BoardService::boardTitle($board['uri']),
+                'uri' => sprintf($config['board_path'], $board['uri']),
+            ];
         }
 
         // Build recent posts page
@@ -67,7 +67,7 @@ class Index
         $recent_posts = [];
         $stats = ['total_posts' => 0, 'unique_posters' => 0, 'active_content' => 0];
 
-        $boards = listBoards();
+        $boards = BoardService::listBoards();
 
         $query = '';
         foreach ($boards as &$_board) {
@@ -80,7 +80,7 @@ class Index
         $query = query($query) or error(db_error());
 
         while ($post = $query->fetch(\PDO::FETCH_ASSOC)) {
-            openBoard($post['board']);
+            BoardService::openBoard($post['board']);
 
             // board settings won't be available in the template file, so generate links now
             $post['link'] = $config['root'] . $board['dir'] . $config['dir']['res'] . sprintf($config['file_page'], ($post['thread'] ? $post['thread'] : $post['id'])) . '#' . $post['id'];
@@ -100,7 +100,7 @@ class Index
         $query = query($query) or error(db_error());
 
         while ($post = $query->fetch(\PDO::FETCH_ASSOC)) {
-            openBoard($post['board']);
+            BoardService::openBoard($post['board']);
 
             $post['link'] = $config['root'] . $board['dir'] . $config['dir']['res'] . sprintf($config['file_page'], ($post['thread'] ? $post['thread'] : $post['id'])) . '#' . $post['id'];
             $post['snippet'] = pm_snippet($post['body'], 30);
@@ -120,6 +120,39 @@ class Index
         $query = preg_replace('/UNION ALL $/', ') AS `posts_all`', $query);
         $query = query($query) or error(db_error());
         $stats['total_posts'] = number_format($query->fetchColumn());
+
+        // Build popular threads
+        $popular_threads = [];
+        $boards = BoardService::listBoards();
+        foreach ($boards as &$_board) {
+            if (in_array($_board['uri'], $excluded)) {
+                continue;
+            }
+            // Get top 3 threads by reply count
+            $query = sprintf(
+                "SELECT t.*, '%s' AS `board`, 
+                    (SELECT COUNT(*) FROM ``posts_%s`` WHERE `thread` = t.`id`) AS replies
+                 FROM ``posts_%s`` t
+                 WHERE t.`thread` IS NULL
+                 ORDER BY replies DESC, t.`id` DESC
+                 LIMIT 3",
+                $_board['uri'],
+                $_board['uri'],
+                $_board['uri'],
+            );
+            $result = query($query) or error(db_error());
+            while ($thread = $result->fetch(\PDO::FETCH_ASSOC)) {
+                BoardService::openBoard($thread['board']);
+                $thread['link'] = $config['root'] . $board['dir'] . $config['dir']['res'] . sprintf($config['file_page'], $thread['id']);
+                $thread['src'] = $config['uri_thumb'] . $thread['thumb'];
+                $thread['thumbwidth'] = $thread['thumbwidth'] ?? 150;
+                $thread['thumbheight'] = $thread['thumbheight'] ?? 150;
+                $thread['snippet'] = pm_snippet($thread['body'], 30);
+                $thread['board_name'] = $board['name'];
+
+                $popular_threads[] = $thread;
+            }
+        }
 
         // Unique IPs
         $query = 'SELECT COUNT(DISTINCT(`ip`)) FROM (';
@@ -148,12 +181,13 @@ class Index
         return Element('themes/index/index.html', [
             'settings' => $settings,
             'config' => $config,
-            'boardlist' => createBoardlist(),
+            'boardlist' => BoardService::createBoardlist(),
             'news' => $news,
             'categories' => $categories,
             'recent_images' => $recent_images,
             'recent_posts' => $recent_posts,
             'stats' => $stats,
+            'popular_threads' => $popular_threads,
         ]);
     }
 }

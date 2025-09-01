@@ -693,26 +693,15 @@ $config['banner_height'] = 100;
 // available stylesheets (or create your own).
 $config['stylesheets']['Yotsuba B'] = ''; // Default; there is no additional/custom stylesheet for this.
 $config['stylesheets']['Yotsuba'] = 'yotsuba.css';
-// $config['stylesheets']['Futaba'] = 'futaba.css';
-// $config['stylesheets']['Dark'] = 'dark.css';
+$config['stylesheets']['Futaba'] = 'futaba.css';
 $config['stylesheets']['Futaba + Vichan'] = 'futaba+vichan.css';
 $config['stylesheets']['Futaba Light'] = 'futaba-light.css';
 $config['stylesheets']['Gentoochan'] = 'gentoochan.css';
-// $config['stylesheets']['Jungle'] = 'jungle.css';
-// $config['stylesheets']['Luna'] = 'luna.css';
 $config['stylesheets']['Miku'] = 'miku.css';
 $config['stylesheets']['Notsuba'] = 'notsuba.css';
-// $config['stylesheets']['Photon'] = 'photon.css';
-// $config['stylesheets']['Piwnichan'] = 'piwnichan.css';
-// $config['stylesheets']['Ricechan'] = 'ricechan.css';
-// $config['stylesheets']['Roach'] = 'roach.css';
-// $config['stylesheets']['Stripes'] = 'stripes.css';
-// $config['stylesheets']['Szalet'] = 'szalet.css';
-// $config['stylesheets']['Terminal 2'] = 'terminal2.css';
-// $config['stylesheets']['Test Orange'] = 'testorange.css';
+$config['stylesheets']['Piwnichan'] = 'piwnichan.css';
+$config['stylesheets']['Ricechan'] = 'ricechan.css';
 $config['stylesheets']['Wasabi'] = 'wasabi.css';
-// $config['stylesheets']['Dark Roach'] = 'dark_roach.css';
-// $config['stylesheets']['Ferus'] = 'ferus.css';
 
 // The prefix for each stylesheet URI. Defaults to $config['root']/stylesheets/
 // $config['uri_stylesheets'] = 'http://static.example.org/stylesheets/';
@@ -729,13 +718,13 @@ $config['stylesheets_board'] = false;
 $config['font_awesome'] = true;
 $config['font_awesome_css'] = 'vendor/fortawesome/font-awesome/css/all.min.css';
 
-// $config['boards'] = [
-//     ['a', 'b'],
-//     ['c', 'd', 'e', 'f', 'g'],
-//     ['h', 'i', 'j'],
-//     ['k', ['l', 'm']],
-//     ['status' => 'http://status.example.org/']
-// ];
+$config['boards'] = [
+    ['a', 'b'],
+    ['c', 'd', 'e', 'f', 'g'],
+    ['h', 'i', 'j'],
+    ['k', ['l', 'm']],
+    ['status' => 'http://status.example.org/'],
+];
 
 // Whether or not to put brackets around the whole board list
 $config['boardlist_wrap_bracket'] = true;
@@ -781,19 +770,20 @@ $config['flag_style'] = 'width:16px;height:11px;';
  */
 
 // Additional Javascript files to include on board index and thread pages. See js/ for available scripts.
-$config['additional_javascript'][] = 'js/inline-expanding.js';
-// $config['additional_javascript'][] = 'js/local-time.js';
-
 // Some scripts require jQuery. Check the comments in script files to see what's needed. When enabling
-// jQuery, you should first empty the array so that "js/query.min.js" can be the first, and then re-add
+// jQuery, you should first empty the array so that "js/jquery.min.js" can be the first, and then re-add
 // "js/inline-expanding.js" or else the inline-expanding script might not interact properly with other
 // scripts.
-// $config['additional_javascript'] = [];
+$config['additional_javascript'] = [];
 $config['additional_javascript'][] = 'js/jquery.min.js';
-// $config['additional_javascript'][] = 'js/inline-expanding.js';
-// $config['additional_javascript'][] = 'js/auto-reload.js';
-// $config['additional_javascript'][] = 'js/post-hover.js';
 $config['additional_javascript'][] = 'js/style-select.js';
+$config['additional_javascript'][] = 'js/catalog-link.js';
+$config['additional_javascript'][] = 'js/forced-anon.js';
+$config['additional_javascript'][] = 'js/show-backlinks.js';
+$config['additional_javascript'][] = 'js/hide-threads.js';
+$config['additional_javascript'][] = 'js/hide-images.js';
+$config['additional_javascript'][] = 'js/show-op.js';
+$config['additional_javascript'][] = 'js/download-original.js';
 
 // Where these script files are located on the web. Defaults to $config['root'].
 // $config['additional_javascript_url'] = 'http://static.example.org/tinyboard-javascript-stuff/';

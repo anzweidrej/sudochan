@@ -13,8 +13,6 @@
  *
  */
 
-import $ from 'jquery';
-
 $(document).ready(function () {
     $(
         'form[name="postcontrols"] div.delete input:not([type="checkbox"]):not([type="submit"]):not([type="hidden"])',

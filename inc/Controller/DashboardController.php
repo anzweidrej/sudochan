@@ -8,6 +8,7 @@ namespace Sudochan\Controller;
 
 use Sudochan\Mod\Auth;
 use Sudochan\Cache;
+use Sudochan\Service\BoardService;
 
 class DashboardController
 {
@@ -17,7 +18,7 @@ class DashboardController
 
         $args = [];
 
-        $args['boards'] = listBoards();
+        $args['boards'] = BoardService::listBoards();
 
         if (hasPermission($config['mod']['noticeboard'])) {
             if (!$config['cache']['enabled'] || !$args['noticeboard'] = Cache::get('noticeboard_preview')) {
@@ -121,7 +122,7 @@ class DashboardController
             @set_time_limit($config['mod']['rebuild_timelimit']);
 
             $log = [];
-            $boards = listBoards();
+            $boards = BoardService::listBoards();
             $rebuilt_scripts = [];
 
             if (isset($_POST['rebuild_cache'])) {
@@ -161,7 +162,7 @@ class DashboardController
                     continue;
                 }
 
-                openBoard($board['uri']);
+                BoardService::openBoard($board['uri']);
                 $config['try_smarter'] = false;
 
                 if (isset($_POST['rebuild_index'])) {
@@ -189,7 +190,7 @@ class DashboardController
         }
 
         mod_page(_('Rebuild'), 'mod/rebuild.html', [
-            'boards' => listBoards(),
+            'boards' => BoardService::listBoards(),
             'token' => Auth::make_secure_link_token('rebuild'),
         ]);
     }

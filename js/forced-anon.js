@@ -12,8 +12,6 @@
  *
  */
 
-import $ from 'jquery';
-
 $(document).ready(function () {
     var force_anon = function () {
         if ($(this).children('a.capcode').length == 0) {

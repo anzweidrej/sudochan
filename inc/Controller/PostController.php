@@ -9,6 +9,7 @@ namespace Sudochan\Controller;
 use Sudochan\Mod\Auth;
 use Sudochan\EventDispatcher;
 use Sudochan\Bans;
+use Sudochan\Service\BoardService;
 
 class PostController
 {
@@ -16,7 +17,7 @@ class PostController
     {
         global $config;
 
-        if (!openBoard($board)) {
+        if (!BoardService::openBoard($board)) {
             error($config['error']['noboard']);
         }
 
@@ -54,7 +55,7 @@ class PostController
     {
         global $config;
 
-        if (!openBoard($board)) {
+        if (!BoardService::openBoard($board)) {
             error($config['error']['noboard']);
         }
 
@@ -79,7 +80,7 @@ class PostController
     {
         global $config;
 
-        if (!openBoard($board)) {
+        if (!BoardService::openBoard($board)) {
             error($config['error']['noboard']);
         }
 
@@ -104,7 +105,7 @@ class PostController
     {
         global $board, $config, $mod, $pdo;
 
-        if (!openBoard($originBoard)) {
+        if (!BoardService::openBoard($originBoard)) {
             error($config['error']['noboard']);
         }
 
@@ -147,7 +148,7 @@ class PostController
             // allow thread to keep its same traits (stickied, locked, etc.)
             $post['mod'] = true;
 
-            if (!openBoard($targetBoard)) {
+            if (!BoardService::openBoard($targetBoard)) {
                 error($config['error']['noboard']);
             }
 
@@ -163,7 +164,7 @@ class PostController
             }
 
             // go back to the original board to fetch replies
-            openBoard($originBoard);
+            BoardService::openBoard($originBoard);
 
             $query = prepare(sprintf('SELECT * FROM ``posts_%s`` WHERE `thread` = :id ORDER BY `id`', $originBoard));
             $query->bindValue(':id', $postID, \PDO::PARAM_INT);
@@ -191,7 +192,7 @@ class PostController
 
             $newIDs = [$postID => $newID];
 
-            openBoard($targetBoard);
+            BoardService::openBoard($targetBoard);
 
             foreach ($replies as &$post) {
                 $query = prepare('SELECT `target` FROM ``cites`` WHERE `target_board` = :board AND `board` = :board AND `post` = :post');
@@ -249,7 +250,7 @@ class PostController
             rebuildThemes('post', $targetBoard);
 
             // return to original board
-            openBoard($originBoard);
+            BoardService::openBoard($originBoard);
 
             if ($shadow) {
                 // lock old thread
@@ -287,12 +288,12 @@ class PostController
                 deletePost($postID);
                 buildIndex();
 
-                openBoard($targetBoard);
+                BoardService::openBoard($targetBoard);
                 header('Location: ?/' . sprintf($config['board_path'], $board['uri']) . $config['dir']['res'] . sprintf($config['file_page'], $newID), true, $config['redirect_http']);
             }
         }
 
-        $boards = listBoards();
+        $boards = BoardService::listBoards();
         if (count($boards) <= 1) {
             error(_('Impossible to move thread; there is only one board.'));
         }
@@ -306,7 +307,7 @@ class PostController
     {
         global $config, $mod;
 
-        if (!openBoard($board)) {
+        if (!BoardService::openBoard($board)) {
             error($config['error']['noboard']);
         }
 
@@ -375,7 +376,7 @@ class PostController
             'post' => $post,
             'board' => $board,
             'delete' => (bool) $delete,
-            'boards' => listBoards(),
+            'boards' => BoardService::listBoards(),
             'token' => $security_token,
         ];
 
@@ -386,7 +387,7 @@ class PostController
     {
         global $config, $mod;
 
-        if (!openBoard($board)) {
+        if (!BoardService::openBoard($board)) {
             error($config['error']['noboard']);
         }
 
@@ -455,7 +456,7 @@ class PostController
     {
         global $config, $mod;
 
-        if (!openBoard($board)) {
+        if (!BoardService::openBoard($board)) {
             error($config['error']['noboard']);
         }
 
@@ -479,7 +480,7 @@ class PostController
     {
         global $config, $mod;
 
-        if (!openBoard($board)) {
+        if (!BoardService::openBoard($board)) {
             error($config['error']['noboard']);
         }
 
@@ -505,7 +506,7 @@ class PostController
     {
         global $config, $mod;
 
-        if (!openBoard($board)) {
+        if (!BoardService::openBoard($board)) {
             error($config['error']['noboard']);
         }
 
@@ -551,7 +552,7 @@ class PostController
 
         $global = (bool) $global;
 
-        if (!openBoard($boardName)) {
+        if (!BoardService::openBoard($boardName)) {
             error($config['error']['noboard']);
         }
 
@@ -571,7 +572,7 @@ class PostController
             error($config['error']['invalidpost']);
         }
 
-        $boards = $global ? listBoards() : [['uri' => $boardName]];
+        $boards = $global ? BoardService::listBoards() : [['uri' => $boardName]];
 
         $query = '';
         foreach ($boards as $_board) {
@@ -592,7 +593,7 @@ class PostController
         $threads_to_rebuild = [];
         $threads_deleted = [];
         while ($post = $query->fetch(\PDO::FETCH_ASSOC)) {
-            openBoard($post['board']);
+            BoardService::openBoard($post['board']);
 
             deletePost($post['id'], false, false);
 
@@ -606,7 +607,7 @@ class PostController
         }
 
         foreach ($threads_to_rebuild as $_board => $_threads) {
-            openBoard($_board);
+            BoardService::openBoard($_board);
             foreach ($_threads as $_thread => $_dummy) {
                 if ($_dummy && !isset($threads_deleted[$_board][$_thread])) {
                     buildThread($_thread);

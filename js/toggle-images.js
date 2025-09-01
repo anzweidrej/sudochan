@@ -11,8 +11,6 @@
  *
  */
 
-import $ from 'jquery';
-
 $(document).ready(function () {
     var hide_images = localStorage['hideimages'] ? true : false;
 

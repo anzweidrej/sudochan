@@ -11,8 +11,6 @@
  *
  */
 
-import $ from 'jquery';
-
 $(window).ready(function () {
     var do_not_ajax = false;
 

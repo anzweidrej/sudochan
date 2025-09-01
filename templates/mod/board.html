@@ -45,6 +45,18 @@
                        autocomplete="off">
             </td>
         </tr>
+        <tr>
+            <th>
+                {% trans 'Category' %}
+            </th>
+            <td>
+                <input size="25"
+                       type="text"
+                       name="category"
+                       value="{{ board.category|e }}"
+                       autocomplete="off">
+            </td>
+        </tr>
     </table>
     <ul style="padding:0;text-align:center;list-style:none">
         {% if new %}

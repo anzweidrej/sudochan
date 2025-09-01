@@ -12,8 +12,6 @@
  *   $config['additional_javascript'][] = 'js/catalog-link.js';
  */
 
-import $ from 'jquery';
-
 $(document).ready(function catalog() {
     var board = $("input[name='board']");
 

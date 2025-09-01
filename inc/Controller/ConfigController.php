@@ -8,6 +8,7 @@ namespace Sudochan\Controller;
 
 use Sudochan\Mod\Auth;
 use Sudochan\Mod\ConfigEditor;
+use Sudochan\Service\BoardService;
 
 class ConfigController
 {
@@ -15,7 +16,7 @@ class ConfigController
     {
         global $config, $mod, $board;
 
-        if ($board_config && !openBoard($board_config)) {
+        if ($board_config && !BoardService::openBoard($board_config)) {
             error($config['error']['noboard']);
         }
 
@@ -44,7 +45,7 @@ class ConfigController
             mod_page(_('Config editor'), 'mod/config-editor-php.html', [
                 'php' => $instance_config,
                 'readonly' => $readonly,
-                'boards' => listBoards(),
+                'boards' => BoardService::listBoards(),
                 'board' => $board_config,
                 'file' => $config_file,
                 'token' => Auth::make_secure_link_token('config' . ($board_config ? '/' . $board_config : '')),
@@ -143,7 +144,7 @@ class ConfigController
             _('Config editor') . ($board_config ? ': ' . sprintf($config['board_abbreviation'], $board_config) : ''),
             'mod/config-editor.html',
             [
-                'boards' => listBoards(),
+                'boards' => BoardService::listBoards(),
                 'board' => $board_config,
                 'conf' => $conf,
                 'file' => $config_file,

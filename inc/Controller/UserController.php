@@ -7,6 +7,7 @@
 namespace Sudochan\Controller;
 
 use Sudochan\Mod\Auth;
+use Sudochan\Service\BoardService;
 
 class UserController
 {
@@ -29,7 +30,7 @@ class UserController
             if (isset($_POST['allboards'])) {
                 $boards = ['*'];
             } else {
-                $_boards = listBoards();
+                $_boards = BoardService::listBoards();
                 foreach ($_boards as &$board) {
                     $board = $board['uri'];
                 }
@@ -140,7 +141,7 @@ class UserController
         mod_page(_('Edit user'), 'mod/user.html', [
             'user' => $user,
             'logs' => $log,
-            'boards' => listBoards(),
+            'boards' => BoardService::listBoards(),
             'token' => Auth::make_secure_link_token('users/' . $user['id']),
         ]);
     }
@@ -164,7 +165,7 @@ class UserController
             if (isset($_POST['allboards'])) {
                 $boards = ['*'];
             } else {
-                $_boards = listBoards();
+                $_boards = BoardService::listBoards();
                 foreach ($_boards as &$board) {
                     $board = $board['uri'];
                 }
@@ -201,7 +202,7 @@ class UserController
             return;
         }
 
-        mod_page(_('New user'), 'mod/user.html', ['new' => true, 'boards' => listBoards(), 'token' => Auth::make_secure_link_token('users/new')]);
+        mod_page(_('New user'), 'mod/user.html', ['new' => true, 'boards' => BoardService::listBoards(), 'token' => Auth::make_secure_link_token('users/new')]);
     }
 
     public function mod_users(): void

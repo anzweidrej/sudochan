@@ -51,7 +51,7 @@ bug, please report it.
 If you need assistance with installing, configuring, or using Sudochan, you may
 find support from a variety of sources:
 
-- If you're unsure about how to enable or configure certain features, make sure you have read the comments in inc/config.php
+- If you're unsure about how to enable or configure certain features, make sure you have read the comments in etc/config.php
 - Create a Github issue
 
 ### License

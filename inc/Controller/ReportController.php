@@ -9,6 +9,7 @@ namespace Sudochan\Controller;
 use Sudochan\Mod\Auth;
 use Sudochan\Entity\Post;
 use Sudochan\Entity\Thread;
+use Sudochan\Service\BoardService;
 
 class ReportController
 {
@@ -55,7 +56,7 @@ class ReportController
                 continue;
             }
 
-            openBoard($report['board']);
+            BoardService::openBoard($report['board']);
 
             $post = &$report_posts[$report['board']][$report['post']];
 

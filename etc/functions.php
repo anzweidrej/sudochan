@@ -11,15 +11,14 @@ if (realpath($_SERVER['SCRIPT_FILENAME']) == str_replace('\\', '/', __FILE__)) {
 
 use Sudochan\Api;
 use Sudochan\Bans;
+use Sudochan\Service\BoardService;
 use Sudochan\Cache;
 use Sudochan\EventDispatcher;
 use Sudochan\Filter;
 use Sudochan\Mod\Auth;
 use Sudochan\Remote;
-use Sudochan\Entity\{
-    Post,
-    Thread
-};
+use Sudochan\Entity\Post;
+use Sudochan\Entity\Thread;
 
 $microtime_start = microtime(true);
 
@@ -361,88 +360,6 @@ function mb_substr_replace(string $string, string $replacement, int $start, int 
     return mb_substr($string, 0, $start) . $replacement . mb_substr($string, $start + $length);
 }
 
-function setupBoard(array $array): void
-{
-    global $board, $config;
-
-    $board = [
-        'uri' => $array['uri'],
-        'title' => $array['title'],
-        'subtitle' => $array['subtitle'],
-    ];
-
-    // older versions
-    $board['name'] = &$board['title'];
-
-    $board['dir'] = sprintf($config['board_path'], $board['uri']);
-    $board['url'] = sprintf($config['board_abbreviation'], $board['uri']);
-
-    loadConfig();
-
-    if (!file_exists($board['dir'])) {
-        @mkdir($board['dir'], 0777) or error("Couldn't create " . $board['dir'] . ". Check permissions.", true);
-    }
-    if (!file_exists($board['dir'] . $config['dir']['img'])) {
-        @mkdir($board['dir'] . $config['dir']['img'], 0777)
-            or error("Couldn't create " . $board['dir'] . $config['dir']['img'] . ". Check permissions.", true);
-    }
-    if (!file_exists($board['dir'] . $config['dir']['thumb'])) {
-        @mkdir($board['dir'] . $config['dir']['thumb'], 0777)
-            or error("Couldn't create " . $board['dir'] . $config['dir']['img'] . ". Check permissions.", true);
-    }
-    if (!file_exists($board['dir'] . $config['dir']['res'])) {
-        @mkdir($board['dir'] . $config['dir']['res'], 0777)
-            or error("Couldn't create " . $board['dir'] . $config['dir']['img'] . ". Check permissions.", true);
-    }
-}
-
-function openBoard(string $uri): bool
-{
-    global $config, $build_pages;
-
-    if ($config['try_smarter']) {
-        $build_pages = [];
-    }
-
-    $board = getBoardInfo($uri);
-    if ($board) {
-        setupBoard($board);
-        return true;
-    }
-    return false;
-}
-
-function getBoardInfo(string $uri): array|false
-{
-    global $config;
-
-    if ($config['cache']['enabled'] && ($board = Cache::get('board_' . $uri))) {
-        return $board;
-    }
-
-    $query = prepare("SELECT * FROM ``boards`` WHERE `uri` = :uri LIMIT 1");
-    $query->bindValue(':uri', $uri);
-    $query->execute() or error(db_error($query));
-
-    if ($board = $query->fetch(\PDO::FETCH_ASSOC)) {
-        if ($config['cache']['enabled']) {
-            Cache::set('board_' . $uri, $board);
-        }
-        return $board;
-    }
-
-    return false;
-}
-
-function boardTitle(string $uri): string|false
-{
-    $board = getBoardInfo($uri);
-    if ($board) {
-        return $board['title'];
-    }
-    return false;
-}
-
 function purge(string $uri): void
 {
     global $config, $debug;
@@ -613,24 +530,6 @@ function hasPermission(?int $action = null, ?string $board = null, ?array $_mod 
     return true;
 }
 
-function listBoards(): array
-{
-    global $config;
-
-    if ($config['cache']['enabled'] && ($boards = Cache::get('all_boards'))) {
-        return $boards;
-    }
-
-    $query = query("SELECT * FROM ``boards`` ORDER BY `uri`") or error(db_error());
-    $boards = $query->fetchAll();
-
-    if ($config['cache']['enabled']) {
-        Cache::set('all_boards', $boards);
-    }
-
-    return $boards;
-}
-
 function until(int $timestamp): string
 {
     $difference = $timestamp - time();
@@ -677,7 +576,7 @@ function displayBan(array $ban): void
 
     $ban['ip'] = $_SERVER['REMOTE_ADDR'];
     if ($ban['post'] && isset($ban['post']['board'], $ban['post']['id'])) {
-        if (openBoard($ban['post']['board'])) {
+        if (BoardService::openBoard($ban['post']['board'])) {
 
             $query = query(sprintf("SELECT `thumb`, `file` FROM ``posts_%s`` WHERE `id` = " .
                 (int) $ban['post']['id'], $board['uri']));
@@ -1107,13 +1006,13 @@ function deletePost(int $id, bool $error_if_doesnt_exist = true, bool $rebuild_a
             if (!isset($tmp_board)) {
                 $tmp_board = $board['uri'];
             }
-            openBoard($cite['board']);
+            BoardService::openBoard($cite['board']);
         }
         rebuildPost($cite['post']);
     }
 
     if (isset($tmp_board)) {
-        openBoard($tmp_board);
+        BoardService::openBoard($tmp_board);
     }
 
     $query = prepare("DELETE FROM ``cites`` WHERE (`target_board` = :board AND (`target` = " . implode(' OR `target` = ', $ids) . ")) OR (`board` = :board AND (`post` = " . implode(' OR `post` = ', $ids) . "))");
@@ -1234,7 +1133,7 @@ function index(int $page, bool|array $mod = false): array|false
         'body' => $body,
         'post_url' => $config['post_url'],
         'config' => $config,
-        'boardlist' => createBoardlist($mod),
+        'boardlist' => BoardService::createBoardlist($mod),
         'threads' => $threads,
     ];
 }
@@ -1881,7 +1780,7 @@ function markup(string &$body, bool $track_cites = false): array
             $clauses = array_unique($clauses);
 
             if ($board['uri'] != $_board) {
-                if (!openBoard($_board)) {
+                if (!BoardService::openBoard($_board)) {
                     continue;
                 } // Unknown board
             }
@@ -1903,7 +1802,7 @@ function markup(string &$body, bool $track_cites = false): array
 
         // Restore old board
         if ($board['uri'] != $tmp_board) {
-            openBoard($tmp_board);
+            BoardService::openBoard($tmp_board);
         }
 
         foreach ($cites as $matches) {
@@ -2084,7 +1983,7 @@ function buildThread(int $id, bool $return = false, array|bool $mod = false): ?s
         'id' => $id,
         'mod' => $mod,
         'antibot' => $mod || $return ? false : create_antibot($board['uri'], $id),
-        'boardlist' => createBoardlist($mod),
+        'boardlist' => BoardService::createBoardlist($mod),
         'return' => ($mod ? '?' . $board['url'] . $config['file_index'] : $config['root'] . $board['dir'] . $config['file_index']),
     ]);
 
@@ -2345,63 +2244,6 @@ function format_bytes(int|float $size): string
         $size /= 1024;
     }
     return round($size, 2) . $units[$i];
-}
-
-function doBoardListPart(array $list, string $root): string
-{
-    global $config;
-
-    $body = '';
-    // Build board list
-    foreach ($list as $key => $board) {
-        if (is_array($board)) {
-            $body .= ' <span class="sub">[' . doBoardListPart($board, $root) . ']</span> ';
-        } else {
-            if (is_string($key)) {
-                $body .= ' <a href="' . $board . '">' . $key . '</a> /';
-            } else {
-                $body .= ' <a href="' . $root . $board . '/' . $config['file_index'] . '">' . $board . '</a> /';
-            }
-        }
-    }
-    $body = preg_replace('/\/$/', '', $body);
-
-    return $body;
-}
-
-function createBoardlist(bool|array $mod = false): array
-{
-    global $config;
-
-    // Get boards from database
-    $boards = listBoards();
-
-    // Use config boards if set and not empty, else use database boards
-    if (!empty($config['boards']) && is_array($config['boards'])) {
-        $board_list = $config['boards'];
-    } else {
-        $board_list = [];
-        foreach ($boards as $b) {
-            $board_list[] = $b['uri'];
-        }
-    }
-
-    // If no boards available, return empty strings
-    if (empty($board_list)) {
-        return ['top' => '', 'bottom' => ''];
-    }
-
-    $body = doBoardListPart($board_list, $mod ? '?/' : $config['root']);
-    if ($config['boardlist_wrap_bracket'] && !preg_match('/\] $/', $body)) {
-        $body = '[' . $body . ']';
-    }
-
-    $body = trim($body);
-
-    return [
-        'top' => '<div class="boardlist">' . $body . '</div>',
-        'bottom' => '<div class="boardlist bottom">' . $body . '</div>',
-    ];
 }
 
 function error(string $message, bool|int $priority = true, mixed $debug_stuff = false): never

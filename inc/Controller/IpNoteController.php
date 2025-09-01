@@ -10,6 +10,7 @@ use Sudochan\Mod\Auth;
 use Sudochan\Entity\Thread;
 use Sudochan\Entity\Post;
 use Sudochan\Bans;
+use Sudochan\Service\BoardService;
 
 class IpNoteController
 {
@@ -82,9 +83,9 @@ class IpNoteController
             $args['hostname'] = rDNS($ip);
         }
 
-        $boards = listBoards();
+        $boards = BoardService::listBoards();
         foreach ($boards as $board) {
-            openBoard($board['uri']);
+            BoardService::openBoard($board['uri']);
             if (!hasPermission($config['mod']['show_ip'], $board['uri'])) {
                 continue;
             }

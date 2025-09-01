@@ -10,6 +10,7 @@ use Sudochan\Mod\Auth;
 use Sudochan\Bans;
 use Sudochan\Entity\Thread;
 use Sudochan\Entity\Post;
+use Sudochan\Service\BoardService;
 
 class BanController
 {
@@ -138,7 +139,7 @@ class BanController
             $ban['mask'] = Bans::range_to_string([$ban['ipstart'], $ban['ipend']]);
 
             if ($ban['post'] && isset($ban['post']['board'], $ban['post']['id'])) {
-                if (openBoard($ban['post']['board'])) {
+                if (BoardService::openBoard($ban['post']['board'])) {
                     $query = query(sprintf("SELECT `thumb`, `file` FROM ``posts_%s`` WHERE `id` = " .
                         (int) $ban['post']['id'], $board['uri']));
                     if ($_post = $query->fetch(\PDO::FETCH_ASSOC)) {

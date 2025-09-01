@@ -13,8 +13,6 @@
  *
  */
 
-import $ from 'jquery';
-
 $(document).ready(function () {
     var open_form = function () {
         var thread = $(this).parent().parent().hasClass('op');
