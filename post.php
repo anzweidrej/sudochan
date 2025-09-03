@@ -10,6 +10,7 @@ use Sudochan\ImageConvert;
 use Sudochan\EventDispatcher;
 use Sudochan\Bans;
 use Sudochan\Service\BoardService;
+use Sudochan\Handler\ErrorHandler;
 
 require_once 'bootstrap.php';
 
@@ -69,7 +70,7 @@ if (isset($_POST['delete'])) {
                 deletePost($id);
             }
 
-            _syslog(
+            ErrorHandler::_syslog(
                 LOG_INFO,
                 'Deleted post: ' .
                 '/' . $board['dir'] . $config['dir']['res'] . sprintf($config['file_page'], $post['thread'] ? $post['thread'] : $id) . ($post['thread'] ? '#' . $id : ''),
@@ -131,7 +132,7 @@ if (isset($_POST['delete'])) {
         $thread = $query->fetchColumn();
 
         if ($config['syslog']) {
-            _syslog(
+            ErrorHandler::_syslog(
                 LOG_INFO,
                 'Reported post: ' .
                 '/' . $board['dir'] . $config['dir']['res'] . sprintf($config['file_page'], $thread ? $thread : $id) . ($thread ? '#' . $id : '') .
@@ -325,7 +326,7 @@ if (isset($_POST['delete'])) {
         function unlink_tmp_file(string $file): void
         {
             @unlink($file);
-            fatal_error_handler();
+            ErrorHandler::fatal_error_handler();
         }
         register_shutdown_function('unlink_tmp_file', $post['file_tmp']);
 
@@ -805,7 +806,7 @@ if (isset($_POST['delete'])) {
     }
 
     if ($config['syslog']) {
-        _syslog(LOG_INFO, 'New post: /' . $board['dir'] . $config['dir']['res'] .
+        ErrorHandler::_syslog(LOG_INFO, 'New post: /' . $board['dir'] . $config['dir']['res'] .
             sprintf($config['file_page'], $post['op'] ? $id : $post['thread']) . (!$post['op'] ? '#' . $id : ''));
     }
 

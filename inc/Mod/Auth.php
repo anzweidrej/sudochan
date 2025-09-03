@@ -9,6 +9,7 @@ namespace Sudochan\Mod;
 defined('TINYBOARD') or exit;
 
 use Sudochan\Cache;
+use Sudochan\Handler\ErrorHandler;
 
 class Auth
 {
@@ -142,7 +143,7 @@ class Auth
         $query->execute() or error(db_error($query));
 
         if ($config['syslog']) {
-            _syslog(LOG_INFO, '[mod/' . $mod['username'] . ']: ' . $action);
+            ErrorHandler::_syslog(LOG_INFO, '[mod/' . $mod['username'] . ']: ' . $action);
         }
     }
 

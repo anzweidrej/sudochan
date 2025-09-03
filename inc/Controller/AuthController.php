@@ -7,6 +7,7 @@
 namespace Sudochan\Controller;
 
 use Sudochan\Mod\Auth;
+use Sudochan\Handler\ErrorHandler;
 
 class AuthController
 {
@@ -22,7 +23,7 @@ class AuthController
                 $args['error'] = $config['error']['invalid'];
             } elseif (!Auth::login($_POST['username'], $_POST['password'])) {
                 if ($config['syslog']) {
-                    _syslog(LOG_WARNING, 'Unauthorized login attempt!');
+                    ErrorHandler::_syslog(LOG_WARNING, 'Unauthorized login attempt!');
                 }
 
                 $args['error'] = $config['error']['invalid'];
