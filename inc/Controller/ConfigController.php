@@ -9,6 +9,7 @@ namespace Sudochan\Controller;
 use Sudochan\Mod\Auth;
 use Sudochan\Mod\ConfigEditor;
 use Sudochan\Service\BoardService;
+use Sudochan\Manager\PermissionManager;
 
 class ConfigController
 {
@@ -20,7 +21,7 @@ class ConfigController
             error($config['error']['noboard']);
         }
 
-        if (!hasPermission($config['mod']['edit_config'], $board_config)) {
+        if (!PermissionManager::hasPermission($config['mod']['edit_config'], $board_config)) {
             error($config['error']['noaccess']);
         }
 

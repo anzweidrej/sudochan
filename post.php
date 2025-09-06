@@ -9,9 +9,16 @@ use Sudochan\Image;
 use Sudochan\ImageConvert;
 use Sudochan\Dispatcher\EventDispatcher;
 use Sudochan\Bans;
+use Sudochan\Mutes;
 use Sudochan\Service\BoardService;
+use Sudochan\Service\PageService;
+use Sudochan\Service\PostService;
+use Sudochan\Service\MarkupService;
 use Sudochan\Handler\ErrorHandler;
 use Sudochan\Resolver\DNSResolver;
+use Sudochan\Manager\FileManager;
+use Sudochan\Manager\ThemeManager;
+use Sudochan\Manager\PermissionManager;
 
 require_once 'bootstrap.php';
 
@@ -65,10 +72,10 @@ if (isset($_POST['delete'])) {
 
             if (isset($_POST['file'])) {
                 // Delete just the file
-                deleteFile($id);
+                PostService::deleteFile($id);
             } else {
                 // Delete entire post
-                deletePost($id);
+                PostService::deletePost($id);
             }
 
             ErrorHandler::_syslog(
@@ -79,9 +86,9 @@ if (isset($_POST['delete'])) {
         }
     }
 
-    buildIndex();
+    PageService::buildIndex();
 
-    rebuildThemes('post-delete', $board['uri']);
+    ThemeManager::rebuildThemes('post-delete', $board['uri']);
 
     $is_mod = isset($_POST['mod']) && $_POST['mod'];
     $root = $is_mod ? $config['root'] . $config['file_mod'] . '?/' : $config['root'];
@@ -123,7 +130,7 @@ if (isset($_POST['delete'])) {
     }
 
     $reason = escape_markup_modifiers($_POST['reason']);
-    markup($reason);
+    MarkupService::markup($reason);
 
     foreach ($report as &$id) {
         $query = prepare(sprintf("SELECT `thread` FROM ``posts_%s`` WHERE `id` = :id", $board['uri']));
@@ -236,13 +243,13 @@ if (isset($_POST['delete'])) {
         $post['locked'] = $post['op'] && isset($_POST['lock']);
         $post['raw'] = isset($_POST['raw']);
 
-        if ($post['sticky'] && !hasPermission($config['mod']['sticky'], $board['uri'])) {
+        if ($post['sticky'] && !PermissionManager::hasPermission($config['mod']['sticky'], $board['uri'])) {
             error($config['error']['noaccess']);
         }
-        if ($post['locked'] && !hasPermission($config['mod']['lock'], $board['uri'])) {
+        if ($post['locked'] && !PermissionManager::hasPermission($config['mod']['lock'], $board['uri'])) {
             error($config['error']['noaccess']);
         }
-        if ($post['raw'] && !hasPermission($config['mod']['rawhtml'], $board['uri'])) {
+        if ($post['raw'] && !PermissionManager::hasPermission($config['mod']['rawhtml'], $board['uri'])) {
             error($config['error']['noaccess']);
         }
     }
@@ -255,7 +262,7 @@ if (isset($_POST['delete'])) {
     }
 
     if ($config['robot_enable'] && $config['robot_mute']) {
-        checkMute();
+        Mutes::checkMute();
     }
 
     //Check if thread exists
@@ -288,7 +295,7 @@ if (isset($_POST['delete'])) {
         }
     }
 
-    if (!hasPermission($config['mod']['bypass_field_disable'], $board['uri'])) {
+    if (!PermissionManager::hasPermission($config['mod']['bypass_field_disable'], $board['uri'])) {
         if ($config['field_disable_name']) {
             $_POST['name'] = $config['anonymous'];
         } // "forced anonymous"
@@ -388,7 +395,7 @@ if (isset($_POST['delete'])) {
     if (!$post['op']) {
         // Check if thread is locked
         // but allow mods to post
-        if ($thread['locked'] && !hasPermission($config['mod']['postinlocked'], $board['uri'])) {
+        if ($thread['locked'] && !PermissionManager::hasPermission($config['mod']['postinlocked'], $board['uri'])) {
             error($config['error']['locked']);
         }
 
@@ -522,7 +529,7 @@ if (isset($_POST['delete'])) {
         }
     }
 
-    $post['tracked_cites'] = markup($post['body'], true);
+    $post['tracked_cites'] = MarkupService::markup($post['body'], true);
 
     if ($post['has_file']) {
         if (!in_array($post['extension'], $config['allowed_ext']) && !in_array($post['extension'], $config['allowed_ext_files'])) {
@@ -544,7 +551,7 @@ if (isset($_POST['delete'])) {
         $post['filesize'] = filesize($upload);
     }
 
-    if (!hasPermission($config['mod']['bypass_filters'], $board['uri'])) {
+    if (!PermissionManager::hasPermission($config['mod']['bypass_filters'], $board['uri'])) {
         do_filters($post);
     }
 
@@ -553,7 +560,7 @@ if (isset($_POST['delete'])) {
             // Check IE MIME type detection XSS exploit
             $buffer = file_get_contents($upload, false, null, 0, 255);
             if (preg_match($config['ie_mime_type_detection'], $buffer)) {
-                undoImage($post);
+                FileManager::undoImage($post);
                 error($config['error']['mime_exploit']);
             }
 
@@ -691,7 +698,7 @@ if (isset($_POST['delete'])) {
     if ($post['has_file']) {
         if ($config['image_reject_repost']) {
             if ($p = getPostByHash($post['filehash'])) {
-                undoImage($post);
+                FileManager::undoImage($post);
                 error(sprintf(
                     $config['error']['fileexists'],
                     ($post['mod'] ? $config['root'] . $config['file_mod'] . '?/' : $config['root']) .
@@ -706,7 +713,7 @@ if (isset($_POST['delete'])) {
             }
         } elseif (!$post['op'] && $config['image_reject_repost_in_thread']) {
             if ($p = getPostByHashInThread($post['filehash'], $post['thread'])) {
-                undoImage($post);
+                FileManager::undoImage($post);
                 error(sprintf(
                     $config['error']['fileexistsinthread'],
                     ($post['mod'] ? $config['root'] . $config['file_mod'] . '?/' : $config['root']) .
@@ -722,10 +729,10 @@ if (isset($_POST['delete'])) {
         }
     }
 
-    if (!hasPermission($config['mod']['postunoriginal'], $board['uri']) && $config['robot_enable'] && checkRobot($post['body_nomarkup'])) {
-        undoImage($post);
+    if (!PermissionManager::hasPermission($config['mod']['postunoriginal'], $board['uri']) && $config['robot_enable'] && Mutes::checkRobot($post['body_nomarkup'])) {
+        FileManager::undoImage($post);
         if ($config['robot_mute']) {
-            error(sprintf($config['error']['muted'], mute()));
+            error(sprintf($config['error']['muted'], Mutes::mute()));
         } else {
             error($config['error']['unoriginal']);
         }
@@ -743,14 +750,14 @@ if (isset($_POST['delete'])) {
 
     $post = (object) $post;
     if ($error = EventDispatcher::event('post', $post)) {
-        undoImage((array) $post);
+        FileManager::undoImage((array) $post);
         error($error);
     }
     $post = (array) $post;
 
-    $post['id'] = $id = post($post);
+    $post['id'] = $id = PostService::post($post);
 
-    insertFloodPost($post);
+    PostService::insertFloodPost($post);
 
     if (isset($post['antispam_hash'])) {
         incrementSpamHash($post['antispam_hash']);
@@ -767,22 +774,22 @@ if (isset($_POST['delete'])) {
     }
 
     if (!$post['op'] && strtolower($post['email']) != 'sage' && !$thread['sage'] && ($config['reply_limit'] == 0 || $numposts['replies'] + 1 < $config['reply_limit'])) {
-        bumpThread($post['thread']);
+        PostService::bumpThread($post['thread']);
     }
 
-    buildThread($post['op'] ? $id : $post['thread']);
+    PostService::buildThread($post['op'] ? $id : $post['thread']);
 
     if ($config['try_smarter'] && $post['op']) {
         $build_pages = range(1, $config['max_pages']);
     }
 
     if ($post['op']) {
-        clean();
+        PostService::clean();
     }
 
     EventDispatcher::event('post-after', $post);
 
-    buildIndex();
+    PageService::buildIndex();
 
     if (isset($_SERVER['HTTP_REFERER'])) {
         // Tell Javascript that we posted successfully
@@ -812,9 +819,9 @@ if (isset($_POST['delete'])) {
     }
 
     if ($post['op']) {
-        rebuildThemes('post-thread', $board['uri']);
+        ThemeManager::rebuildThemes('post-thread', $board['uri']);
     } else {
-        rebuildThemes('post', $board['uri']);
+        ThemeManager::rebuildThemes('post', $board['uri']);
     }
 
     if (!isset($_POST['json_response'])) {

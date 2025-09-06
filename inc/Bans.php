@@ -8,6 +8,7 @@ namespace Sudochan;
 
 use Lifo\IP\CIDR;
 use Sudochan\Mod\Auth;
+use Sudochan\Service\MarkupService;
 
 class Bans
 {
@@ -252,7 +253,7 @@ class Bans
 
         if ($reason !== '') {
             $reason = escape_markup_modifiers($reason);
-            markup($reason);
+            MarkupService::markup($reason);
             $query->bindValue(':reason', $reason);
         } else {
             $query->bindValue(':reason', null, \PDO::PARAM_NULL);

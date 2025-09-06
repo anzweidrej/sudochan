@@ -6,6 +6,8 @@
 
 namespace Sudochan\Controller;
 
+use Sudochan\Manager\PermissionManager;
+
 class LogController
 {
     public function mod_log(int $page_no = 1): void
@@ -16,7 +18,7 @@ class LogController
             error($config['error']['404']);
         }
 
-        if (!hasPermission($config['mod']['modlog'])) {
+        if (!PermissionManager::hasPermission($config['mod']['modlog'])) {
             error($config['error']['noaccess']);
         }
 
@@ -45,7 +47,7 @@ class LogController
             error($config['error']['404']);
         }
 
-        if (!hasPermission($config['mod']['modlog'])) {
+        if (!PermissionManager::hasPermission($config['mod']['modlog'])) {
             error($config['error']['noaccess']);
         }
 

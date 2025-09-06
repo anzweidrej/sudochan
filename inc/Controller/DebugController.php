@@ -8,6 +8,7 @@ namespace Sudochan\Controller;
 
 use Sudochan\Mod\Auth;
 use Sudochan\Service\BoardService;
+use Sudochan\Manager\PermissionManager;
 
 class DebugController
 {
@@ -90,7 +91,7 @@ class DebugController
     {
         global $config;
 
-        if (!hasPermission($config['mod']['debug_sql'])) {
+        if (!PermissionManager::hasPermission($config['mod']['debug_sql'])) {
             error($config['error']['noaccess']);
         }
 
@@ -117,7 +118,7 @@ class DebugController
     {
         global $config;
 
-        if (!hasPermission($config['mod']['debug_apc'])) {
+        if (!PermissionManager::hasPermission($config['mod']['debug_apc'])) {
             error($config['error']['noaccess']);
         }
 

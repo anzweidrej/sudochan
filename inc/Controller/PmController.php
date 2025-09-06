@@ -8,6 +8,8 @@ namespace Sudochan\Controller;
 
 use Sudochan\Mod\Auth;
 use Sudochan\Cache;
+use Sudochan\Manager\PermissionManager;
+use Sudochan\Service\MarkupService;
 
 class PmController
 {
@@ -15,7 +17,7 @@ class PmController
     {
         global $mod, $config;
 
-        if ($reply && !hasPermission($config['mod']['create_pm'])) {
+        if ($reply && !PermissionManager::hasPermission($config['mod']['create_pm'])) {
             error($config['error']['noaccess']);
         }
 
@@ -23,7 +25,7 @@ class PmController
         $query->bindValue(':id', $id);
         $query->execute() or error(db_error($query));
 
-        if ((!$pm = $query->fetch(\PDO::FETCH_ASSOC)) || ($pm['to'] != $mod['id'] && !hasPermission($config['mod']['master_pm']))) {
+        if ((!$pm = $query->fetch(\PDO::FETCH_ASSOC)) || ($pm['to'] != $mod['id'] && !PermissionManager::hasPermission($config['mod']['master_pm']))) {
             error($config['error']['404']);
         }
 
@@ -99,7 +101,7 @@ class PmController
     {
         global $config, $mod;
 
-        if (!hasPermission($config['mod']['create_pm'])) {
+        if (!PermissionManager::hasPermission($config['mod']['create_pm'])) {
             error($config['error']['noaccess']);
         }
 
@@ -120,7 +122,7 @@ class PmController
 
         if (isset($_POST['message'])) {
             $_POST['message'] = escape_markup_modifiers($_POST['message']);
-            markup($_POST['message']);
+            MarkupService::markup($_POST['message']);
 
             $query = prepare("INSERT INTO ``pms`` VALUES (NULL, :me, :id, :message, :time, 1)");
             $query->bindValue(':me', $mod['id']);

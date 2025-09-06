@@ -10,6 +10,7 @@ use Sudochan\Mod\Auth;
 use Sudochan\Entity\Post;
 use Sudochan\Entity\Thread;
 use Sudochan\Service\BoardService;
+use Sudochan\Manager\PermissionManager;
 
 class ReportController
 {
@@ -17,7 +18,7 @@ class ReportController
     {
         global $config, $mod;
 
-        if (!hasPermission($config['mod']['reports'])) {
+        if (!PermissionManager::hasPermission($config['mod']['reports'])) {
             error($config['error']['noaccess']);
         }
 
@@ -114,11 +115,11 @@ class ReportController
             error($config['error']['404']);
         }
 
-        if (!$all && !hasPermission($config['mod']['report_dismiss'], $board)) {
+        if (!$all && !PermissionManager::hasPermission($config['mod']['report_dismiss'], $board)) {
             error($config['error']['noaccess']);
         }
 
-        if ($all && !hasPermission($config['mod']['report_dismiss_ip'], $board)) {
+        if ($all && !PermissionManager::hasPermission($config['mod']['report_dismiss_ip'], $board)) {
             error($config['error']['noaccess']);
         }
 

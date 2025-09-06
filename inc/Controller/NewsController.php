@@ -7,6 +7,9 @@
 namespace Sudochan\Controller;
 
 use Sudochan\Mod\Auth;
+use Sudochan\Manager\ThemeManager;
+use Sudochan\Manager\PermissionManager;
+use Sudochan\Service\MarkupService;
 
 class NewsController
 {
@@ -19,15 +22,15 @@ class NewsController
         }
 
         if (isset($_POST['subject'], $_POST['body'])) {
-            if (!hasPermission($config['mod']['news'])) {
+            if (!PermissionManager::hasPermission($config['mod']['news'])) {
                 error($config['error']['noaccess']);
             }
 
             $_POST['body'] = escape_markup_modifiers($_POST['body']);
-            markup($_POST['body']);
+            MarkupService::markup($_POST['body']);
 
             $query = prepare('INSERT INTO ``news`` VALUES (NULL, :name, :time, :subject, :body)');
-            $query->bindValue(':name', isset($_POST['name']) && hasPermission($config['mod']['news_custom']) ? $_POST['name'] : $mod['username']);
+            $query->bindValue(':name', isset($_POST['name']) && PermissionManager::hasPermission($config['mod']['news_custom']) ? $_POST['name'] : $mod['username']);
             $query->bindValue(':time', time());
             $query->bindValue(':subject', $_POST['subject']);
             $query->bindValue(':body', $_POST['body']);
@@ -35,7 +38,7 @@ class NewsController
 
             Auth::modLog('Posted a news entry');
 
-            rebuildThemes('news');
+            ThemeManager::rebuildThemes('news');
 
             header('Location: ?/news#' . $pdo->lastInsertId(), true, $config['redirect_http']);
         }
@@ -65,7 +68,7 @@ class NewsController
     {
         global $config;
 
-        if (!hasPermission($config['mod']['news_delete'])) {
+        if (!PermissionManager::hasPermission($config['mod']['news_delete'])) {
             error($config['error']['noaccess']);
         }
 

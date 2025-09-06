@@ -9,6 +9,10 @@ namespace Sudochan\Controller;
 use Sudochan\Mod\Auth;
 use Sudochan\Cache;
 use Sudochan\Service\BoardService;
+use Sudochan\Service\PageService;
+use Sudochan\Service\PostService;
+use Sudochan\Manager\ThemeManager;
+use Sudochan\Manager\PermissionManager;
 
 class DashboardController
 {
@@ -20,7 +24,7 @@ class DashboardController
 
         $args['boards'] = BoardService::listBoards();
 
-        if (hasPermission($config['mod']['noticeboard'])) {
+        if (PermissionManager::hasPermission($config['mod']['noticeboard'])) {
             if (!$config['cache']['enabled'] || !$args['noticeboard'] = Cache::get('noticeboard_preview')) {
                 $query = prepare("SELECT ``noticeboard``.*, `username` FROM ``noticeboard`` LEFT JOIN ``mods`` ON ``mods``.`id` = `mod` ORDER BY `id` DESC LIMIT :limit");
                 $query->bindValue(':limit', $config['mod']['noticeboard_dashboard'], \PDO::PARAM_INT);
@@ -114,7 +118,7 @@ class DashboardController
     {
         global $config, $twig;
 
-        if (!hasPermission($config['mod']['rebuild'])) {
+        if (!PermissionManager::hasPermission($config['mod']['rebuild'])) {
             error($config['error']['noaccess']);
         }
 
@@ -148,12 +152,12 @@ class DashboardController
 
             if (isset($_POST['rebuild_themes'])) {
                 $log[] = 'Regenerating theme files';
-                rebuildThemes('all');
+                ThemeManager::rebuildThemes('all');
             }
 
             if (isset($_POST['rebuild_javascript'])) {
                 $log[] = 'Rebuilding <strong>' . $config['file_script'] . '</strong>';
-                buildJavascript();
+                PageService::buildJavascript();
                 $rebuilt_scripts[] = $config['file_script'];
             }
 
@@ -166,13 +170,13 @@ class DashboardController
                 $config['try_smarter'] = false;
 
                 if (isset($_POST['rebuild_index'])) {
-                    buildIndex();
+                    PageService::buildIndex();
                     $log[] = '<strong>' . sprintf($config['board_abbreviation'], $board['uri']) . '</strong>: Creating index pages';
                 }
 
                 if (isset($_POST['rebuild_javascript']) && !in_array($config['file_script'], $rebuilt_scripts)) {
                     $log[] = '<strong>' . sprintf($config['board_abbreviation'], $board['uri']) . '</strong>: Rebuilding <strong>' . $config['file_script'] . '</strong>';
-                    buildJavascript();
+                    PageService::buildJavascript();
                     $rebuilt_scripts[] = $config['file_script'];
                 }
 
@@ -180,7 +184,7 @@ class DashboardController
                     $query = query(sprintf("SELECT `id` FROM ``posts_%s`` WHERE `thread` IS NULL", $board['uri'])) or error(db_error());
                     while ($post = $query->fetch(\PDO::FETCH_ASSOC)) {
                         $log[] = '<strong>' . sprintf($config['board_abbreviation'], $board['uri']) . '</strong>: Rebuilding thread #' . $post['id'];
-                        buildThread($post['id']);
+                        PostService::buildThread($post['id']);
                     }
                 }
             }

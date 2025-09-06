@@ -6,6 +6,9 @@
 
 namespace Sudochan\Entity;
 
+use Sudochan\Manager\PermissionManager;
+use Sudochan\Service\MarkupService;
+
 class Post
 {
     public int $id;
@@ -63,7 +66,7 @@ class Post
 
         if ($config['always_regenerate_markup']) {
             $this->body = $this->body_nomarkup;
-            markup($this->body);
+            MarkupService::markup($this->body);
         }
 
         if ($this->mod) {
@@ -93,42 +96,42 @@ class Post
             // Mod controls (on posts)
 
             // Delete
-            if (hasPermission($config['mod']['delete'], $board['uri'], $this->mod)) {
+            if (PermissionManager::hasPermission($config['mod']['delete'], $board['uri'], $this->mod)) {
                 $built .= ' ' . secure_link_confirm($config['mod']['link_delete'], 'Delete', 'Are you sure you want to delete this?', $board['dir'] . 'delete/' . $this->id);
             }
 
             // Delete all posts by IP
-            if (hasPermission($config['mod']['deletebyip'], $board['uri'], $this->mod)) {
+            if (PermissionManager::hasPermission($config['mod']['deletebyip'], $board['uri'], $this->mod)) {
                 $built .= ' ' . secure_link_confirm($config['mod']['link_deletebyip'], 'Delete all posts by IP', 'Are you sure you want to delete all posts by this IP address?', $board['dir'] . 'deletebyip/' . $this->id);
             }
 
             // Delete all posts by IP (global)
-            if (hasPermission($config['mod']['deletebyip_global'], $board['uri'], $this->mod)) {
+            if (PermissionManager::hasPermission($config['mod']['deletebyip_global'], $board['uri'], $this->mod)) {
                 $built .= ' ' . secure_link_confirm($config['mod']['link_deletebyip_global'], 'Delete all posts by IP across all boards', 'Are you sure you want to delete all posts by this IP address, across all boards?', $board['dir'] . 'deletebyip/' . $this->id . '/global');
             }
 
             // Ban
-            if (hasPermission($config['mod']['ban'], $board['uri'], $this->mod)) {
+            if (PermissionManager::hasPermission($config['mod']['ban'], $board['uri'], $this->mod)) {
                 $built .= ' <a title="' . _('Ban') . '" href="?/' . $board['dir'] . 'ban/' . $this->id . '">' . $config['mod']['link_ban'] . '</a>';
             }
 
             // Ban & Delete
-            if (hasPermission($config['mod']['bandelete'], $board['uri'], $this->mod)) {
+            if (PermissionManager::hasPermission($config['mod']['bandelete'], $board['uri'], $this->mod)) {
                 $built .= ' <a title="' . _('Ban & Delete') . '" href="?/' . $board['dir'] . 'ban&amp;delete/' . $this->id . '">' . $config['mod']['link_bandelete'] . '</a>';
             }
 
             // Delete file (keep post)
-            if (!empty($this->file) && hasPermission($config['mod']['deletefile'], $board['uri'], $this->mod)) {
+            if (!empty($this->file) && PermissionManager::hasPermission($config['mod']['deletefile'], $board['uri'], $this->mod)) {
                 $built .= ' ' . secure_link_confirm($config['mod']['link_deletefile'], _('Delete file'), _('Are you sure you want to delete this file?'), $board['dir'] . 'deletefile/' . $this->id);
             }
 
             // Spoiler file (keep post)
-            if (!empty($this->file)  && $this->file != 'deleted' && $this->thumb != 'spoiler' && hasPermission($config['mod']['spoilerimage'], $board['uri'], $this->mod) && $config['spoiler_images']) {
+            if (!empty($this->file)  && $this->file != 'deleted' && $this->thumb != 'spoiler' && PermissionManager::hasPermission($config['mod']['spoilerimage'], $board['uri'], $this->mod) && $config['spoiler_images']) {
                 $built .= ' ' . secure_link_confirm($config['mod']['link_spoilerimage'], 'Spoiler File', 'Are you sure you want to spoiler this file?', $board['uri'] . '/spoiler/' . $this->id);
             }
 
             // Edit post
-            if (hasPermission($config['mod']['editpost'], $board['uri'], $this->mod)) {
+            if (PermissionManager::hasPermission($config['mod']['editpost'], $board['uri'], $this->mod)) {
                 $built .= ' <a title="' . _('Edit post') . '" href="?/' . $board['dir'] . 'edit' . ($config['mod']['raw_html_default'] ? '_raw' : '') . '/' . $this->id . '">' . $config['mod']['link_editpost'] . '</a>';
             }
 

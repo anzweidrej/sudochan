@@ -11,6 +11,7 @@ use Sudochan\Bans;
 use Sudochan\Entity\Thread;
 use Sudochan\Entity\Post;
 use Sudochan\Service\BoardService;
+use Sudochan\Manager\PermissionManager;
 
 class BanController
 {
@@ -18,7 +19,7 @@ class BanController
     {
         global $config;
 
-        if (!hasPermission($config['mod']['ban'])) {
+        if (!PermissionManager::hasPermission($config['mod']['ban'])) {
             error($config['error']['noaccess']);
         }
 
@@ -44,12 +45,12 @@ class BanController
             error($config['error']['404']);
         }
 
-        if (!hasPermission($config['mod']['view_banlist'])) {
+        if (!PermissionManager::hasPermission($config['mod']['view_banlist'])) {
             error($config['error']['noaccess']);
         }
 
         if (isset($_POST['unban'])) {
-            if (!hasPermission($config['mod']['unban'])) {
+            if (!PermissionManager::hasPermission($config['mod']['unban'])) {
                 error($config['error']['noaccess']);
             }
 
@@ -93,7 +94,7 @@ class BanController
     {
         global $config, $board;
 
-        if (!hasPermission($config['mod']['view_ban_appeals'])) {
+        if (!PermissionManager::hasPermission($config['mod']['view_ban_appeals'])) {
             error($config['error']['noaccess']);
         }
 
@@ -102,7 +103,7 @@ class BanController
             or error(db_error());
 
         if (isset($_POST['appeal_id']) && (isset($_POST['unban']) || isset($_POST['deny']))) {
-            if (!hasPermission($config['mod']['ban_appeals'])) {
+            if (!PermissionManager::hasPermission($config['mod']['ban_appeals'])) {
                 error($config['error']['noaccess']);
             }
 

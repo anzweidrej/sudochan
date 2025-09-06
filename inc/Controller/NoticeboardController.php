@@ -8,6 +8,8 @@ namespace Sudochan\Controller;
 
 use Sudochan\Mod\Auth;
 use Sudochan\Cache;
+use Sudochan\Manager\PermissionManager;
+use Sudochan\Service\MarkupService;
 
 class NoticeboardController
 {
@@ -19,17 +21,17 @@ class NoticeboardController
             error($config['error']['404']);
         }
 
-        if (!hasPermission($config['mod']['noticeboard'])) {
+        if (!PermissionManager::hasPermission($config['mod']['noticeboard'])) {
             error($config['error']['noaccess']);
         }
 
         if (isset($_POST['subject'], $_POST['body'])) {
-            if (!hasPermission($config['mod']['noticeboard_post'])) {
+            if (!PermissionManager::hasPermission($config['mod']['noticeboard_post'])) {
                 error($config['error']['noaccess']);
             }
 
             $_POST['body'] = escape_markup_modifiers($_POST['body']);
-            markup($_POST['body']);
+            MarkupService::markup($_POST['body']);
 
             $query = prepare('INSERT INTO ``noticeboard`` VALUES (NULL, :mod, :time, :subject, :body)');
             $query->bindValue(':mod', $mod['id']);
@@ -76,7 +78,7 @@ class NoticeboardController
     {
         global $config;
 
-        if (!hasPermission($config['mod']['noticeboard_delete'])) {
+        if (!PermissionManager::hasPermission($config['mod']['noticeboard_delete'])) {
             error($config['error']['noaccess']);
         }
 

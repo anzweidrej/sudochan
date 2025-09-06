@@ -8,6 +8,7 @@
 define('VERSION', 'v0.9.6-dev-22');
 
 use Sudochan\Service\BoardService;
+use Sudochan\Service\PageService;
 use Sudochan\Manager\FileManager;
 
 require_once 'bootstrap.php';
@@ -827,7 +828,7 @@ if ($step == 0) {
 } elseif ($step == 4) {
     // SQL installation
 
-    buildJavascript();
+    PageService::buildJavascript();
 
     $sql = @file_get_contents('install.sql') or error("Couldn't load install.sql.");
 
@@ -866,7 +867,7 @@ if ($step == 0) {
         $boards = BoardService::listBoards();
         foreach ($boards as &$_board) {
             BoardService::setupBoard($_board);
-            buildIndex();
+            PageService::buildIndex();
         }
 
         FileManager::file_write($config['has_installed'], VERSION);
@@ -881,7 +882,7 @@ if ($step == 0) {
     $boards = BoardService::listBoards();
     foreach ($boards as &$_board) {
         BoardService::setupBoard($_board);
-        buildIndex();
+        PageService::buildIndex();
     }
 
     FileManager::file_write($config['has_installed'], VERSION);

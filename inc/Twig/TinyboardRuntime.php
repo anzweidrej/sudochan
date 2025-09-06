@@ -7,7 +7,9 @@
 namespace Sudochan\Twig;
 
 use Twig\Extension\RuntimeExtensionInterface;
+use Sudochan\Manager\PermissionManager;
 use Sudochan\Mod\Auth;
+use Sudochan\Dispatcher\EventDispatcher;
 
 class TinyboardRuntime implements RuntimeExtensionInterface
 {
@@ -40,7 +42,7 @@ class TinyboardRuntime implements RuntimeExtensionInterface
 
     public function twig_hasPermission_filter(mixed $mod, mixed $permission, string|null $board = null): bool
     {
-        return hasPermission($permission, $board, $mod);
+        return PermissionManager::hasPermission($permission, $board, $mod);
     }
 
     public function twig_extension_filter(string $value, bool $case_insensitive = true): string

@@ -9,6 +9,11 @@ namespace Sudochan\Controller;
 use Sudochan\Mod\Auth;
 use Sudochan\Cache;
 use Sudochan\Service\BoardService;
+use Sudochan\Service\PageService;
+use Sudochan\Service\PostService;
+use Sudochan\Manager\ThemeManager;
+use Sudochan\Manager\PermissionManager;
+use Sudochan\Manager\FileManager;
 
 class BoardController
 {
@@ -20,13 +25,13 @@ class BoardController
             error($config['error']['noboard']);
         }
 
-        if (!hasPermission($config['mod']['manageboards'], $board['uri'])) {
+        if (!PermissionManager::hasPermission($config['mod']['manageboards'], $board['uri'])) {
             error($config['error']['noaccess']);
         }
 
         if (isset($_POST['title'], $_POST['subtitle'])) {
             if (isset($_POST['delete'])) {
-                if (!hasPermission($config['mod']['manageboards'], $board['uri'])) {
+                if (!PermissionManager::hasPermission($config['mod']['manageboards'], $board['uri'])) {
                     error($config['error']['deleteboard']);
                 }
 
@@ -63,7 +68,7 @@ class BoardController
                             $tmp_board = $board;
                         }
                         BoardService::openBoard($cite['board']);
-                        rebuildPost($cite['post']);
+                        PostService::rebuildPost($cite['post']);
                     }
                 }
 
@@ -93,7 +98,7 @@ class BoardController
                 }
 
                 // Delete entire board directory
-                rrmdir($board['uri'] . '/');
+                FileManager::rrmdir($board['uri'] . '/');
             } else {
                 $query = prepare('UPDATE ``boards`` SET `title` = :title, `subtitle` = :subtitle, `category` = :category WHERE `uri` = :uri');
                 $query->bindValue(':uri', $board['uri']);
@@ -110,7 +115,7 @@ class BoardController
                 Cache::delete('all_boards');
             }
 
-            rebuildThemes('boards');
+            ThemeManager::rebuildThemes('boards');
 
             header('Location: ?/', true, $config['redirect_http']);
         } else {
@@ -125,7 +130,7 @@ class BoardController
     {
         global $config, $board;
 
-        if (!hasPermission($config['mod']['newboard'])) {
+        if (!PermissionManager::hasPermission($config['mod']['newboard'])) {
             error($config['error']['noaccess']);
         }
 
@@ -191,9 +196,9 @@ class BoardController
             }
 
             // Build the board
-            buildIndex();
+            PageService::buildIndex();
 
-            rebuildThemes('boards');
+            ThemeManager::rebuildThemes('boards');
 
             header('Location: ?/' . $board['uri'] . '/' . $config['file_index'], true, $config['redirect_http']);
         }
@@ -209,13 +214,13 @@ class BoardController
             error($config['error']['noboard']);
         }
 
-        if (!$page = index($page_no, $mod)) {
+        if (!$page = PageService::index($page_no, $mod)) {
             error($config['error']['404']);
         }
 
-        $page['pages'] = getPages(true);
+        $page['pages'] = PageService::getPages(true);
         $page['pages'][$page_no - 1]['selected'] = true;
-        $page['btn'] = getPageButtons($page['pages'], true);
+        $page['btn'] = PageService::getPageButtons($page['pages'], true);
         $page['mod'] = true;
         $page['config'] = $config;
 
@@ -230,7 +235,7 @@ class BoardController
             error($config['error']['noboard']);
         }
 
-        $page = buildThread($thread, true, $mod);
+        $page = PostService::buildThread($thread, true, $mod);
         echo $page;
     }
 }

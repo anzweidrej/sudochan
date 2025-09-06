@@ -10,7 +10,12 @@ use Sudochan\Mod\Auth;
 use Sudochan\Dispatcher\EventDispatcher;
 use Sudochan\Bans;
 use Sudochan\Service\BoardService;
+use Sudochan\Service\PageService;
+use Sudochan\Service\PostService;
+use Sudochan\Service\MarkupService;
 use Sudochan\Manager\FileManager;
+use Sudochan\Manager\ThemeManager;
+use Sudochan\Manager\PermissionManager;
 
 class PostController
 {
@@ -22,7 +27,7 @@ class PostController
             error($config['error']['noboard']);
         }
 
-        if (!hasPermission($config['mod']['lock'], $board)) {
+        if (!PermissionManager::hasPermission($config['mod']['lock'], $board)) {
             error($config['error']['noaccess']);
         }
 
@@ -32,8 +37,8 @@ class PostController
         $query->execute() or error(db_error($query));
         if ($query->rowCount()) {
             Auth::modLog(($unlock ? 'Unlocked' : 'Locked') . " thread #{$post}");
-            buildThread($post);
-            buildIndex();
+            PostService::buildThread($post);
+            PageService::buildIndex();
         }
 
         if ($config['mod']['dismiss_reports_on_lock']) {
@@ -60,7 +65,7 @@ class PostController
             error($config['error']['noboard']);
         }
 
-        if (!hasPermission($config['mod']['sticky'], $board)) {
+        if (!PermissionManager::hasPermission($config['mod']['sticky'], $board)) {
             error($config['error']['noaccess']);
         }
 
@@ -70,8 +75,8 @@ class PostController
         $query->execute() or error(db_error($query));
         if ($query->rowCount()) {
             Auth::modLog(($unsticky ? 'Unstickied' : 'Stickied') . " thread #{$post}");
-            buildThread($post);
-            buildIndex();
+            PostService::buildThread($post);
+            PageService::buildIndex();
         }
 
         header('Location: ?/' . sprintf($config['board_path'], $board) . $config['file_index'], true, $config['redirect_http']);
@@ -85,7 +90,7 @@ class PostController
             error($config['error']['noboard']);
         }
 
-        if (!hasPermission($config['mod']['bumplock'], $board)) {
+        if (!PermissionManager::hasPermission($config['mod']['bumplock'], $board)) {
             error($config['error']['noaccess']);
         }
 
@@ -95,8 +100,8 @@ class PostController
         $query->execute() or error(db_error($query));
         if ($query->rowCount()) {
             Auth::modLog(($unbumplock ? 'Unbumplocked' : 'Bumplocked') . " thread #{$post}");
-            buildThread($post);
-            buildIndex();
+            PostService::buildThread($post);
+            PageService::buildIndex();
         }
 
         header('Location: ?/' . sprintf($config['board_path'], $board) . $config['file_index'], true, $config['redirect_http']);
@@ -110,7 +115,7 @@ class PostController
             error($config['error']['noboard']);
         }
 
-        if (!hasPermission($config['mod']['move'], $originBoard)) {
+        if (!PermissionManager::hasPermission($config['mod']['move'], $originBoard)) {
             error($config['error']['noaccess']);
         }
 
@@ -154,7 +159,7 @@ class PostController
             }
 
             // create the new thread
-            $newID = post($post);
+            $newID = PostService::post($post);
 
             if ($post['has_file']) {
                 // copy image
@@ -217,10 +222,10 @@ class PostController
                 $post['body'] = $post['body_nomarkup'];
 
                 $post['op'] = false;
-                $post['tracked_cites'] = markup($post['body'], true);
+                $post['tracked_cites'] = MarkupService::markup($post['body'], true);
 
                 // insert reply
-                $newIDs[$post['id']] = $newPostID = post($post);
+                $newIDs[$post['id']] = $newPostID = PostService::post($post);
 
                 if ($post['has_file']) {
                     // copy image
@@ -242,13 +247,13 @@ class PostController
             Auth::modLog("Moved thread #{$postID} to " . sprintf($config['board_abbreviation'], $targetBoard) . " (#{$newID})", $originBoard);
 
             // build new thread
-            buildThread($newID);
+            PostService::buildThread($newID);
 
-            clean();
-            buildIndex();
+            PostService::clean();
+            PageService::buildIndex();
 
             // trigger themes
-            rebuildThemes('post', $targetBoard);
+            ThemeManager::rebuildThemes('post', $targetBoard);
 
             // return to original board
             BoardService::openBoard($originBoard);
@@ -276,18 +281,18 @@ class PostController
 
                 $post['body'] = $post['body_nomarkup'] =  sprintf($config['mod']['shadow_mesage'], '>>>/' . $targetBoard . '/' . $newID);
 
-                markup($post['body']);
+                MarkupService::markup($post['body']);
 
-                $botID = post($post);
-                buildThread($postID);
+                $botID = PostService::post($post);
+                PostService::buildThread($postID);
 
-                buildIndex();
+                PageService::buildIndex();
 
                 header('Location: ?/' . sprintf($config['board_path'], $originBoard) . $config['dir']['res'] . sprintf($config['file_page'], $postID) .
                     '#' . $botID, true, $config['redirect_http']);
             } else {
-                deletePost($postID);
-                buildIndex();
+                PostService::deletePost($postID);
+                PageService::buildIndex();
 
                 BoardService::openBoard($targetBoard);
                 header('Location: ?/' . sprintf($config['board_path'], $board['uri']) . $config['dir']['res'] . sprintf($config['file_page'], $newID), true, $config['redirect_http']);
@@ -312,7 +317,7 @@ class PostController
             error($config['error']['noboard']);
         }
 
-        if (!hasPermission($config['mod']['delete'], $board)) {
+        if (!PermissionManager::hasPermission($config['mod']['delete'], $board)) {
             error($config['error']['noaccess']);
         }
 
@@ -353,19 +358,19 @@ class PostController
                 $query->bindValue(':id', $post);
                 $query->bindValue(':body_nomarkup', sprintf("\n<tinyboard ban message>%s</tinyboard>", utf8tohtml($_POST['message'])));
                 $query->execute() or error(db_error($query));
-                rebuildPost($post);
+                PostService::rebuildPost($post);
 
                 Auth::modLog("Attached a public ban message to post #{$post}: " . utf8tohtml($_POST['message']));
-                buildThread($thread ? $thread : $post);
-                buildIndex();
+                PostService::buildThread($thread ? $thread : $post);
+                PageService::buildIndex();
             } elseif (isset($_POST['delete']) && (int) $_POST['delete']) {
                 // Delete post
-                deletePost($post);
+                PostService::deletePost($post);
                 Auth::modLog("Deleted post #{$post}");
                 // Rebuild board
-                buildIndex();
+                PageService::buildIndex();
                 // Rebuild themes
-                rebuildThemes('post-delete', $board);
+                ThemeManager::rebuildThemes('post-delete', $board);
             }
 
             header('Location: ?/' . sprintf($config['board_path'], $board) . $config['file_index'], true, $config['redirect_http']);
@@ -373,7 +378,7 @@ class PostController
 
         $args = [
             'ip' => $ip,
-            'hide_ip' => !hasPermission($config['mod']['show_ip'], $board),
+            'hide_ip' => !PermissionManager::hasPermission($config['mod']['show_ip'], $board),
             'post' => $post,
             'board' => $board,
             'delete' => (bool) $delete,
@@ -392,11 +397,11 @@ class PostController
             error($config['error']['noboard']);
         }
 
-        if (!hasPermission($config['mod']['editpost'], $board)) {
+        if (!PermissionManager::hasPermission($config['mod']['editpost'], $board)) {
             error($config['error']['noaccess']);
         }
 
-        if ($edit_raw_html && !hasPermission($config['mod']['rawhtml'], $board)) {
+        if ($edit_raw_html && !PermissionManager::hasPermission($config['mod']['rawhtml'], $board)) {
             error($config['error']['noaccess']);
         }
 
@@ -431,12 +436,12 @@ class PostController
                 Auth::modLog("Edited raw HTML of post #{$postID}");
             } else {
                 Auth::modLog("Edited post #{$postID}");
-                rebuildPost($postID);
+                PostService::rebuildPost($postID);
             }
 
-            buildIndex();
+            PageService::buildIndex();
 
-            rebuildThemes('post', $board);
+            ThemeManager::rebuildThemes('post', $board);
 
             header('Location: ?/' . sprintf($config['board_path'], $board) . $config['dir']['res'] . sprintf($config['file_page'], $post['thread'] ? $post['thread'] : $postID) . '#' . $postID, true, $config['redirect_http']);
         } else {
@@ -461,18 +466,18 @@ class PostController
             error($config['error']['noboard']);
         }
 
-        if (!hasPermission($config['mod']['delete'], $board)) {
+        if (!PermissionManager::hasPermission($config['mod']['delete'], $board)) {
             error($config['error']['noaccess']);
         }
 
         // Delete post
-        deletePost($post);
+        PostService::deletePost($post);
         // Record the action
         Auth::modLog("Deleted post #{$post}");
         // Rebuild board
-        buildIndex();
+        PageService::buildIndex();
         // Rebuild themes
-        rebuildThemes('post-delete', $board);
+        ThemeManager::rebuildThemes('post-delete', $board);
         // Redirect
         header('Location: ?/' . sprintf($config['board_path'], $board) . $config['file_index'], true, $config['redirect_http']);
     }
@@ -485,19 +490,19 @@ class PostController
             error($config['error']['noboard']);
         }
 
-        if (!hasPermission($config['mod']['deletefile'], $board)) {
+        if (!PermissionManager::hasPermission($config['mod']['deletefile'], $board)) {
             error($config['error']['noaccess']);
         }
 
         // Delete file
-        deleteFile($post);
+        PostService::deleteFile($post);
         // Record the action
         Auth::modLog("Deleted file from post #{$post}");
 
         // Rebuild board
-        buildIndex();
+        PageService::buildIndex();
         // Rebuild themes
-        rebuildThemes('post-delete', $board);
+        ThemeManager::rebuildThemes('post-delete', $board);
 
         // Redirect
         header('Location: ?/' . sprintf($config['board_path'], $board) . $config['file_index'], true, $config['redirect_http']);
@@ -511,7 +516,7 @@ class PostController
             error($config['error']['noboard']);
         }
 
-        if (!hasPermission($config['mod']['spoilerimage'], $board)) {
+        if (!PermissionManager::hasPermission($config['mod']['spoilerimage'], $board)) {
             error($config['error']['noaccess']);
         }
 
@@ -535,13 +540,13 @@ class PostController
         Auth::modLog("Spoilered file from post #{$post}");
 
         // Rebuild thread
-        buildThread($result['thread'] ? $result['thread'] : $post);
+        PostService::buildThread($result['thread'] ? $result['thread'] : $post);
 
         // Rebuild board
-        buildIndex();
+        PageService::buildIndex();
 
         // Rebuild themes
-        rebuildThemes('post-delete', $board);
+        ThemeManager::rebuildThemes('post-delete', $board);
 
         // Redirect
         header('Location: ?/' . sprintf($config['board_path'], $board) . $config['file_index'], true, $config['redirect_http']);
@@ -557,11 +562,11 @@ class PostController
             error($config['error']['noboard']);
         }
 
-        if (!$global && !hasPermission($config['mod']['deletebyip'], $boardName)) {
+        if (!$global && !PermissionManager::hasPermission($config['mod']['deletebyip'], $boardName)) {
             error($config['error']['noaccess']);
         }
 
-        if ($global && !hasPermission($config['mod']['deletebyip_global'], $boardName)) {
+        if ($global && !PermissionManager::hasPermission($config['mod']['deletebyip_global'], $boardName)) {
             error($config['error']['noaccess']);
         }
 
@@ -596,9 +601,9 @@ class PostController
         while ($post = $query->fetch(\PDO::FETCH_ASSOC)) {
             BoardService::openBoard($post['board']);
 
-            deletePost($post['id'], false, false);
+            PostService::deletePost($post['id'], false, false);
 
-            rebuildThemes('post-delete', $board['uri']);
+            ThemeManager::rebuildThemes('post-delete', $board['uri']);
 
             if ($post['thread']) {
                 $threads_to_rebuild[$post['board']][$post['thread']] = true;
@@ -611,10 +616,10 @@ class PostController
             BoardService::openBoard($_board);
             foreach ($_threads as $_thread => $_dummy) {
                 if ($_dummy && !isset($threads_deleted[$_board][$_thread])) {
-                    buildThread($_thread);
+                    PostService::buildThread($_thread);
                 }
             }
-            buildIndex();
+            PageService::buildIndex();
         }
 
         if ($global) {

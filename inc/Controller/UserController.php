@@ -8,6 +8,7 @@ namespace Sudochan\Controller;
 
 use Sudochan\Mod\Auth;
 use Sudochan\Service\BoardService;
+use Sudochan\Manager\PermissionManager;
 
 class UserController
 {
@@ -15,7 +16,7 @@ class UserController
     {
         global $config, $mod;
 
-        if (!hasPermission($config['mod']['editusers']) && !(hasPermission($config['mod']['change_password']) && $uid == $mod['id'])) {
+        if (!PermissionManager::hasPermission($config['mod']['editusers']) && !(PermissionManager::hasPermission($config['mod']['change_password']) && $uid == $mod['id'])) {
             error($config['error']['noaccess']);
         }
 
@@ -26,7 +27,7 @@ class UserController
             error($config['error']['404']);
         }
 
-        if (hasPermission($config['mod']['editusers']) && isset($_POST['username'], $_POST['password'])) {
+        if (PermissionManager::hasPermission($config['mod']['editusers']) && isset($_POST['username'], $_POST['password'])) {
             if (isset($_POST['allboards'])) {
                 $boards = ['*'];
             } else {
@@ -44,7 +45,7 @@ class UserController
             }
 
             if (isset($_POST['delete'])) {
-                if (!hasPermission($config['mod']['deleteusers'])) {
+                if (!PermissionManager::hasPermission($config['mod']['deleteusers'])) {
                     error($config['error']['noaccess']);
                 }
 
@@ -92,7 +93,7 @@ class UserController
                 }
             }
 
-            if (hasPermission($config['mod']['manageusers'])) {
+            if (PermissionManager::hasPermission($config['mod']['manageusers'])) {
                 header('Location: ?/users', true, $config['redirect_http']);
             } else {
                 header('Location: ?/', true, $config['redirect_http']);
@@ -101,7 +102,7 @@ class UserController
             return;
         }
 
-        if (hasPermission($config['mod']['change_password']) && $uid == $mod['id'] && isset($_POST['password'])) {
+        if (PermissionManager::hasPermission($config['mod']['change_password']) && $uid == $mod['id'] && isset($_POST['password'])) {
             if ($_POST['password'] != '') {
                 $salt = Auth::generate_salt();
                 $password = hash('sha256', $salt . sha1($_POST['password']));
@@ -118,7 +119,7 @@ class UserController
                 Auth::setCookies();
             }
 
-            if (hasPermission($config['mod']['manageusers'])) {
+            if (PermissionManager::hasPermission($config['mod']['manageusers'])) {
                 header('Location: ?/users', true, $config['redirect_http']);
             } else {
                 header('Location: ?/', true, $config['redirect_http']);
@@ -127,7 +128,7 @@ class UserController
             return;
         }
 
-        if (hasPermission($config['mod']['modlog'])) {
+        if (PermissionManager::hasPermission($config['mod']['modlog'])) {
             $query = prepare('SELECT * FROM ``modlogs`` WHERE `mod` = :id ORDER BY `time` DESC LIMIT 5');
             $query->bindValue(':id', $uid);
             $query->execute() or error(db_error($query));
@@ -150,7 +151,7 @@ class UserController
     {
         global $pdo, $config;
 
-        if (!hasPermission($config['mod']['createusers'])) {
+        if (!PermissionManager::hasPermission($config['mod']['createusers'])) {
             error($config['error']['noaccess']);
         }
 
@@ -209,7 +210,7 @@ class UserController
     {
         global $config;
 
-        if (!hasPermission($config['mod']['manageusers'])) {
+        if (!PermissionManager::hasPermission($config['mod']['manageusers'])) {
             error($config['error']['noaccess']);
         }
 
@@ -232,7 +233,7 @@ class UserController
     {
         global $config;
 
-        if (!hasPermission($config['mod']['promoteusers'])) {
+        if (!PermissionManager::hasPermission($config['mod']['promoteusers'])) {
             error($config['error']['noaccess']);
         }
 

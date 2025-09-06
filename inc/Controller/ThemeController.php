@@ -7,6 +7,8 @@
 namespace Sudochan\Controller;
 
 use Sudochan\Mod\Auth;
+use Sudochan\Manager\ThemeManager;
+use Sudochan\Manager\PermissionManager;
 
 class ThemeController
 {
@@ -14,7 +16,7 @@ class ThemeController
     {
         global $config;
 
-        if (!hasPermission($config['mod']['themes'])) {
+        if (!PermissionManager::hasPermission($config['mod']['themes'])) {
             error($config['error']['noaccess']);
         }
 
@@ -32,7 +34,7 @@ class ThemeController
         $themes = [];
         while ($file = readdir($dir)) {
             if ($file[0] != '.' && is_dir($config['dir']['themes'] . '/' . $file)) {
-                $themes[$file] = loadThemeConfig($file);
+                $themes[$file] = ThemeManager::loadThemeConfig($file);
             }
         }
         closedir($dir);
@@ -52,11 +54,11 @@ class ThemeController
     {
         global $config;
 
-        if (!hasPermission($config['mod']['themes'])) {
+        if (!PermissionManager::hasPermission($config['mod']['themes'])) {
             error($config['error']['noaccess']);
         }
 
-        if (!$theme = loadThemeConfig($theme_name)) {
+        if (!$theme = ThemeManager::loadThemeConfig($theme_name)) {
             error($config['error']['invalidtheme']);
         }
 
@@ -92,7 +94,7 @@ class ThemeController
             $result = true;
             $message = false;
             if (isset($theme['install_callback'])) {
-                $ret = $theme['install_callback'](themeSettings($theme_name));
+                $ret = $theme['install_callback'](ThemeManager::themeSettings($theme_name));
                 if ($ret && !empty($ret)) {
                     if (is_array($ret) && count($ret) == 2) {
                         $result = $ret[0];
@@ -109,7 +111,7 @@ class ThemeController
             }
 
             // Build themes
-            rebuildThemes('all');
+            ThemeManager::rebuildThemes('all');
 
             mod_page(sprintf(_($result ? 'Installed theme: %s' : 'Installation failed: %s'), $theme['name']), 'mod/theme_installed.html', [
                 'theme_name' => $theme_name,
@@ -120,7 +122,7 @@ class ThemeController
             return;
         }
 
-        $settings = themeSettings($theme_name);
+        $settings = ThemeManager::themeSettings($theme_name);
 
         mod_page(sprintf(_('Configuring theme: %s'), $theme['name']), 'mod/theme_config.html', [
             'theme_name' => $theme_name,
@@ -134,7 +136,7 @@ class ThemeController
     {
         global $config;
 
-        if (!hasPermission($config['mod']['themes'])) {
+        if (!PermissionManager::hasPermission($config['mod']['themes'])) {
             error($config['error']['noaccess']);
         }
 
@@ -149,11 +151,11 @@ class ThemeController
     {
         global $config;
 
-        if (!hasPermission($config['mod']['themes'])) {
+        if (!PermissionManager::hasPermission($config['mod']['themes'])) {
             error($config['error']['noaccess']);
         }
 
-        rebuildTheme($theme_name, 'all');
+        ThemeManager::rebuildTheme($theme_name, 'all');
 
         mod_page(sprintf(_('Rebuilt theme: %s'), $theme_name), 'mod/theme_rebuilt.html', [
             'theme_name' => $theme_name,

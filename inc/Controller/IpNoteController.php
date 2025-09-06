@@ -11,7 +11,9 @@ use Sudochan\Entity\Thread;
 use Sudochan\Entity\Post;
 use Sudochan\Bans;
 use Sudochan\Service\BoardService;
+use Sudochan\Service\MarkupService;
 use Sudochan\Resolver\DNSResolver;
+use Sudochan\Manager\PermissionManager;
 
 class IpNoteController
 {
@@ -19,7 +21,7 @@ class IpNoteController
     {
         global $config, $mod;
 
-        if (!hasPermission($config['mod']['remove_notes'])) {
+        if (!PermissionManager::hasPermission($config['mod']['remove_notes'])) {
             error($config['error']['noaccess']);
         }
 
@@ -46,7 +48,7 @@ class IpNoteController
         }
 
         if (isset($_POST['ban_id'], $_POST['unban'])) {
-            if (!hasPermission($config['mod']['unban'])) {
+            if (!PermissionManager::hasPermission($config['mod']['unban'])) {
                 error($config['error']['noaccess']);
             }
 
@@ -57,12 +59,12 @@ class IpNoteController
         }
 
         if (isset($_POST['note'])) {
-            if (!hasPermission($config['mod']['create_notes'])) {
+            if (!PermissionManager::hasPermission($config['mod']['create_notes'])) {
                 error($config['error']['noaccess']);
             }
 
             $_POST['note'] = escape_markup_modifiers($_POST['note']);
-            markup($_POST['note']);
+            MarkupService::markup($_POST['note']);
             $query = prepare('INSERT INTO ``ip_notes`` VALUES (NULL, :ip, :mod, :time, :body)');
             $query->bindValue(':ip', $ip);
             $query->bindValue(':mod', $mod['id']);
@@ -87,7 +89,7 @@ class IpNoteController
         $boards = BoardService::listBoards();
         foreach ($boards as $board) {
             BoardService::openBoard($board['uri']);
-            if (!hasPermission($config['mod']['show_ip'], $board['uri'])) {
+            if (!PermissionManager::hasPermission($config['mod']['show_ip'], $board['uri'])) {
                 continue;
             }
             $query = prepare(sprintf('SELECT * FROM ``posts_%s`` WHERE `ip` = :ip ORDER BY `sticky` DESC, `id` DESC LIMIT :limit', $board['uri']));
@@ -112,18 +114,18 @@ class IpNoteController
         $args['boards'] = $boards;
         $args['token'] = Auth::make_secure_link_token('ban');
 
-        if (hasPermission($config['mod']['view_ban'])) {
+        if (PermissionManager::hasPermission($config['mod']['view_ban'])) {
             $args['bans'] = Bans::find($ip, false, true);
         }
 
-        if (hasPermission($config['mod']['view_notes'])) {
+        if (PermissionManager::hasPermission($config['mod']['view_notes'])) {
             $query = prepare("SELECT ``ip_notes``.*, `username` FROM ``ip_notes`` LEFT JOIN ``mods`` ON `mod` = ``mods``.`id` WHERE `ip` = :ip ORDER BY `time` DESC");
             $query->bindValue(':ip', $ip);
             $query->execute() or error(db_error($query));
             $args['notes'] = $query->fetchAll(\PDO::FETCH_ASSOC);
         }
 
-        if (hasPermission($config['mod']['modlog_ip'])) {
+        if (PermissionManager::hasPermission($config['mod']['modlog_ip'])) {
             $query = prepare("SELECT `username`, `mod`, `ip`, `board`, `time`, `text` FROM ``modlogs`` LEFT JOIN ``mods`` ON `mod` = ``mods``.`id` WHERE `text` LIKE :search ORDER BY `time` DESC LIMIT 50");
             $query->bindValue(':search', '%' . $ip . '%');
             $query->execute() or error(db_error($query));

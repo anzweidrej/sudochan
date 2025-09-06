@@ -8,6 +8,7 @@ namespace Sudochan\Controller;
 
 use Sudochan\Bans;
 use Sudochan\Service\BoardService;
+use Sudochan\Manager\PermissionManager;
 
 class SearchController
 {
@@ -15,7 +16,7 @@ class SearchController
     {
         global $config;
 
-        if (!hasPermission($config['mod']['search'])) {
+        if (!PermissionManager::hasPermission($config['mod']['search'])) {
             error($config['error']['noaccess']);
         }
 
@@ -40,7 +41,7 @@ class SearchController
     {
         global $pdo, $config;
 
-        if (!hasPermission($config['mod']['search'])) {
+        if (!PermissionManager::hasPermission($config['mod']['search'])) {
             error($config['error']['noaccess']);
         }
 
@@ -126,7 +127,7 @@ class SearchController
 
             foreach ($boards as $board) {
                 BoardService::openBoard($board['uri']);
-                if (!hasPermission($config['mod']['search_posts'], $board['uri'])) {
+                if (!PermissionManager::hasPermission($config['mod']['search_posts'], $board['uri'])) {
                     continue;
                 }
 
@@ -147,7 +148,7 @@ class SearchController
         if ($type == 'IP_notes') {
             $query = 'SELECT * FROM ``ip_notes`` LEFT JOIN ``mods`` ON `mod` = ``mods``.`id` WHERE ' . $sql_like . ' ORDER BY `time` DESC';
             $sql_table = 'ip_notes';
-            if (!hasPermission($config['mod']['view_notes']) || !hasPermission($config['mod']['show_ip'])) {
+            if (!PermissionManager::hasPermission($config['mod']['view_notes']) || !PermissionManager::hasPermission($config['mod']['show_ip'])) {
                 error($config['error']['noaccess']);
             }
         }
@@ -155,7 +156,7 @@ class SearchController
         if ($type == 'bans') {
             $query = 'SELECT ``bans``.*, `username` FROM ``bans`` LEFT JOIN ``mods`` ON `creator` = ``mods``.`id` WHERE ' . $sql_like . ' ORDER BY (`expires` IS NOT NULL AND `expires` < UNIX_TIMESTAMP()), `created` DESC';
             $sql_table = 'bans';
-            if (!hasPermission($config['mod']['view_banlist'])) {
+            if (!PermissionManager::hasPermission($config['mod']['view_banlist'])) {
                 error($config['error']['noaccess']);
             }
         }
@@ -163,7 +164,7 @@ class SearchController
         if ($type == 'log') {
             $query = 'SELECT `username`, `mod`, `ip`, `board`, `time`, `text` FROM ``modlogs`` LEFT JOIN ``mods`` ON `mod` = ``mods``.`id` WHERE ' . $sql_like . ' ORDER BY `time` DESC';
             $sql_table = 'modlogs';
-            if (!hasPermission($config['mod']['modlog'])) {
+            if (!PermissionManager::hasPermission($config['mod']['modlog'])) {
                 error($config['error']['noaccess']);
             }
         }
