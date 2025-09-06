@@ -1,6 +1,7 @@
 <?php
 
 use Sudochan\Service\BoardService;
+use Sudochan\Manager\FileManager;
 
 require 'info.php';
 
@@ -52,7 +53,7 @@ class Catalog
             $recent_posts[] = $post;
         }
 
-        file_write($config['dir']['home'] . $board_name . '/catalog.html', Element('themes/catalog/catalog.html', [
+        FileManager::file_write($config['dir']['home'] . $board_name . '/catalog.html', Element('themes/catalog/catalog.html', [
             'settings' => $settings,
             'config' => $config,
             'boardlist' => BoardService::createBoardlist(),

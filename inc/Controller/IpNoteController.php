@@ -11,6 +11,7 @@ use Sudochan\Entity\Thread;
 use Sudochan\Entity\Post;
 use Sudochan\Bans;
 use Sudochan\Service\BoardService;
+use Sudochan\Resolver\DNSResolver;
 
 class IpNoteController
 {
@@ -80,7 +81,7 @@ class IpNoteController
         $args['posts'] = [];
 
         if ($config['mod']['dns_lookup']) {
-            $args['hostname'] = rDNS($ip);
+            $args['hostname'] = DNSResolver::rDNS($ip);
         }
 
         $boards = BoardService::listBoards();

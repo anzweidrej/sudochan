@@ -6,7 +6,7 @@
 
 namespace Sudochan\Entity;
 
-use Sudochan\EventDispatcher;
+use Sudochan\Dispatcher\EventDispatcher;
 use Sudochan\Entity\Post;
 
 class Thread

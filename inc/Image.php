@@ -8,6 +8,8 @@ namespace Sudochan;
 
 defined('TINYBOARD') or exit;
 
+use Sudochan\Manager\FileManager;
+
 class Image
 {
     public string $src;
@@ -117,7 +119,7 @@ class Image
 
     public function delete(): void
     {
-        file_unlink($this->src);
+        FileManager::file_unlink($this->src);
     }
 
     public function destroy(): void

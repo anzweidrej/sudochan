@@ -93,8 +93,8 @@
                     {{ antibot.html() }}
                 </th>
                 <td>
-                    <script type="text/javascript"
-                            src="//www.google.com/recaptcha/api/challenge?k={{ config.recaptcha_public }}"></script>
+                    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+                    <div class="g-recaptcha" data-sitekey="{{ config.recaptcha_public }}"></div>
                     {{ antibot.html() }}
                 </td>
             </tr>

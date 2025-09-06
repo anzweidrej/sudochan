@@ -8,6 +8,7 @@
 define('VERSION', 'v0.9.6-dev-22');
 
 use Sudochan\Service\BoardService;
+use Sudochan\Manager\FileManager;
 
 require_once 'bootstrap.php';
 loadConfig();
@@ -179,7 +180,7 @@ if (file_exists($config['has_installed'])) {
 						<a href="?confirm=1">I have read and understood the agreement. Proceed to upgrading.</a>
 					</p>';
 
-                file_write($config['has_installed'], 'v0.9.4-dev-2');
+                FileManager::file_write($config['has_installed'], 'v0.9.4-dev-2');
 
                 break;
             }
@@ -546,7 +547,7 @@ if (file_exists($config['has_installed'])) {
             // no break
         case false:
             // Update version number
-            file_write($config['has_installed'], VERSION);
+            FileManager::file_write($config['has_installed'], VERSION);
 
             $page['title'] = 'Upgraded';
             $page['body'] = '<p style="text-align:center">Successfully upgraded from ' . $version . ' to <strong>' . VERSION . '</strong>.</p>';
@@ -868,7 +869,7 @@ if ($step == 0) {
             buildIndex();
         }
 
-        file_write($config['has_installed'], VERSION);
+        FileManager::file_write($config['has_installed'], VERSION);
         $page['body'] .= '<div class="ban"><h2>Delete install.php!</h2><p>I couldn\'t remove <strong>install.php</strong>. You will have to remove it manually.</p></div>';
     }
 
@@ -883,7 +884,7 @@ if ($step == 0) {
         buildIndex();
     }
 
-    file_write($config['has_installed'], VERSION);
+    FileManager::file_write($config['has_installed'], VERSION);
     $page['body'] .= '<div class="ban"><h2>Delete install.php!</h2><p>I couldn\'t remove <strong>install.php</strong>. You will have to remove it manually.</p></div>';
 
     echo element('page.html', $page);

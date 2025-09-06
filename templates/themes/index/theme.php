@@ -1,6 +1,7 @@
 <?php
 
 use Sudochan\Service\BoardService;
+use Sudochan\Manager\FileManager;
 
 require 'info.php';
 
@@ -31,7 +32,7 @@ class Index
             $action == 'post-thread' ||
             $action == 'post-delete'
         ) {
-            file_write($config['dir']['home'] . $settings['html'], self::homepage($settings, $excluded));
+            FileManager::file_write($config['dir']['home'] . $settings['html'], self::homepage($settings, $excluded));
         }
         if ($action == 'all') {
             copy('templates/themes/index/' . $settings['css'], $config['dir']['home'] . $settings['css']);

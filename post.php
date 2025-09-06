@@ -7,10 +7,11 @@
 use Sudochan\Mod\Auth;
 use Sudochan\Image;
 use Sudochan\ImageConvert;
-use Sudochan\EventDispatcher;
+use Sudochan\Dispatcher\EventDispatcher;
 use Sudochan\Bans;
 use Sudochan\Service\BoardService;
 use Sudochan\Handler\ErrorHandler;
+use Sudochan\Resolver\DNSResolver;
 
 require_once 'bootstrap.php';
 
@@ -34,7 +35,7 @@ if (isset($_POST['delete'])) {
         }
     }
 
-    checkDNSBL();
+    DNSResolver::checkDNSBL();
 
     // Check if board exists
     if (!BoardService::openBoard($_POST['board'])) {
@@ -103,7 +104,7 @@ if (isset($_POST['delete'])) {
         }
     }
 
-    checkDNSBL();
+    DNSResolver::checkDNSBL();
 
     // Check if board exists
     if (!BoardService::openBoard($_POST['board'])) {
@@ -201,7 +202,7 @@ if (isset($_POST['delete'])) {
         error($config['error']['referer']);
     }
 
-    checkDNSBL();
+    DNSResolver::checkDNSBL();
 
     // Check if board exists
     if (!BoardService::openBoard($post['board'])) {

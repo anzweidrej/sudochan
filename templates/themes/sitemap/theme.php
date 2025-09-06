@@ -1,5 +1,7 @@
 <?php
 
+use Sudochan\Manager\FileManager;
+
 require 'info.php';
 
 function sitemap_build(string $action, array $settings, string $board): void
@@ -34,7 +36,7 @@ function sitemap_build(string $action, array $settings, string $board): void
         $threads[$board] = $query->fetchAll(\PDO::FETCH_ASSOC);
     }
 
-    file_write($settings['path'], Element('themes/sitemap/sitemap.xml', [
+    FileManager::file_write($settings['path'], Element('themes/sitemap/sitemap.xml', [
         'settings' => $settings,
         'config' => $config,
         'threads' => $threads,

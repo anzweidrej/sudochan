@@ -8,6 +8,8 @@ namespace Sudochan;
 
 defined('TINYBOARD') or exit;
 
+use Sudochan\Manager\FileManager;
+
 class Remote
 {
     public array $auth = [];
@@ -74,12 +76,12 @@ class Remote
         switch ($this->type) {
             case 'sftp':
                 $sftp = ssh2_sftp($this->connection);
-                file_write('ssh2.sftp://' . $sftp . $remote_path, $data, true);
+                FileManager::file_write('ssh2.sftp://' . $sftp . $remote_path, $data, true);
                 break;
             case 'scp':
                 $file = tempnam($config['tmp'], 'tinyboard-scp');
                 // Write to temp file
-                file_write($file, $data);
+                FileManager::file_write($file, $data);
                 ssh2_scp_send($this->connection, $file, $remote_path, 0755);
                 break;
             default:

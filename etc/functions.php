@@ -13,13 +13,14 @@ use Sudochan\Api;
 use Sudochan\Bans;
 use Sudochan\Service\BoardService;
 use Sudochan\Cache;
-use Sudochan\EventDispatcher;
+use Sudochan\Dispatcher\EventDispatcher;
 use Sudochan\Filter;
 use Sudochan\Mod\Auth;
 use Sudochan\Remote;
 use Sudochan\Entity\Post;
 use Sudochan\Entity\Thread;
 use Sudochan\Handler\ErrorHandler;
+use Sudochan\Manager\FileManager;
 
 $microtime_start = microtime(true);
 
@@ -340,106 +341,6 @@ function purge(string $uri): void
             error('Could not PURGE for ' . $host);
         }
     }
-}
-
-function file_write(string $path, string $data, bool $simple = false, bool $skip_purge = false): void
-{
-    global $config, $debug;
-
-    if (preg_match('/^remote:\/\/(.+)\:(.+)$/', $path, $m)) {
-        if (isset($config['remote'][$m[1]])) {
-
-            $remote = new Remote($config['remote'][$m[1]]);
-            $remote->write($data, $m[2]);
-            return;
-        } else {
-            error('Invalid remote server: ' . $m[1]);
-        }
-    }
-
-    if (!$fp = fopen($path, $simple ? 'w' : 'c')) {
-        error('Unable to open file for writing: ' . $path);
-    }
-
-    // File locking
-    if (!$simple && !flock($fp, LOCK_EX)) {
-        error('Unable to lock file: ' . $path);
-    }
-
-    // Truncate file
-    if (!$simple && !ftruncate($fp, 0)) {
-        error('Unable to truncate file: ' . $path);
-    }
-
-    // Write data
-    if (($bytes = fwrite($fp, $data)) === false) {
-        error('Unable to write to file: ' . $path);
-    }
-
-    // Unlock
-    if (!$simple) {
-        flock($fp, LOCK_UN);
-    }
-
-    // Close
-    if (!fclose($fp)) {
-        error('Unable to close file: ' . $path);
-    }
-
-    if (!$skip_purge && isset($config['purge'])) {
-        // Purge cache
-        if (basename($path) == $config['file_index']) {
-            // Index file (/index.html); purge "/" as well
-            $uri = dirname($path);
-            // root
-            if ($uri == '.') {
-                $uri = '';
-            } else {
-                $uri .= '/';
-            }
-            purge($uri);
-        }
-        purge($path);
-    }
-
-    if ($config['debug']) {
-        $debug['write'][] = $path . ': ' . $bytes . ' bytes';
-    }
-
-    EventDispatcher::event('write', $path);
-}
-
-function file_unlink(string $path): bool
-{
-    global $config, $debug;
-
-    if ($config['debug']) {
-        if (!isset($debug['unlink'])) {
-            $debug['unlink'] = [];
-        }
-        $debug['unlink'][] = $path;
-    }
-
-    $ret = @unlink($path);
-    if (isset($config['purge']) && $path[0] != '/' && isset($_SERVER['HTTP_HOST'])) {
-        // Purge cache
-        if (basename($path) == $config['file_index']) {
-            // Index file (/index.html); purge "/" as well
-            $uri = dirname($path);
-            // root
-            if ($uri == '.') {
-                $uri = '';
-            } else {
-                $uri .= '/';
-            }
-            purge($uri);
-        }
-        purge($path);
-    }
-
-    EventDispatcher::event('unlink', $path);
-
-    return $ret;
 }
 
 function hasPermission(?int $action = null, ?string $board = null, ?array $_mod = null): bool
@@ -846,10 +747,10 @@ function deleteFile(int $id, bool $remove_entirely_if_already = true): void
         $query->bindValue(':file', null, \PDO::PARAM_NULL);
     } else {
         // Delete thumbnail
-        file_unlink($board['dir'] . $config['dir']['thumb'] . $post['thumb']);
+        FileManager::file_unlink($board['dir'] . $config['dir']['thumb'] . $post['thumb']);
 
         // Delete file
-        file_unlink($board['dir'] . $config['dir']['img'] . $post['file']);
+        FileManager::file_unlink($board['dir'] . $config['dir']['img'] . $post['file']);
 
         // Set file to 'deleted'
         $query->bindValue(':file', 'deleted', \PDO::PARAM_INT);
@@ -916,7 +817,7 @@ function deletePost(int $id, bool $error_if_doesnt_exist = true, bool $rebuild_a
 
         if (!$post['thread']) {
             // Delete thread HTML page
-            file_unlink($board['dir'] . $config['dir']['res'] . sprintf($config['file_page'], $post['id']));
+            FileManager::file_unlink($board['dir'] . $config['dir']['res'] . sprintf($config['file_page'], $post['id']));
 
             $antispam_query = prepare('DELETE FROM ``antispam`` WHERE `board` = :board AND `thread` = :thread');
             $antispam_query->bindValue(':board', $board['uri']);
@@ -928,11 +829,11 @@ function deletePost(int $id, bool $error_if_doesnt_exist = true, bool $rebuild_a
         }
         if ($post['thumb']) {
             // Delete thumbnail
-            file_unlink($board['dir'] . $config['dir']['thumb'] . $post['thumb']);
+            FileManager::file_unlink($board['dir'] . $config['dir']['thumb'] . $post['thumb']);
         }
         if ($post['file']) {
             // Delete file
-            file_unlink($board['dir'] . $config['dir']['img'] . $post['file']);
+            FileManager::file_unlink($board['dir'] . $config['dir']['img'] . $post['file']);
         }
 
         $ids[] = (int) $post['id'];
@@ -1334,14 +1235,14 @@ function buildIndex(): void
         $content['btn'] = getPageButtons($content['pages']);
         $content['antibot'] = $antibot;
 
-        file_write($filename, element('index.html', $content));
+        FileManager::file_write($filename, element('index.html', $content));
 
         // json api
         if ($config['api']['enabled']) {
             $threads = $content['threads'];
             $json = json_encode($api->translatePage($threads));
             $jsonFilename = $board['dir'] . ($page - 1) . '.json'; // pages should start from 0
-            file_write($jsonFilename, $json);
+            FileManager::file_write($jsonFilename, $json);
 
             $catalog[$page - 1] = $threads;
         }
@@ -1350,10 +1251,10 @@ function buildIndex(): void
     if ($page < $config['max_pages']) {
         for (;$page <= $config['max_pages'];$page++) {
             $filename = $board['dir'] . ($page == 1 ? $config['file_index'] : sprintf($config['file_page'], $page));
-            file_unlink($filename);
+            FileManager::file_unlink($filename);
 
             $jsonFilename = $board['dir'] . ($page - 1) . '.json';
-            file_unlink($jsonFilename);
+            FileManager::file_unlink($jsonFilename);
         }
     }
 
@@ -1361,7 +1262,7 @@ function buildIndex(): void
     if ($config['api']['enabled']) {
         $json = json_encode($api->translateCatalog($catalog));
         $jsonFilename = $board['dir'] . 'catalog.json';
-        file_write($jsonFilename, $json);
+        FileManager::file_write($jsonFilename, $json);
     }
 
     if ($config['try_smarter']) {
@@ -1401,72 +1302,7 @@ function buildJavascript(): void
         $script = \JSMin\JSMin::minify($script);
     }
 
-    file_write($config['file_script'], $script);
-}
-
-function checkDNSBL(): void
-{
-    global $config;
-
-
-    if (isIPv6()) {
-        return;
-    } // No IPv6 support yet.
-
-    if (!isset($_SERVER['REMOTE_ADDR'])) {
-        return;
-    } // Fix your web server configuration
-
-    if (in_array($_SERVER['REMOTE_ADDR'], $config['dnsbl_exceptions'])) {
-        return;
-    }
-
-    $ipaddr = ReverseIPOctets($_SERVER['REMOTE_ADDR']);
-
-    foreach ($config['dnsbl'] as $blacklist) {
-        if (!is_array($blacklist)) {
-            $blacklist = [$blacklist];
-        }
-
-        if (($lookup = str_replace('%', $ipaddr, $blacklist[0])) == $blacklist[0]) {
-            $lookup = $ipaddr . '.' . $blacklist[0];
-        }
-
-        if (!$ip = DNS($lookup)) {
-            continue;
-        } // not in list
-
-        $blacklist_name = isset($blacklist[2]) ? $blacklist[2] : $blacklist[0];
-
-        if (!isset($blacklist[1])) {
-            // If you're listed at all, you're blocked.
-            error(sprintf($config['error']['dnsbl'], $blacklist_name));
-        } elseif (is_array($blacklist[1])) {
-            foreach ($blacklist[1] as $octet) {
-                if ($ip == $octet || $ip == '127.0.0.' . $octet) {
-                    error(sprintf($config['error']['dnsbl'], $blacklist_name));
-                }
-            }
-        } elseif (is_callable($blacklist[1])) {
-            if ($blacklist[1]($ip)) {
-                error(sprintf($config['error']['dnsbl'], $blacklist_name));
-            }
-        } else {
-            if ($ip == $blacklist[1] || $ip == '127.0.0.' . $blacklist[1]) {
-                error(sprintf($config['error']['dnsbl'], $blacklist_name));
-            }
-        }
-    }
-}
-
-function isIPv6(): bool
-{
-    return strstr($_SERVER['REMOTE_ADDR'], ':') !== false;
-}
-
-function ReverseIPOctets(string $ip): string
-{
-    return implode('.', array_reverse(explode('.', $ip)));
+    FileManager::file_write($config['file_script'], $script);
 }
 
 function wordfilters(string &$body): void
@@ -1940,14 +1776,14 @@ function buildThread(int $id, bool $return = false, array|bool $mod = false): ?s
         return $body;
     }
 
-    file_write($board['dir'] . $config['dir']['res'] . sprintf($config['file_page'], $id), $body);
+    FileManager::file_write($board['dir'] . $config['dir']['res'] . sprintf($config['file_page'], $id), $body);
 
     // json api
     if ($config['api']['enabled']) {
         $api = new Api();
         $json = json_encode($api->translateThread($thread));
         $jsonFilename = $board['dir'] . $config['dir']['res'] . $id . '.json';
-        file_write($jsonFilename, $json);
+        FileManager::file_write($jsonFilename, $json);
     }
 
     return null;
@@ -1962,7 +1798,7 @@ function rrmdir(string $dir): void
                 if (filetype($dir . "/" . $object) == "dir") {
                     rrmdir($dir . "/" . $object);
                 } else {
-                    file_unlink($dir . "/" . $object);
+                    FileManager::file_unlink($dir . "/" . $object);
                 }
             }
         }
@@ -2091,66 +1927,11 @@ function undoImage(array $post): void
     }
 
     if (isset($post['file_path'])) {
-        file_unlink($post['file_path']);
+        FileManager::file_unlink($post['file_path']);
     }
     if (isset($post['thumb_path'])) {
-        file_unlink($post['thumb_path']);
+        FileManager::file_unlink($post['thumb_path']);
     }
-}
-
-function rDNS(string $ip_addr): string
-{
-    global $config;
-
-    if ($config['cache']['enabled'] && ($host = Cache::get('rdns_' . $ip_addr))) {
-        return $host;
-    }
-
-    if (!$config['dns_system']) {
-        $host = gethostbyaddr($ip_addr);
-    } else {
-        $resp = shell_exec_error('host -W 1 ' . $ip_addr);
-        if (preg_match('/domain name pointer ([^\s]+)$/', $resp, $m)) {
-            $host = $m[1];
-        } else {
-            $host = $ip_addr;
-        }
-    }
-
-    if ($config['cache']['enabled']) {
-        Cache::set('rdns_' . $ip_addr, $host);
-    }
-
-    return $host;
-}
-
-function DNS(string $host): string|false
-{
-    global $config;
-
-    if ($config['cache']['enabled'] && ($ip_addr = Cache::get('dns_' . $host))) {
-        return $ip_addr != '?' ? $ip_addr : false;
-    }
-
-    if (!$config['dns_system']) {
-        $ip_addr = gethostbyname($host);
-        if ($ip_addr == $host) {
-            $ip_addr = false;
-        }
-    } else {
-        $resp = shell_exec_error('host -W 1 ' . $host);
-        if (preg_match('/has address ([^\s]+)$/', $resp, $m)) {
-            $ip_addr = $m[1];
-        } else {
-            $ip_addr = false;
-        }
-    }
-
-    if ($config['cache']['enabled']) {
-        Cache::set('dns_' . $host, $ip_addr !== false ? $ip_addr : '?');
-    }
-
-    return $ip_addr;
 }
 
 function shell_exec_error(string $command, bool $suppress_stdout = false): string|false

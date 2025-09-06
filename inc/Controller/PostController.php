@@ -7,9 +7,10 @@
 namespace Sudochan\Controller;
 
 use Sudochan\Mod\Auth;
-use Sudochan\EventDispatcher;
+use Sudochan\Dispatcher\EventDispatcher;
 use Sudochan\Bans;
 use Sudochan\Service\BoardService;
+use Sudochan\Manager\FileManager;
 
 class PostController
 {
@@ -520,7 +521,7 @@ class PostController
         $query->execute() or error(db_error($query));
         $result = $query->fetch(\PDO::FETCH_ASSOC);
 
-        file_unlink($board . '/' . $config['dir']['thumb'] . $result['thumb']);
+        FileManager::file_unlink($board . '/' . $config['dir']['thumb'] . $result['thumb']);
 
         // Make thumbnail spoiler
         $query = prepare(sprintf("UPDATE ``posts_%s`` SET `thumb` = :thumb, `thumbwidth` = :thumbwidth, `thumbheight` = :thumbheight WHERE `id` = :id", $board));
