@@ -5,8 +5,8 @@
  */
 
 use Sudochan\Mod\Auth;
-use Sudochan\Image;
-use Sudochan\ImageConvert;
+use Sudochan\Resource\ImageResource as Image;
+use Sudochan\Resource\Extensions\ImageConvert;
 use Sudochan\Dispatcher\EventDispatcher;
 use Sudochan\Bans;
 use Sudochan\Mutes;
