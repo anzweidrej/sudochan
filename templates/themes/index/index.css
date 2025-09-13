@@ -123,7 +123,7 @@ body {
     line-height: 1.231;
     font-family: Arial, Helvetica, sans-serif;
     text-align: center;
-    background: #ffe url("fade.png") top repeat-x;
+    background: #ffe;
     color: #800;
 }
 
@@ -174,6 +174,62 @@ a:visited {
     text-align: left;
     width: 57.69em;
     min-width: 750px;
+}
+
+/* Menu */
+#filter-btn,
+#opts-btn {
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding-right: 0.25em;
+}
+
+#filter-btn:hover,
+#opts-btn:hover {
+    cursor: pointer;
+    color: #c63;
+}
+
+#menu-toggle {
+    display: inline-block;
+    position: absolute;
+    text-align: right;
+    background: #fff;
+    border: 1px solid #808080;
+    box-shadow: 2px 2px 0px 1px rgba(0, 0, 0, 0.1);
+    right: 0;
+    top: 100%;
+    margin-top: 0.25em;
+    z-index: 1000;
+}
+
+#menu-toggle ul {
+    padding: 4px 0;
+}
+
+#menu-toggle li {
+    padding: 3px 10px;
+    cursor: pointer;
+}
+
+#menu-toggle li:hover {
+    background: #fca;
+}
+
+#menu-toggle .menu-toggle-sel {
+    list-style: inside;
+    list-style-type: "✔  ";
+}
+
+#menu-toggle .menu-toggle-sep {
+    border-bottom: 1px solid #ccc;
+    margin: 6px 0 4px 0;
+    padding: 0;
+}
+
+#menu-toggle.hide {
+    display: none !important;
 }
 
 /* Header */
@@ -364,6 +420,10 @@ a:visited {
 /* Announcement */
 #announce .boxcontent {
     line-height: 1.5em;
+}
+
+#announce h2 {
+    color: #fff;
 }
 
 #announce em {

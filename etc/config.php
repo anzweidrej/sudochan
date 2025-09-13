@@ -699,8 +699,6 @@ $config['stylesheets']['Futaba Light'] = 'futaba-light.css';
 $config['stylesheets']['Gentoochan'] = 'gentoochan.css';
 $config['stylesheets']['Miku'] = 'miku.css';
 $config['stylesheets']['Notsuba'] = 'notsuba.css';
-$config['stylesheets']['Piwnichan'] = 'piwnichan.css';
-$config['stylesheets']['Ricechan'] = 'ricechan.css';
 $config['stylesheets']['Wasabi'] = 'wasabi.css';
 
 // The prefix for each stylesheet URI. Defaults to $config['root']/stylesheets/
@@ -784,6 +782,7 @@ $config['additional_javascript'][] = 'js/hide-threads.js';
 $config['additional_javascript'][] = 'js/hide-images.js';
 $config['additional_javascript'][] = 'js/show-op.js';
 $config['additional_javascript'][] = 'js/download-original.js';
+$config['additional_javascript'][] = 'js/frames-link.js';
 
 // Where these script files are located on the web. Defaults to $config['root'].
 // $config['additional_javascript_url'] = 'http://static.example.org/tinyboard-javascript-stuff/';

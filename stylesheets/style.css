@@ -1,3 +1,9 @@
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
 body {
     background: #eef2ff url("img/fade-blue.png") repeat-x 50% 0%;
     color: black;
@@ -57,6 +63,13 @@ p.intro a.capcode {
     unicode-bidi: embed;
 }
 
+h1 {
+    font-family: tahoma;
+    letter-spacing: -2px;
+    font-size: 20pt;
+    margin: 0;
+}
+
 h2 {
     color: #af0a0f;
     font-size: 11pt;
@@ -66,13 +79,6 @@ h2 {
 
 header {
     margin: 1em 0;
-}
-
-h1 {
-    font-family: tahoma;
-    letter-spacing: -2px;
-    font-size: 20pt;
-    margin: 0;
 }
 
 header div.subtitle,

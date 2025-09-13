@@ -52,6 +52,15 @@
                             <h2>
                                 Boards
                             </h2>
+                            <div id="opts-btn" data-cmd="options">
+                                options ▼
+                            </div>
+                            <div id="menu-toggle" class="hide">
+                                <ul>
+                                    <li data-cmd="set" data-opt="frames">
+                                    </li>
+                                </ul>
+                            </div>
                         </div>
                         <div class="boxcontent">
                             {% for category, boards in categories %}
@@ -68,7 +77,6 @@
                                     </ul>
                                 </div>
                             {% endfor %}
-
                             {% for category, links in config.custom_categories %}
                                 <div class="column">
                                     <h3 style="text-decoration: underline; display: inline">
@@ -152,5 +160,17 @@
                 </div>
             </div>
         </div>
+        <script>
+            (function() {
+                var btn = document.getElementById('opts-btn');
+                var menu = document.getElementById('menu-toggle');
+                if (!btn || !menu) return;
+
+                btn.addEventListener('click', function() {
+                    menu.classList.toggle('hide');
+                    btn.textContent = menu.classList.contains('hide') ? 'options ▼' : 'options ▲';
+                });
+            })();
+        </script>
     </body>
 </html>

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="{{ config.locale }}">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+        <title>{% block title %}{{ settings.title }}{% endblock %}</title>
+        {% include 'meta.html' %}
+        {% block stylesheets %}
+        {% endblock %}
+        {% block javascripts %}
+        {% endblock %}
+    </head>
+    <body>
+        <h1>
+            {{ settings.title }}
+        </h1>
+        <ul>
+            <li>
+                <a href="{{ config.root }}" target="_top">[Remove Frames]</a>
+            </li>
+        </ul>
+        <h2>
+            Boards
+        </h2>
+        <div id="img">
+            <ul>
+                {% for board in boards %}
+                    <li>
+                        <a href="{{ config.board_path|sprintf(board.uri) }}" target="main">/{{ board.uri }}/ - {{ board.title|e }} </a>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </body>
+</html>
