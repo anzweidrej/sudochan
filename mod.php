@@ -4,12 +4,12 @@
  *  Copyright (c) 2010-2014 Tinyboard Development Group
  */
 
-use Sudochan\Mod\Auth;
+use Sudochan\Manager\AuthManager;
 
 require_once 'bootstrap.php';
 
 // Authenticate the mod user
-Auth::authenticate();
+AuthManager::authenticate();
 
 if ($config['debug']) {
     $parse_start_time = microtime(true);
@@ -90,7 +90,7 @@ foreach ($pages as $uri => $handler) {
 
                 // CSRF-protected page; validate security token
                 $actual_query = preg_replace('!/([a-f0-9]{8})$!', '', $query);
-                if ($token != Auth::make_secure_link_token(substr($actual_query, 1))) {
+                if ($token != AuthManager::make_secure_link_token(substr($actual_query, 1))) {
                     error($config['error']['csrf']);
                 }
             }

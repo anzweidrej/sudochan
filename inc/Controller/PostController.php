@@ -6,7 +6,7 @@
 
 namespace Sudochan\Controller;
 
-use Sudochan\Mod\Auth;
+use Sudochan\Manager\AuthManager;
 use Sudochan\Dispatcher\EventDispatcher;
 use Sudochan\Bans;
 use Sudochan\Service\BoardService;
@@ -36,7 +36,7 @@ class PostController
         $query->bindValue(':locked', $unlock ? 0 : 1);
         $query->execute() or error(db_error($query));
         if ($query->rowCount()) {
-            Auth::modLog(($unlock ? 'Unlocked' : 'Locked') . " thread #{$post}");
+            AuthManager::modLog(($unlock ? 'Unlocked' : 'Locked') . " thread #{$post}");
             PostService::buildThread($post);
             PageService::buildIndex();
         }
@@ -74,7 +74,7 @@ class PostController
         $query->bindValue(':sticky', $unsticky ? 0 : 1);
         $query->execute() or error(db_error($query));
         if ($query->rowCount()) {
-            Auth::modLog(($unsticky ? 'Unstickied' : 'Stickied') . " thread #{$post}");
+            AuthManager::modLog(($unsticky ? 'Unstickied' : 'Stickied') . " thread #{$post}");
             PostService::buildThread($post);
             PageService::buildIndex();
         }
@@ -99,7 +99,7 @@ class PostController
         $query->bindValue(':bumplock', $unbumplock ? 0 : 1);
         $query->execute() or error(db_error($query));
         if ($query->rowCount()) {
-            Auth::modLog(($unbumplock ? 'Unbumplocked' : 'Bumplocked') . " thread #{$post}");
+            AuthManager::modLog(($unbumplock ? 'Unbumplocked' : 'Bumplocked') . " thread #{$post}");
             PostService::buildThread($post);
             PageService::buildIndex();
         }
@@ -244,7 +244,7 @@ class PostController
                 }
             }
 
-            Auth::modLog("Moved thread #{$postID} to " . sprintf($config['board_abbreviation'], $targetBoard) . " (#{$newID})", $originBoard);
+            AuthManager::modLog("Moved thread #{$postID} to " . sprintf($config['board_abbreviation'], $targetBoard) . " (#{$newID})", $originBoard);
 
             // build new thread
             PostService::buildThread($newID);
@@ -304,7 +304,7 @@ class PostController
             error(_('Impossible to move thread; there is only one board.'));
         }
 
-        $security_token = Auth::make_secure_link_token($originBoard . '/move/' . $postID);
+        $security_token = AuthManager::make_secure_link_token($originBoard . '/move/' . $postID);
 
         mod_page(_('Move thread'), 'mod/move.html', ['post' => $postID, 'board' => $originBoard, 'boards' => $boards, 'token' => $security_token]);
     }
@@ -321,7 +321,7 @@ class PostController
             error($config['error']['noaccess']);
         }
 
-        $security_token = Auth::make_secure_link_token($board . '/ban/' . $post);
+        $security_token = AuthManager::make_secure_link_token($board . '/ban/' . $post);
 
         $query = prepare(sprintf('SELECT ' . ($config['ban_show_post'] ? '*' : '`ip`, `thread`') .
             ' FROM ``posts_%s`` WHERE `id` = :id', $board));
@@ -360,13 +360,13 @@ class PostController
                 $query->execute() or error(db_error($query));
                 PostService::rebuildPost($post);
 
-                Auth::modLog("Attached a public ban message to post #{$post}: " . utf8tohtml($_POST['message']));
+                AuthManager::modLog("Attached a public ban message to post #{$post}: " . utf8tohtml($_POST['message']));
                 PostService::buildThread($thread ? $thread : $post);
                 PageService::buildIndex();
             } elseif (isset($_POST['delete']) && (int) $_POST['delete']) {
                 // Delete post
                 PostService::deletePost($post);
-                Auth::modLog("Deleted post #{$post}");
+                AuthManager::modLog("Deleted post #{$post}");
                 // Rebuild board
                 PageService::buildIndex();
                 // Rebuild themes
@@ -405,7 +405,7 @@ class PostController
             error($config['error']['noaccess']);
         }
 
-        $security_token = Auth::make_secure_link_token($board . '/edit' . ($edit_raw_html ? '_raw' : '') . '/' . $postID);
+        $security_token = AuthManager::make_secure_link_token($board . '/edit' . ($edit_raw_html ? '_raw' : '') . '/' . $postID);
 
         $query = prepare(sprintf('SELECT * FROM ``posts_%s`` WHERE `id` = :id', $board));
         $query->bindValue(':id', $postID);
@@ -433,9 +433,9 @@ class PostController
             $query->execute() or error(db_error($query));
 
             if ($edit_raw_html) {
-                Auth::modLog("Edited raw HTML of post #{$postID}");
+                AuthManager::modLog("Edited raw HTML of post #{$postID}");
             } else {
-                Auth::modLog("Edited post #{$postID}");
+                AuthManager::modLog("Edited post #{$postID}");
                 PostService::rebuildPost($postID);
             }
 
@@ -473,7 +473,7 @@ class PostController
         // Delete post
         PostService::deletePost($post);
         // Record the action
-        Auth::modLog("Deleted post #{$post}");
+        AuthManager::modLog("Deleted post #{$post}");
         // Rebuild board
         PageService::buildIndex();
         // Rebuild themes
@@ -497,7 +497,7 @@ class PostController
         // Delete file
         PostService::deleteFile($post);
         // Record the action
-        Auth::modLog("Deleted file from post #{$post}");
+        AuthManager::modLog("Deleted file from post #{$post}");
 
         // Rebuild board
         PageService::buildIndex();
@@ -537,7 +537,7 @@ class PostController
         $query->execute() or error(db_error($query));
 
         // Record the action
-        Auth::modLog("Spoilered file from post #{$post}");
+        AuthManager::modLog("Spoilered file from post #{$post}");
 
         // Rebuild thread
         PostService::buildThread($result['thread'] ? $result['thread'] : $post);
@@ -627,7 +627,7 @@ class PostController
         }
 
         // Record the action
-        Auth::modLog("Deleted all posts by IP address: <a href=\"?/IP/$ip\">$ip</a>");
+        AuthManager::modLog("Deleted all posts by IP address: <a href=\"?/IP/$ip\">$ip</a>");
 
         // Redirect
         header('Location: ?/' . sprintf($config['board_path'], $boardName) . $config['file_index'], true, $config['redirect_http']);

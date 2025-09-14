@@ -6,7 +6,7 @@
 
 namespace Sudochan\Controller;
 
-use Sudochan\Mod\Auth;
+use Sudochan\Manager\AuthManager;
 use Sudochan\Cache;
 use Sudochan\Manager\PermissionManager;
 use Sudochan\Service\MarkupService;
@@ -44,7 +44,7 @@ class NoticeboardController
                 Cache::delete('noticeboard_preview');
             }
 
-            Auth::modLog('Posted a noticeboard entry');
+            AuthManager::modLog('Posted a noticeboard entry');
 
             header('Location: ?/noticeboard#' . $pdo->lastInsertId(), true, $config['redirect_http']);
         }
@@ -60,7 +60,7 @@ class NoticeboardController
         }
 
         foreach ($noticeboard as &$entry) {
-            $entry['delete_token'] = Auth::make_secure_link_token('noticeboard/delete/' . $entry['id']);
+            $entry['delete_token'] = AuthManager::make_secure_link_token('noticeboard/delete/' . $entry['id']);
         }
 
         $query = prepare("SELECT COUNT(*) FROM ``noticeboard``");
@@ -70,7 +70,7 @@ class NoticeboardController
         mod_page(_('Noticeboard'), 'mod/noticeboard.html', [
             'noticeboard' => $noticeboard,
             'count' => $count,
-            'token' => Auth::make_secure_link_token('noticeboard'),
+            'token' => AuthManager::make_secure_link_token('noticeboard'),
         ]);
     }
 
@@ -86,7 +86,7 @@ class NoticeboardController
         $query->bindValue(':id', $id);
         $query->execute() or error(db_error($query));
 
-        Auth::modLog('Deleted a noticeboard entry');
+        AuthManager::modLog('Deleted a noticeboard entry');
 
         if ($config['cache']['enabled']) {
             Cache::delete('noticeboard_preview');

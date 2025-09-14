@@ -6,7 +6,7 @@
 
 namespace Sudochan\Controller;
 
-use Sudochan\Mod\Auth;
+use Sudochan\Manager\AuthManager;
 use Sudochan\Cache;
 use Sudochan\Manager\PermissionManager;
 use Sudochan\Service\MarkupService;
@@ -53,7 +53,7 @@ class PmController
                 Cache::delete('pm_unreadcount_' . $mod['id']);
             }
 
-            Auth::modLog('Read a PM');
+            AuthManager::modLog('Read a PM');
         }
 
         if ($reply) {
@@ -65,7 +65,7 @@ class PmController
                 'username' => $pm['username'],
                 'id' => $pm['sender'],
                 'message' => quote($pm['message']),
-                'token' => Auth::make_secure_link_token('new_PM/' . $pm['username']),
+                'token' => AuthManager::make_secure_link_token('new_PM/' . $pm['username']),
             ]);
         } else {
             mod_page(sprintf('%s &ndash; #%d', _('Private message'), $id), 'mod/pm.html', $pm);
@@ -136,7 +136,7 @@ class PmController
                 Cache::delete('pm_unreadcount_' . $id);
             }
 
-            Auth::modLog('Sent a PM to ' . utf8tohtml($username));
+            AuthManager::modLog('Sent a PM to ' . utf8tohtml($username));
 
             header('Location: ?/', true, $config['redirect_http']);
         }
@@ -144,7 +144,7 @@ class PmController
         mod_page(sprintf('%s %s', _('New PM for'), $username), 'mod/new_pm.html', [
             'username' => $username,
             'id' => $id,
-            'token' => Auth::make_secure_link_token('new_PM/' . $username),
+            'token' => AuthManager::make_secure_link_token('new_PM/' . $username),
         ]);
     }
 }

@@ -6,7 +6,7 @@
 
 namespace Sudochan\Controller;
 
-use Sudochan\Mod\Auth;
+use Sudochan\Manager\AuthManager;
 use Sudochan\Service\BoardService;
 use Sudochan\Manager\PermissionManager;
 
@@ -95,7 +95,7 @@ class DebugController
             error($config['error']['noaccess']);
         }
 
-        $args['security_token'] = Auth::make_secure_link_token('debug/sql');
+        $args['security_token'] = AuthManager::make_secure_link_token('debug/sql');
 
         if (isset($_POST['query'])) {
             $args['query'] = $_POST['query'];

@@ -7,7 +7,7 @@
 defined('TINYBOARD') or exit;
 
 use PhpMyAdmin\Twig\Extensions\I18nExtension;
-use Sudochan\Mod\Auth;
+use Sudochan\Manager\AuthManager;
 use Sudochan\Twig\TinyboardExtension;
 use Sudochan\Twig\TinyboardRuntime;
 use Twig\Environment;
@@ -57,7 +57,7 @@ function element(string $templateFile, array $options): string
         ((isset($options['mod']) && $options['mod']) || isset($options['__mod'])) &&
         !preg_match('!^mod/!', $templateFile)
     ) {
-        $options['pm'] = Auth::create_pm_header();
+        $options['pm'] = AuthManager::create_pm_header();
     }
 
     if (isset($options['body']) && $config['debug']) {

@@ -6,7 +6,7 @@
 
 namespace Sudochan\Controller;
 
-use Sudochan\Mod\Auth;
+use Sudochan\Manager\AuthManager;
 use Sudochan\Bans;
 use Sudochan\Entity\Thread;
 use Sudochan\Entity\Post;
@@ -24,7 +24,7 @@ class BanController
         }
 
         if (!isset($_POST['ip'], $_POST['reason'], $_POST['length'], $_POST['board'])) {
-            mod_page(_('New ban'), 'mod/ban_form.html', ['token' => Auth::make_secure_link_token('ban')]);
+            mod_page(_('New ban'), 'mod/ban_form.html', ['token' => AuthManager::make_secure_link_token('ban')]);
             return;
         }
 
@@ -86,7 +86,7 @@ class BanController
         mod_page(_('Ban list'), 'mod/ban_list.html', [
             'bans' => $bans,
             'count' => Bans::count(),
-            'token' => Auth::make_secure_link_token('bans'),
+            'token' => AuthManager::make_secure_link_token('bans'),
         ]);
     }
 
@@ -117,11 +117,11 @@ class BanController
             $ban['mask'] = Bans::range_to_string([$ban['ipstart'], $ban['ipend']]);
 
             if (isset($_POST['unban'])) {
-                Auth::modLog('Accepted ban appeal #' . $ban['id'] . ' for ' . $ban['mask']);
+                AuthManager::modLog('Accepted ban appeal #' . $ban['id'] . ' for ' . $ban['mask']);
                 Bans::delete($ban['ban_id'], true);
                 query("DELETE FROM ``ban_appeals`` WHERE `id` = " . $ban['id']) or error(db_error());
             } else {
-                Auth::modLog('Denied ban appeal #' . $ban['id'] . ' for ' . $ban['mask']);
+                AuthManager::modLog('Denied ban appeal #' . $ban['id'] . ' for ' . $ban['mask']);
                 query("UPDATE ``ban_appeals`` SET `denied` = 1 WHERE `id` = " . $ban['id']) or error(db_error());
             }
 
@@ -164,7 +164,7 @@ class BanController
 
         mod_page(_('Ban appeals'), 'mod/ban_appeals.html', [
             'ban_appeals' => $ban_appeals,
-            'token' => Auth::make_secure_link_token('ban-appeals'),
+            'token' => AuthManager::make_secure_link_token('ban-appeals'),
         ]);
     }
 }

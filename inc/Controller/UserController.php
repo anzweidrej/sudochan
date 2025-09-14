@@ -6,7 +6,7 @@
 
 namespace Sudochan\Controller;
 
-use Sudochan\Mod\Auth;
+use Sudochan\Manager\AuthManager;
 use Sudochan\Service\BoardService;
 use Sudochan\Manager\PermissionManager;
 
@@ -53,7 +53,7 @@ class UserController
                 $query->bindValue(':id', $uid);
                 $query->execute() or error(db_error($query));
 
-                Auth::modLog('Deleted user ' . utf8tohtml($user['username']) . ' <small>(#' . $user['id'] . ')</small>');
+                AuthManager::modLog('Deleted user ' . utf8tohtml($user['username']) . ' <small>(#' . $user['id'] . ')</small>');
 
                 header('Location: ?/users', true, $config['redirect_http']);
 
@@ -72,11 +72,11 @@ class UserController
 
             if ($user['username'] !== $_POST['username']) {
                 // account was renamed
-                Auth::modLog('Renamed user "' . utf8tohtml($user['username']) . '" <small>(#' . $user['id'] . ')</small> to "' . utf8tohtml($_POST['username']) . '"');
+                AuthManager::modLog('Renamed user "' . utf8tohtml($user['username']) . '" <small>(#' . $user['id'] . ')</small> to "' . utf8tohtml($_POST['username']) . '"');
             }
 
             if ($_POST['password'] != '') {
-                $salt = Auth::generate_salt();
+                $salt = AuthManager::generate_salt();
                 $password = hash('sha256', $salt . sha1($_POST['password']));
 
                 $query = prepare('UPDATE ``mods`` SET `password` = :password, `salt` = :salt WHERE `id` = :id');
@@ -85,11 +85,11 @@ class UserController
                 $query->bindValue(':salt', $salt);
                 $query->execute() or error(db_error($query));
 
-                Auth::modLog('Changed password for ' . utf8tohtml($_POST['username']) . ' <small>(#' . $user['id'] . ')</small>');
+                AuthManager::modLog('Changed password for ' . utf8tohtml($_POST['username']) . ' <small>(#' . $user['id'] . ')</small>');
 
                 if ($uid == $mod['id']) {
-                    Auth::login($_POST['username'], $_POST['password']);
-                    Auth::setCookies();
+                    AuthManager::login($_POST['username'], $_POST['password']);
+                    AuthManager::setCookies();
                 }
             }
 
@@ -104,7 +104,7 @@ class UserController
 
         if (PermissionManager::hasPermission($config['mod']['change_password']) && $uid == $mod['id'] && isset($_POST['password'])) {
             if ($_POST['password'] != '') {
-                $salt = Auth::generate_salt();
+                $salt = AuthManager::generate_salt();
                 $password = hash('sha256', $salt . sha1($_POST['password']));
 
                 $query = prepare('UPDATE ``mods`` SET `password` = :password, `salt` = :salt WHERE `id` = :id');
@@ -113,10 +113,10 @@ class UserController
                 $query->bindValue(':salt', $salt);
                 $query->execute() or error(db_error($query));
 
-                Auth::modLog('Changed own password');
+                AuthManager::modLog('Changed own password');
 
-                Auth::login($user['username'], $_POST['password']);
-                Auth::setCookies();
+                AuthManager::login($user['username'], $_POST['password']);
+                AuthManager::setCookies();
             }
 
             if (PermissionManager::hasPermission($config['mod']['manageusers'])) {
@@ -143,7 +143,7 @@ class UserController
             'user' => $user,
             'logs' => $log,
             'boards' => BoardService::listBoards(),
-            'token' => Auth::make_secure_link_token('users/' . $user['id']),
+            'token' => AuthManager::make_secure_link_token('users/' . $user['id']),
         ]);
     }
 
@@ -184,7 +184,7 @@ class UserController
                 error(sprintf($config['error']['invalidfield'], 'type'));
             }
 
-            $salt = Auth::generate_salt();
+            $salt = AuthManager::generate_salt();
             $password = hash('sha256', $salt . sha1($_POST['password']));
 
             $query = prepare('INSERT INTO ``mods`` VALUES (NULL, :username, :password, :salt, :type, :boards)');
@@ -197,13 +197,13 @@ class UserController
 
             $userID = $pdo->lastInsertId();
 
-            Auth::modLog('Created a new user: ' . utf8tohtml($_POST['username']) . ' <small>(#' . $userID . ')</small>');
+            AuthManager::modLog('Created a new user: ' . utf8tohtml($_POST['username']) . ' <small>(#' . $userID . ')</small>');
 
             header('Location: ?/users', true, $config['redirect_http']);
             return;
         }
 
-        mod_page(_('New user'), 'mod/user.html', ['new' => true, 'boards' => BoardService::listBoards(), 'token' => Auth::make_secure_link_token('users/new')]);
+        mod_page(_('New user'), 'mod/user.html', ['new' => true, 'boards' => BoardService::listBoards(), 'token' => AuthManager::make_secure_link_token('users/new')]);
     }
 
     public function mod_users(): void
@@ -222,8 +222,8 @@ class UserController
         $users = $query->fetchAll(\PDO::FETCH_ASSOC);
 
         foreach ($users as &$user) {
-            $user['promote_token'] = Auth::make_secure_link_token("users/{$user['id']}/promote");
-            $user['demote_token'] = Auth::make_secure_link_token("users/{$user['id']}/demote");
+            $user['promote_token'] = AuthManager::make_secure_link_token("users/{$user['id']}/promote");
+            $user['demote_token'] = AuthManager::make_secure_link_token("users/{$user['id']}/demote");
         }
 
         mod_page(sprintf('%s (%d)', _('Manage users'), count($users)), 'mod/users.html', ['users' => $users]);
@@ -271,7 +271,7 @@ class UserController
         $query->bindValue(':group_value', $new_group);
         $query->execute() or error(db_error($query));
 
-        Auth::modLog(($action == 'promote' ? 'Promoted' : 'Demoted') . ' user "' .
+        AuthManager::modLog(($action == 'promote' ? 'Promoted' : 'Demoted') . ' user "' .
             utf8tohtml($mod['username']) . '" to ' . $config['mod']['groups'][$new_group]);
 
         header('Location: ?/users', true, $config['redirect_http']);

@@ -6,7 +6,7 @@
 
 namespace Sudochan\Controller;
 
-use Sudochan\Mod\Auth;
+use Sudochan\Manager\AuthManager;
 use Sudochan\Manager\ThemeManager;
 use Sudochan\Manager\PermissionManager;
 
@@ -40,8 +40,8 @@ class ThemeController
         closedir($dir);
 
         foreach ($themes as $theme_name => &$theme) {
-            $theme['rebuild_token'] = Auth::make_secure_link_token('themes/' . $theme_name . '/rebuild');
-            $theme['uninstall_token'] = Auth::make_secure_link_token('themes/' . $theme_name . '/uninstall');
+            $theme['rebuild_token'] = AuthManager::make_secure_link_token('themes/' . $theme_name . '/rebuild');
+            $theme['uninstall_token'] = AuthManager::make_secure_link_token('themes/' . $theme_name . '/uninstall');
         }
 
         mod_page(_('Manage themes'), 'mod/themes.html', [
@@ -128,7 +128,7 @@ class ThemeController
             'theme_name' => $theme_name,
             'theme' => $theme,
             'settings' => $settings,
-            'token' => Auth::make_secure_link_token('themes/' . $theme_name),
+            'token' => AuthManager::make_secure_link_token('themes/' . $theme_name),
         ]);
     }
 

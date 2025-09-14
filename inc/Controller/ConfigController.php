@@ -6,7 +6,7 @@
 
 namespace Sudochan\Controller;
 
-use Sudochan\Mod\Auth;
+use Sudochan\Manager\AuthManager;
 use Sudochan\Mod\ConfigEditor;
 use Sudochan\Service\BoardService;
 use Sudochan\Manager\PermissionManager;
@@ -49,7 +49,7 @@ class ConfigController
                 'boards' => BoardService::listBoards(),
                 'board' => $board_config,
                 'file' => $config_file,
-                'token' => Auth::make_secure_link_token('config' . ($board_config ? '/' . $board_config : '')),
+                'token' => AuthManager::make_secure_link_token('config' . ($board_config ? '/' . $board_config : '')),
             ]);
             return;
         }
@@ -149,7 +149,7 @@ class ConfigController
                 'board' => $board_config,
                 'conf' => $conf,
                 'file' => $config_file,
-                'token' => Auth::make_secure_link_token('config' . ($board_config ? '/' . $board_config : '')),
+                'token' => AuthManager::make_secure_link_token('config' . ($board_config ? '/' . $board_config : '')),
             ],
         );
     }

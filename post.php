@@ -4,7 +4,7 @@
  *  Copyright (c) 2010-2014 Tinyboard Development Group
  */
 
-use Sudochan\Mod\Auth;
+use Sudochan\Manager\AuthManager;
 use Sudochan\Resource\ImageResource as Image;
 use Sudochan\Resource\Extensions\ImageConvert;
 use Sudochan\Dispatcher\EventDispatcher;
@@ -233,7 +233,7 @@ if (isset($_POST['delete'])) {
     }
 
     if ($post['mod'] = isset($_POST['mod']) && $_POST['mod']) {
-        Auth::authenticate();
+        AuthManager::authenticate();
         if (!$mod) {
             // Liar. You're not a mod.
             error($config['error']['notamod']);

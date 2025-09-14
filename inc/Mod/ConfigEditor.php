@@ -8,6 +8,8 @@ namespace Sudochan\Mod;
 
 defined('TINYBOARD') or exit;
 
+use Sudochan\Service\MarkupService;
+
 class ConfigEditor
 {
     public static function permission_to_edit_config_var(array|string $varname): bool
@@ -155,7 +157,7 @@ class ConfigEditor
                             foreach ($var['comment'] as &$comment) {
                                 $comment = preg_replace_callback(
                                     '/((?:https?:\/\/|ftp:\/\/|irc:\/\/)[^\s<>()"]+?(?:\([^\s<>()"]*?\)[^\s<>()"]*?)*)((?:\s|<|>|"|\.||\]|!|\?|,|&#44;|&quot;)*(?:[\s<>()"]|$))/',
-                                    'markup_url',
+                                    [MarkupService::class, 'markup_url'],
                                     $comment,
                                 );
                             }

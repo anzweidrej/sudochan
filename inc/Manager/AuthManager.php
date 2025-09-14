@@ -4,14 +4,14 @@
  *  Copyright (c) 2010-2013 Tinyboard Development Group
  */
 
-namespace Sudochan\Mod;
+namespace Sudochan\Manager;
 
 defined('TINYBOARD') or exit;
 
 use Sudochan\Cache;
 use Sudochan\Handler\ErrorHandler;
 
-class Auth
+class AuthManager
 {
     // create a hash/salt pair for validate logins
     public static function mkhash(string $username, string $password, string|false $salt = false): array|string

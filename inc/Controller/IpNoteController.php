@@ -6,7 +6,7 @@
 
 namespace Sudochan\Controller;
 
-use Sudochan\Mod\Auth;
+use Sudochan\Manager\AuthManager;
 use Sudochan\Entity\Thread;
 use Sudochan\Entity\Post;
 use Sudochan\Bans;
@@ -34,7 +34,7 @@ class IpNoteController
         $query->bindValue(':id', $id);
         $query->execute() or error(db_error($query));
 
-        Auth::modLog("Removed a note for <a href=\"?/IP/{$ip}\">{$ip}</a>");
+        AuthManager::modLog("Removed a note for <a href=\"?/IP/{$ip}\">{$ip}</a>");
 
         header('Location: ?/IP/' . $ip . '#notes', true, $config['redirect_http']);
     }
@@ -72,7 +72,7 @@ class IpNoteController
             $query->bindValue(':body', $_POST['note']);
             $query->execute() or error(db_error($query));
 
-            Auth::modLog("Added a note for <a href=\"?/IP/{$ip}\">{$ip}</a>");
+            AuthManager::modLog("Added a note for <a href=\"?/IP/{$ip}\">{$ip}</a>");
 
             header('Location: ?/IP/' . $ip . '#notes', true, $config['redirect_http']);
             return;
@@ -112,7 +112,7 @@ class IpNoteController
         }
 
         $args['boards'] = $boards;
-        $args['token'] = Auth::make_secure_link_token('ban');
+        $args['token'] = AuthManager::make_secure_link_token('ban');
 
         if (PermissionManager::hasPermission($config['mod']['view_ban'])) {
             $args['bans'] = Bans::find($ip, false, true);
@@ -134,7 +134,7 @@ class IpNoteController
             $args['logs'] = [];
         }
 
-        $args['security_token'] = Auth::make_secure_link_token('IP/' . $ip);
+        $args['security_token'] = AuthManager::make_secure_link_token('IP/' . $ip);
 
         mod_page(sprintf('%s: %s', _('IP'), $ip), 'mod/view_ip.html', $args, $args['hostname']);
     }

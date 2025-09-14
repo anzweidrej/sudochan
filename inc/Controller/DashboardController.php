@@ -6,7 +6,7 @@
 
 namespace Sudochan\Controller;
 
-use Sudochan\Mod\Auth;
+use Sudochan\Manager\AuthManager;
 use Sudochan\Cache;
 use Sudochan\Service\BoardService;
 use Sudochan\Service\PageService;
@@ -109,7 +109,7 @@ class DashboardController
             }
         }
 
-        $args['logout_token'] = Auth::make_secure_link_token('logout');
+        $args['logout_token'] = AuthManager::make_secure_link_token('logout');
 
         mod_page(_('Dashboard'), 'mod/dashboard.html', $args);
     }
@@ -195,7 +195,7 @@ class DashboardController
 
         mod_page(_('Rebuild'), 'mod/rebuild.html', [
             'boards' => BoardService::listBoards(),
-            'token' => Auth::make_secure_link_token('rebuild'),
+            'token' => AuthManager::make_secure_link_token('rebuild'),
         ]);
     }
 }

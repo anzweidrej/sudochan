@@ -6,7 +6,7 @@
 
 namespace Sudochan\Controller;
 
-use Sudochan\Mod\Auth;
+use Sudochan\Manager\AuthManager;
 use Sudochan\Cache;
 use Sudochan\Service\BoardService;
 use Sudochan\Service\PageService;
@@ -44,7 +44,7 @@ class BoardController
                     Cache::delete('all_boards');
                 }
 
-                Auth::modLog('Deleted board: ' . sprintf($config['board_abbreviation'], $board['uri']), false);
+                AuthManager::modLog('Deleted board: ' . sprintf($config['board_abbreviation'], $board['uri']), false);
 
                 // Delete posting table
                 $query = query(sprintf('DROP TABLE IF EXISTS ``posts_%s``', $board['uri'])) or error(db_error());
@@ -107,7 +107,7 @@ class BoardController
                 $query->bindValue(':category', $_POST['category']);
                 $query->execute() or error(db_error($query));
 
-                Auth::modLog('Edited board information for ' . sprintf($config['board_abbreviation'], $board['uri']), false);
+                AuthManager::modLog('Edited board information for ' . sprintf($config['board_abbreviation'], $board['uri']), false);
             }
 
             if ($config['cache']['enabled']) {
@@ -121,7 +121,7 @@ class BoardController
         } else {
             mod_page(sprintf('%s: ' . $config['board_abbreviation'], _('Edit board'), $board['uri']), 'mod/board.html', [
                 'board' => $board,
-                'token' => Auth::make_secure_link_token('edit/' . $board['uri']),
+                'token' => AuthManager::make_secure_link_token('edit/' . $board['uri']),
             ]);
         }
     }
@@ -177,7 +177,7 @@ class BoardController
             $query->bindValue(':category', $_POST['category']);
             $query->execute() or error(db_error($query));
 
-            Auth::modLog('Created a new board: ' . sprintf($config['board_abbreviation'], $_POST['uri']));
+            AuthManager::modLog('Created a new board: ' . sprintf($config['board_abbreviation'], $_POST['uri']));
 
             if (!BoardService::openBoard($_POST['uri'])) {
                 error(_("Couldn't open board after creation."));
@@ -203,7 +203,7 @@ class BoardController
             header('Location: ?/' . $board['uri'] . '/' . $config['file_index'], true, $config['redirect_http']);
         }
 
-        mod_page(_('New board'), 'mod/board.html', ['new' => true, 'token' => Auth::make_secure_link_token('new-board')]);
+        mod_page(_('New board'), 'mod/board.html', ['new' => true, 'token' => AuthManager::make_secure_link_token('new-board')]);
     }
 
     public function mod_view_board(string $boardName, int $page_no = 1): void

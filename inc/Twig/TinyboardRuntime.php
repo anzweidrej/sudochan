@@ -8,7 +8,7 @@ namespace Sudochan\Twig;
 
 use Twig\Extension\RuntimeExtensionInterface;
 use Sudochan\Manager\PermissionManager;
-use Sudochan\Mod\Auth;
+use Sudochan\Manager\AuthManager;
 use Sudochan\Dispatcher\EventDispatcher;
 
 class TinyboardRuntime implements RuntimeExtensionInterface
@@ -98,11 +98,11 @@ class TinyboardRuntime implements RuntimeExtensionInterface
     {
         global $config;
 
-        return '<a onclick="if (event.which==2) return true;if (confirm(\'' . htmlentities(addslashes($confirm_message)) . '\')) document.location=\'?/' . htmlspecialchars(addslashes($href . '/' . Auth::make_secure_link_token($href))) . '\';return false;" title="' . htmlentities($title) . '" href="?/' . $href . '">' . $text . '</a>';
+        return '<a onclick="if (event.which==2) return true;if (confirm(\'' . htmlentities(addslashes($confirm_message)) . '\')) document.location=\'?/' . htmlspecialchars(addslashes($href . '/' . AuthManager::make_secure_link_token($href))) . '\';return false;" title="' . htmlentities($title) . '" href="?/' . $href . '">' . $text . '</a>';
     }
 
     public function twig_secure_link(string $href): string
     {
-        return $href . '/' . Auth::make_secure_link_token($href);
+        return $href . '/' . AuthManager::make_secure_link_token($href);
     }
 }

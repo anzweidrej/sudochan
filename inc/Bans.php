@@ -7,7 +7,7 @@
 namespace Sudochan;
 
 use Lifo\IP\CIDR;
-use Sudochan\Mod\Auth;
+use Sudochan\Manager\AuthManager;
 use Sudochan\Service\MarkupService;
 
 class Bans
@@ -213,7 +213,7 @@ class Bans
 
             $mask = self::range_to_string([$ban['ipstart'], $ban['ipend']]);
 
-            Auth::modLog("Removed ban #{$ban_id} for " .
+            AuthManager::modLog("Removed ban #{$ban_id} for " .
                 (filter_var($mask, FILTER_VALIDATE_IP) !== false ? "<a href=\"?/IP/$mask\">$mask</a>" : $mask));
         }
 
@@ -286,7 +286,7 @@ class Bans
         $query->execute() or error(db_error($query));
 
         if (isset($mod['id']) && $mod['id'] == $mod_id) {
-            Auth::modLog('Created a new ' .
+            AuthManager::modLog('Created a new ' .
                 ($length > 0 ? preg_replace('/^(\d+) (\w+?)s?$/', '$1-$2', until($length)) : 'permanent') .
                 ' ban on ' .
                 ($ban_board ? '/' . $ban_board . '/' : 'all boards') .

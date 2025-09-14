@@ -6,7 +6,7 @@
 
 namespace Sudochan\Controller;
 
-use Sudochan\Mod\Auth;
+use Sudochan\Manager\AuthManager;
 use Sudochan\Entity\Post;
 use Sudochan\Entity\Thread;
 use Sudochan\Service\BoardService;
@@ -73,8 +73,8 @@ class ReportController
                 'report' => $report,
                 'config' => $config,
                 'mod' => $mod,
-                'token' => Auth::make_secure_link_token('reports/' . $report['id'] . '/dismiss'),
-                'token_all' => Auth::make_secure_link_token('reports/' . $report['id'] . '/dismissall'),
+                'token' => AuthManager::make_secure_link_token('reports/' . $report['id'] . '/dismiss'),
+                'token_all' => AuthManager::make_secure_link_token('reports/' . $report['id'] . '/dismissall'),
             ]);
 
             // Bug fix for https://github.com/savetheinternet/Tinyboard/issues/21
@@ -134,9 +134,9 @@ class ReportController
 
 
         if ($all) {
-            Auth::modLog("Dismissed all reports by <a href=\"?/IP/$ip\">$ip</a>");
+            AuthManager::modLog("Dismissed all reports by <a href=\"?/IP/$ip\">$ip</a>");
         } else {
-            Auth::modLog("Dismissed a report for post #{$id}", $board);
+            AuthManager::modLog("Dismissed a report for post #{$id}", $board);
         }
 
         header('Location: ?/reports', true, $config['redirect_http']);

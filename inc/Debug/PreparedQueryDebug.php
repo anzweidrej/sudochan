@@ -4,7 +4,7 @@
  *  Copyright (c) 2010-2013 Tinyboard Development Group
  */
 
-namespace Sudochan;
+namespace Sudochan\Debug;
 
 /**
  * Debug wrapper for prepared queries.

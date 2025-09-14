@@ -15,7 +15,7 @@ use Sudochan\Service\BoardService;
 use Sudochan\Cache;
 use Sudochan\Dispatcher\EventDispatcher;
 use Sudochan\Filter;
-use Sudochan\Mod\Auth;
+use Sudochan\Manager\AuthManager;
 use Sudochan\Remote;
 use Sudochan\Entity\Post;
 use Sudochan\Entity\Thread;
@@ -30,14 +30,6 @@ $mod = false;
 register_shutdown_function([ErrorHandler::class, 'fatal_error_handler']);
 mb_internal_encoding('UTF-8');
 loadConfig();
-
-// Ensure fallback translation function is always defined
-if (!function_exists('_')) {
-    function _($str)
-    {
-        return $str;
-    }
-}
 
 function loadConfig(): void
 {
@@ -167,21 +159,14 @@ function loadConfig(): void
 
     // Load locale translations if not English
     if ($config['locale'] != 'en') {
-        // @phpstan-ignore-next-line
-        if (_setlocale(LC_ALL, $config['locale']) === false) {
+        if (setlocale(LC_ALL, $config['locale']) === false) {
             $error('The specified locale (' . $config['locale'] . ') does not exist on your platform!');
         }
         if (extension_loaded('gettext')) {
-            bindtextdomain('sudochan', './locales/');
+            $locales_dir = __DIR__ . '/../locales';
+            bindtextdomain('sudochan', $locales_dir);
             bind_textdomain_codeset('sudochan', 'UTF-8');
             textdomain('sudochan');
-        } else {
-            // @phpstan-ignore-next-line
-            _bindtextdomain('sudochan', './locales/');
-            // @phpstan-ignore-next-line
-            _bind_textdomain_codeset('sudochan', 'UTF-8');
-            // @phpstan-ignore-next-line
-            _textdomain('sudochan');
         }
     }
 
@@ -928,12 +913,12 @@ function secure_link_confirm(string $text, string $title, string $confirm_messag
 {
     global $config;
 
-    return '<a onclick="if (event.which==2) return true;if (confirm(\'' . htmlentities(addslashes($confirm_message)) . '\')) document.location=\'?/' . htmlspecialchars(addslashes($href . '/' . Auth::make_secure_link_token($href))) . '\';return false;" title="' . htmlentities($title) . '" href="?/' . $href . '">' . $text . '</a>';
+    return '<a onclick="if (event.which==2) return true;if (confirm(\'' . htmlentities(addslashes($confirm_message)) . '\')) document.location=\'?/' . htmlspecialchars(addslashes($href . '/' . AuthManager::make_secure_link_token($href))) . '\';return false;" title="' . htmlentities($title) . '" href="?/' . $href . '">' . $text . '</a>';
 }
 
 function secure_link(string $href): string
 {
-    return $href . '/' . Auth::make_secure_link_token($href);
+    return $href . '/' . AuthManager::make_secure_link_token($href);
 }
 
 function embed_html(string $link): string
@@ -1120,5 +1105,5 @@ function do_filters(array $post): void
 
 function mod_confirm(string $request): void
 {
-    mod_page(_('Confirm action'), 'mod/confirm.html', ['request' => $request, 'token' => Auth::make_secure_link_token($request)]);
+    mod_page(_('Confirm action'), 'mod/confirm.html', ['request' => $request, 'token' => AuthManager::make_secure_link_token($request)]);
 }

@@ -6,7 +6,7 @@
 
 namespace Sudochan\Controller;
 
-use Sudochan\Mod\Auth;
+use Sudochan\Manager\AuthManager;
 use Sudochan\Manager\ThemeManager;
 use Sudochan\Manager\PermissionManager;
 use Sudochan\Service\MarkupService;
@@ -36,7 +36,7 @@ class NewsController
             $query->bindValue(':body', $_POST['body']);
             $query->execute() or error(db_error($query));
 
-            Auth::modLog('Posted a news entry');
+            AuthManager::modLog('Posted a news entry');
 
             ThemeManager::rebuildThemes('news');
 
@@ -54,14 +54,14 @@ class NewsController
         }
 
         foreach ($news as &$entry) {
-            $entry['delete_token'] = Auth::make_secure_link_token('news/delete/' . $entry['id']);
+            $entry['delete_token'] = AuthManager::make_secure_link_token('news/delete/' . $entry['id']);
         }
 
         $query = prepare("SELECT COUNT(*) FROM ``news``");
         $query->execute() or error(db_error($query));
         $count = $query->fetchColumn();
 
-        mod_page(_('News'), 'mod/news.html', ['news' => $news, 'count' => $count, 'token' => Auth::make_secure_link_token('news')]);
+        mod_page(_('News'), 'mod/news.html', ['news' => $news, 'count' => $count, 'token' => AuthManager::make_secure_link_token('news')]);
     }
 
     public function mod_news_delete(int $id): void
@@ -76,7 +76,7 @@ class NewsController
         $query->bindValue(':id', $id);
         $query->execute() or error(db_error($query));
 
-        Auth::modLog('Deleted a news entry');
+        AuthManager::modLog('Deleted a news entry');
 
         header('Location: ?/news', true, $config['redirect_http']);
     }
