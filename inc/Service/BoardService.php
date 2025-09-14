@@ -84,8 +84,6 @@ class BoardService
         $board['dir'] = sprintf($config['board_path'], $board['uri']);
         $board['url'] = sprintf($config['board_abbreviation'], $board['uri']);
 
-        loadConfig();
-
         if (!file_exists($board['dir'])) {
             @mkdir($board['dir'], 0777) or error("Couldn't create " . $board['dir'] . ". Check permissions.", true);
         }

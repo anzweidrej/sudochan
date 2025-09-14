@@ -12,7 +12,6 @@ use Sudochan\Service\PageService;
 use Sudochan\Manager\FileManager;
 
 require_once 'bootstrap.php';
-loadConfig();
 
 $step = isset($_GET['step']) ? round($_GET['step']) : 0;
 $page = [
