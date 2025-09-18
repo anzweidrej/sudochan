@@ -1,5 +1,9 @@
 <?php
 
+/*
+ *  Copyright (c) 2010-2013 Tinyboard Development Group
+ */
+
 namespace Sudochan\Loader;
 
 use Sudochan\Handler\ErrorHandler;
@@ -16,6 +20,16 @@ mb_internal_encoding('UTF-8');
 
 class ConfigLoader
 {
+    /**
+     * Load and initialize configuration.
+     *
+     * @global array|null $board
+     * @global array $config
+     * @global string $__ip
+     * @global array|null $debug
+     * @global float $microtime_start
+     * @return void
+     */
     public static function loadConfig(): void
     {
         global $board, $config, $__ip, $debug, $__version, $microtime_start;

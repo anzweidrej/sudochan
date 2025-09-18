@@ -10,6 +10,8 @@ use Sudochan\Manager\AuthManager;
 use Sudochan\Mod\ConfigEditor;
 use Sudochan\Service\BoardService;
 use Sudochan\Manager\PermissionManager;
+use Sudochan\Utils\StringFormatter;
+use Sudochan\Utils\Token;
 
 class ConfigController
 {
@@ -41,7 +43,7 @@ class ConfigController
             if ($instance_config === false) {
                 $instance_config = "<?php\n\n// This file does not exist yet. You are creating it.";
             }
-            $instance_config = str_replace("\n", '&#010;', utf8tohtml($instance_config));
+            $instance_config = str_replace("\n", '&#010;', StringFormatter::utf8tohtml($instance_config));
 
             mod_page(_('Config editor'), 'mod/config-editor-php.html', [
                 'php' => $instance_config,
@@ -49,7 +51,7 @@ class ConfigController
                 'boards' => BoardService::listBoards(),
                 'board' => $board_config,
                 'file' => $config_file,
-                'token' => AuthManager::make_secure_link_token('config' . ($board_config ? '/' . $board_config : '')),
+                'token' => Token::make_secure_link_token('config' . ($board_config ? '/' . $board_config : '')),
             ]);
             return;
         }
@@ -149,7 +151,7 @@ class ConfigController
                 'board' => $board_config,
                 'conf' => $conf,
                 'file' => $config_file,
-                'token' => AuthManager::make_secure_link_token('config' . ($board_config ? '/' . $board_config : '')),
+                'token' => Token::make_secure_link_token('config' . ($board_config ? '/' . $board_config : '')),
             ],
         );
     }

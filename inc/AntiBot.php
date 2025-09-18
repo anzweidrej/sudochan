@@ -8,6 +8,8 @@ namespace Sudochan;
 
 defined('TINYBOARD') or exit;
 
+use Sudochan\Utils\StringFormatter;
+
 $hidden_inputs_twig = [];
 
 class AntiBot
@@ -61,7 +63,7 @@ class AntiBot
 
         foreach ($chars as &$c) {
             if (mt_rand(0, 3) != 0) {
-                $c = utf8tohtml($c);
+                $c = StringFormatter::utf8tohtml($c);
             } else {
                 $c = mb_encode_numericentity($c, [0, 0xffff, 0, 0xffff], 'UTF-8');
             }
@@ -166,12 +168,12 @@ class AntiBot
                 }
             }
 
-            $element = str_replace('%name%', utf8tohtml($name), $element);
+            $element = str_replace('%name%', StringFormatter::utf8tohtml($name), $element);
 
             if (mt_rand(0, 2) == 0) {
                 $value = self::make_confusing($value);
             } else {
-                $value = utf8tohtml($value);
+                $value = StringFormatter::utf8tohtml($value);
             }
 
             if (strpos($element, 'textarea') === false) {
@@ -210,37 +212,4 @@ class AntiBot
         // Use SHA1 for the hash
         return sha1($hash . $this->salt);
     }
-}
-
-function _create_antibot(string $board, ?int $thread): AntiBot
-{
-    global $config, $purged_old_antispam;
-
-    $antibot = new AntiBot([$board, $thread]);
-
-    if (!isset($purged_old_antispam)) {
-        $purged_old_antispam = true;
-        query('DELETE FROM ``antispam`` WHERE `expires` < UNIX_TIMESTAMP()') or error(db_error());
-    }
-
-    if ($thread) {
-        $query = prepare('UPDATE ``antispam`` SET `expires` = UNIX_TIMESTAMP() + :expires WHERE `board` = :board AND `thread` = :thread AND `expires` IS NULL');
-    } else {
-        $query = prepare('UPDATE ``antispam`` SET `expires` = UNIX_TIMESTAMP() + :expires WHERE `board` = :board AND `thread` IS NULL AND `expires` IS NULL');
-    }
-
-    $query->bindValue(':board', $board);
-    if ($thread) {
-        $query->bindValue(':thread', $thread);
-    }
-    $query->bindValue(':expires', $config['spam']['hidden_inputs_expire']);
-    $query->execute() or error(db_error($query));
-
-    $query = prepare('INSERT INTO ``antispam`` VALUES (:board, :thread, :hash, UNIX_TIMESTAMP(), NULL, 0)');
-    $query->bindValue(':board', $board);
-    $query->bindValue(':thread', $thread);
-    $query->bindValue(':hash', $antibot->hash());
-    $query->execute() or error(db_error($query));
-
-    return $antibot;
 }

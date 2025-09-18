@@ -8,6 +8,8 @@ namespace Sudochan\Controller;
 
 use Sudochan\Manager\AuthManager;
 use Sudochan\Handler\ErrorHandler;
+use Sudochan\Utils\StringFormatter;
+use Sudochan\Utils\Token;
 
 class AuthController
 {
@@ -70,10 +72,15 @@ class AuthController
                 [
                     'config' => $config,
                     'error' => $error,
-                    'username' => utf8tohtml($username),
+                    'username' => StringFormatter::utf8tohtml($username),
                     'redirect' => $redirect,
                 ],
             ),
         ]));
+    }
+
+    public static function mod_confirm(string $request): void
+    {
+        mod_page(_('Confirm action'), 'mod/confirm.html', ['request' => $request, 'token' => Token::make_secure_link_token($request)]);
     }
 }

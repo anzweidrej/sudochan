@@ -7,6 +7,9 @@
 namespace Sudochan\Service;
 
 use Sudochan\Dispatcher\EventDispatcher;
+use Sudochan\Utils\TextFormatter;
+use Sudochan\Utils\StringFormatter;
+use Sudochan\Utils\Sanitize;
 
 class MarkupService
 {
@@ -46,7 +49,7 @@ class MarkupService
     {
         global $board, $config, $markup_urls;
 
-        $modifiers = extract_modifiers($body);
+        $modifiers = Sanitize::extract_modifiers($body);
 
         $body = preg_replace('@<tinyboard (?!escape )([\w\s]+)>(.+?)</tinyboard>@us', '', $body);
         $body = preg_replace('@<(tinyboard) escape ([\w\s]+)>@i', '<$1 $2>', $body);
@@ -56,7 +59,7 @@ class MarkupService
         }
 
         $body = str_replace("\r", '', $body);
-        $body = utf8tohtml($body);
+        $body = StringFormatter::utf8tohtml($body);
 
         if (mysql_version() < 50503) {
             $body = mb_encode_numericentity($body, [0x010000, 0xffffff, 0, 0xffffff], 'UTF-8');
@@ -91,11 +94,11 @@ class MarkupService
         }
 
         if ($config['auto_unicode']) {
-            $body = self::unicodify($body);
+            $body = StringFormatter::unicodify($body);
 
             if ($config['markup_urls']) {
                 foreach ($markup_urls as &$url) {
-                    $body = str_replace(self::unicodify($url), $url, $body);
+                    $body = str_replace(StringFormatter::unicodify($url), $url, $body);
                 }
             }
         }
@@ -293,21 +296,6 @@ class MarkupService
         $body = str_replace("\t", '        ', $body);
 
         return $tracked_cites;
-    }
-
-    public static function unicodify(string $body): string
-    {
-        $body = str_replace('...', '&hellip;', $body);
-        $body = str_replace('&lt;--', '&larr;', $body);
-        $body = str_replace('--&gt;', '&rarr;', $body);
-
-        // En and em- dashes are rendered exactly the same in
-        // most monospace fonts (they look the same in code
-        // editors).
-        $body = str_replace('---', '&mdash;', $body); // em dash
-        $body = str_replace('--', '&ndash;', $body); // en dash
-
-        return $body;
     }
 
     public static function mb_substr_replace(string $string, string $replacement, int $start, int $length): string

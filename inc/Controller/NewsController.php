@@ -10,6 +10,9 @@ use Sudochan\Manager\AuthManager;
 use Sudochan\Manager\ThemeManager;
 use Sudochan\Manager\PermissionManager;
 use Sudochan\Service\MarkupService;
+use Sudochan\Utils\Token;
+use Sudochan\Utils\TextFormatter;
+use Sudochan\Utils\Sanitize;
 
 class NewsController
 {
@@ -26,7 +29,7 @@ class NewsController
                 error($config['error']['noaccess']);
             }
 
-            $_POST['body'] = escape_markup_modifiers($_POST['body']);
+            $_POST['body'] = Sanitize::escape_markup_modifiers($_POST['body']);
             MarkupService::markup($_POST['body']);
 
             $query = prepare('INSERT INTO ``news`` VALUES (NULL, :name, :time, :subject, :body)');
@@ -54,14 +57,14 @@ class NewsController
         }
 
         foreach ($news as &$entry) {
-            $entry['delete_token'] = AuthManager::make_secure_link_token('news/delete/' . $entry['id']);
+            $entry['delete_token'] = Token::make_secure_link_token('news/delete/' . $entry['id']);
         }
 
         $query = prepare("SELECT COUNT(*) FROM ``news``");
         $query->execute() or error(db_error($query));
         $count = $query->fetchColumn();
 
-        mod_page(_('News'), 'mod/news.html', ['news' => $news, 'count' => $count, 'token' => AuthManager::make_secure_link_token('news')]);
+        mod_page(_('News'), 'mod/news.html', ['news' => $news, 'count' => $count, 'token' => Token::make_secure_link_token('news')]);
     }
 
     public function mod_news_delete(int $id): void

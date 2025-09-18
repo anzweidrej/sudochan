@@ -9,6 +9,8 @@ namespace Sudochan\Controller;
 use Sudochan\Manager\AuthManager;
 use Sudochan\Service\BoardService;
 use Sudochan\Manager\PermissionManager;
+use Sudochan\Utils\StringFormatter;
+use Sudochan\Utils\Token;
 
 class UserController
 {
@@ -53,7 +55,7 @@ class UserController
                 $query->bindValue(':id', $uid);
                 $query->execute() or error(db_error($query));
 
-                AuthManager::modLog('Deleted user ' . utf8tohtml($user['username']) . ' <small>(#' . $user['id'] . ')</small>');
+                AuthManager::modLog('Deleted user ' . StringFormatter::utf8tohtml($user['username']) . ' <small>(#' . $user['id'] . ')</small>');
 
                 header('Location: ?/users', true, $config['redirect_http']);
 
@@ -72,7 +74,7 @@ class UserController
 
             if ($user['username'] !== $_POST['username']) {
                 // account was renamed
-                AuthManager::modLog('Renamed user "' . utf8tohtml($user['username']) . '" <small>(#' . $user['id'] . ')</small> to "' . utf8tohtml($_POST['username']) . '"');
+                AuthManager::modLog('Renamed user "' . StringFormatter::utf8tohtml($user['username']) . '" <small>(#' . $user['id'] . ')</small> to "' . StringFormatter::utf8tohtml($_POST['username']) . '"');
             }
 
             if ($_POST['password'] != '') {
@@ -85,7 +87,7 @@ class UserController
                 $query->bindValue(':salt', $salt);
                 $query->execute() or error(db_error($query));
 
-                AuthManager::modLog('Changed password for ' . utf8tohtml($_POST['username']) . ' <small>(#' . $user['id'] . ')</small>');
+                AuthManager::modLog('Changed password for ' . StringFormatter::utf8tohtml($_POST['username']) . ' <small>(#' . $user['id'] . ')</small>');
 
                 if ($uid == $mod['id']) {
                     AuthManager::login($_POST['username'], $_POST['password']);
@@ -143,7 +145,7 @@ class UserController
             'user' => $user,
             'logs' => $log,
             'boards' => BoardService::listBoards(),
-            'token' => AuthManager::make_secure_link_token('users/' . $user['id']),
+            'token' => Token::make_secure_link_token('users/' . $user['id']),
         ]);
     }
 
@@ -197,13 +199,13 @@ class UserController
 
             $userID = $pdo->lastInsertId();
 
-            AuthManager::modLog('Created a new user: ' . utf8tohtml($_POST['username']) . ' <small>(#' . $userID . ')</small>');
+            AuthManager::modLog('Created a new user: ' . StringFormatter::utf8tohtml($_POST['username']) . ' <small>(#' . $userID . ')</small>');
 
             header('Location: ?/users', true, $config['redirect_http']);
             return;
         }
 
-        mod_page(_('New user'), 'mod/user.html', ['new' => true, 'boards' => BoardService::listBoards(), 'token' => AuthManager::make_secure_link_token('users/new')]);
+        mod_page(_('New user'), 'mod/user.html', ['new' => true, 'boards' => BoardService::listBoards(), 'token' => Token::make_secure_link_token('users/new')]);
     }
 
     public function mod_users(): void
@@ -222,8 +224,8 @@ class UserController
         $users = $query->fetchAll(\PDO::FETCH_ASSOC);
 
         foreach ($users as &$user) {
-            $user['promote_token'] = AuthManager::make_secure_link_token("users/{$user['id']}/promote");
-            $user['demote_token'] = AuthManager::make_secure_link_token("users/{$user['id']}/demote");
+            $user['promote_token'] = Token::make_secure_link_token("users/{$user['id']}/promote");
+            $user['demote_token'] = Token::make_secure_link_token("users/{$user['id']}/demote");
         }
 
         mod_page(sprintf('%s (%d)', _('Manage users'), count($users)), 'mod/users.html', ['users' => $users]);
@@ -272,7 +274,7 @@ class UserController
         $query->execute() or error(db_error($query));
 
         AuthManager::modLog(($action == 'promote' ? 'Promoted' : 'Demoted') . ' user "' .
-            utf8tohtml($mod['username']) . '" to ' . $config['mod']['groups'][$new_group]);
+            StringFormatter::utf8tohtml($mod['username']) . '" to ' . $config['mod']['groups'][$new_group]);
 
         header('Location: ?/users', true, $config['redirect_http']);
     }

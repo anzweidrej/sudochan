@@ -9,6 +9,7 @@ namespace Sudochan;
 defined('TINYBOARD') or exit;
 
 use Sudochan\Bans;
+use Sudochan\Utils\Obfuscation;
 
 class Filter
 {
@@ -57,7 +58,7 @@ class Filter
                                 }
                                 break;
                             case 'body':
-                                if ($flood_post['posthash'] != make_comment_hex($post['body_nomarkup'])) {
+                                if ($flood_post['posthash'] != Obfuscation::make_comment_hex($post['body_nomarkup'])) {
                                     continue 3;
                                 }
                                 break;
@@ -180,7 +181,7 @@ class Filter
                     if (isset($this->message)) {
                         error($this->message);
                     }
-                    checkBan($board['uri']);
+                    Bans::checkBan($board['uri']);
                     exit;
                 }
                 break;

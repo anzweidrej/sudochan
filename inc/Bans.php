@@ -9,6 +9,15 @@ namespace Sudochan;
 use Lifo\IP\CIDR;
 use Sudochan\Manager\AuthManager;
 use Sudochan\Service\MarkupService;
+use Sudochan\Service\BoardService;
+use Sudochan\Utils\DateRange;
+use Sudochan\Utils\StringFormatter;
+use Sudochan\Utils\TextFormatter;
+use Sudochan\Entity\Post;
+use Sudochan\Entity\Thread;
+use Sudochan\Dispatcher\EventDispatcher;
+use Sudochan\Cache;
+use Sudochan\Utils\Sanitize;
 
 class Bans
 {
@@ -252,7 +261,7 @@ class Bans
         $query->bindValue(':time', time());
 
         if ($reason !== '') {
-            $reason = escape_markup_modifiers($reason);
+            $reason = Sanitize::escape_markup_modifiers($reason);
             MarkupService::markup($reason);
             $query->bindValue(':reason', $reason);
         } else {
@@ -287,14 +296,137 @@ class Bans
 
         if (isset($mod['id']) && $mod['id'] == $mod_id) {
             AuthManager::modLog('Created a new ' .
-                ($length > 0 ? preg_replace('/^(\d+) (\w+?)s?$/', '$1-$2', until($length)) : 'permanent') .
+                ($length > 0 ? preg_replace('/^(\d+) (\w+?)s?$/', '$1-$2', DateRange::until($length)) : 'permanent') .
                 ' ban on ' .
                 ($ban_board ? '/' . $ban_board . '/' : 'all boards') .
                 ' for ' .
                 (filter_var($mask, FILTER_VALIDATE_IP) !== false ? "<a href=\"?/IP/$mask\">$mask</a>" : $mask) .
                 ' (<small>#' . $pdo->lastInsertId() . '</small>)' .
-                ' with ' . ($reason ? 'reason: ' . utf8tohtml($reason) . '' : 'no reason'));
+                ' with ' . ($reason ? 'reason: ' . StringFormatter::utf8tohtml($reason) . '' : 'no reason'));
         }
         return $pdo->lastInsertId();
+    }
+
+    public static function displayBan(array $ban): void
+    {
+        global $config, $board;
+
+        if (!$ban['seen']) {
+            Bans::seen($ban['id']);
+        }
+
+        $ban['ip'] = $_SERVER['REMOTE_ADDR'];
+        if ($ban['post'] && isset($ban['post']['board'], $ban['post']['id'])) {
+            if (BoardService::openBoard($ban['post']['board'])) {
+
+                $query = query(sprintf("SELECT `thumb`, `file` FROM ``posts_%s`` WHERE `id` = " .
+                    (int) $ban['post']['id'], $board['uri']));
+                if ($_post = $query->fetch(\PDO::FETCH_ASSOC)) {
+                    $ban['post'] = array_merge($ban['post'], $_post);
+                } else {
+                    $ban['post']['file'] = 'deleted';
+                    $ban['post']['thumb'] = false;
+                }
+            } else {
+                $ban['post']['file'] = 'deleted';
+                $ban['post']['thumb'] = false;
+            }
+
+            if ($ban['post']['thread']) {
+                $post = new Post($ban['post']);
+            } else {
+                $post = new Thread($ban['post'], null, false, false);
+            }
+        }
+
+        $denied_appeals = [];
+        $pending_appeal = false;
+
+        if ($config['ban_appeals']) {
+            $query = query("SELECT `time`, `denied` FROM `ban_appeals` WHERE `ban_id` = " . (int) $ban['id']) or error(db_error());
+            while ($ban_appeal = $query->fetch(\PDO::FETCH_ASSOC)) {
+                if ($ban_appeal['denied']) {
+                    $denied_appeals[] = $ban_appeal['time'];
+                } else {
+                    $pending_appeal = $ban_appeal['time'];
+                }
+            }
+        }
+
+        // Show banned page and exit
+        die(
+            element(
+                'page.html',
+                [
+                    'title' => _('Banned!'),
+                    'config' => $config,
+                    'nojavascript' => true,
+                    'body' => element(
+                        'banned.html',
+                        [
+                            'config' => $config,
+                            'ban' => $ban,
+                            'board' => $board,
+                            'post' => isset($post) ? $post->build(true) : false,
+                            'denied_appeals' => $denied_appeals,
+                            'pending_appeal' => $pending_appeal,
+                        ],
+                    ),
+                ],
+            )
+        );
+    }
+
+    public static function checkBan(string|false $board = false): ?bool
+    {
+        global $config;
+
+        if (!isset($_SERVER['REMOTE_ADDR'])) {
+            // Server misconfiguration
+            return null;
+        }
+
+        if (EventDispatcher::event('check-ban', $board)) {
+            return true;
+        }
+
+        $bans = Bans::find($_SERVER['REMOTE_ADDR'], $board);
+
+        foreach ($bans as &$ban) {
+            if ($ban['expires'] && $ban['expires'] < time()) {
+                Bans::delete($ban['id']);
+                if ($config['require_ban_view'] && !$ban['seen']) {
+                    if (!isset($_POST['json_response'])) {
+                        self::displayBan($ban);
+                    } else {
+                        header('Content-Type: text/json');
+                        die(json_encode(['error' => true, 'banned' => true]));
+                    }
+                }
+            } else {
+                if (!isset($_POST['json_response'])) {
+                    self::displayBan($ban);
+                } else {
+                    header('Content-Type: text/json');
+                    die(json_encode(['error' => true, 'banned' => true]));
+                }
+            }
+        }
+
+        // I'm not sure where else to put this. It doesn't really matter where; it just needs to be called every
+        // now and then to keep the ban list tidy.
+        if ($config['cache']['enabled'] && $last_time_purged = Cache::get('purged_bans_last')) {
+            if (time() - $last_time_purged < $config['purge_bans']) {
+                return null;
+            }
+        }
+
+        Bans::purge();
+
+        if ($config['cache']['enabled']) {
+            Cache::set('purged_bans_last', time());
+        }
+
+        return null;
     }
 }

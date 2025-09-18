@@ -15,6 +15,10 @@ class EventDispatcher
     /**
      * Dispatch an event to registered handlers.
      * Returns the first non-empty handler result, or false if none.
+     *
+     * @param string $event Event name.
+     * @param mixed  ...$args Arguments to pass to the event handlers.
+     * @return mixed The first non-empty handler result, or false if none.
      */
     public static function event(string $event, mixed ...$args): mixed
     {
@@ -35,6 +39,12 @@ class EventDispatcher
         return false;
     }
 
+    /**
+     * Register an event handler.
+     *
+     * @param string   $event    Event name.
+     * @param callable $callback Handler to register.
+     */
     public static function event_handler(string $event, callable $callback): void
     {
         if (!isset(self::$events[$event])) {
@@ -44,6 +54,11 @@ class EventDispatcher
         self::$events[$event][] = $callback;
     }
 
+    /**
+     * Reset all registered events.
+     *
+     * @return void
+     */
     public static function reset_events(): void
     {
         self::$events = [];

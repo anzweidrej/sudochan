@@ -7,6 +7,7 @@
 namespace Sudochan\Resource\Extensions;
 
 use Sudochan\Resource\ImageBase;
+use Sudochan\Utils\Shell;
 
 class ImageConvert extends ImageBase
 {
@@ -37,7 +38,7 @@ class ImageConvert extends ImageBase
                 return $size;
             }
         }
-        $size = shell_exec_error(($this->gm ? 'gm ' : '') . 'identify -format "%w %h" ' . escapeshellarg($src . '[0]'));
+        $size = Shell::shell_exec_error(($this->gm ? 'gm ' : '') . 'identify -format "%w %h" ' . escapeshellarg($src . '[0]'));
         if (preg_match('/^(\d+) (\d+)$/', $size, $m)) {
             return [$m[1], $m[2]];
         }
@@ -68,13 +69,13 @@ class ImageConvert extends ImageBase
 
         if (!$this->temp) {
             if ($config['strip_exif']) {
-                if ($error = shell_exec_error(($this->gm ? 'gm ' : '') . 'convert ' .
+                if ($error = Shell::shell_exec_error(($this->gm ? 'gm ' : '') . 'convert ' .
                     escapeshellarg($this->src) . ' -auto-orient -strip ' . escapeshellarg($src))) {
                     $this->destroy();
                     error(_('Failed to redraw image!'), null, $error);
                 }
             } else {
-                if ($error = shell_exec_error(($this->gm ? 'gm ' : '') . 'convert ' .
+                if ($error = Shell::shell_exec_error(($this->gm ? 'gm ' : '') . 'convert ' .
                     escapeshellarg($this->src) . ' -auto-orient ' . escapeshellarg($src))) {
                     $this->destroy();
                     error(_('Failed to redraw image!'), null, $error);
@@ -131,7 +132,7 @@ class ImageConvert extends ImageBase
                 } else {
                     $convert_args = $config['convert_args'];
                 }
-                if (($error = shell_exec_error(($this->gm ? 'gm ' : '') . 'convert ' .
+                if (($error = Shell::shell_exec_error(($this->gm ? 'gm ' : '') . 'convert ' .
                     sprintf(
                         $convert_args,
                         $this->width,
@@ -157,7 +158,7 @@ class ImageConvert extends ImageBase
             } else {
                 $convert_args = $config['convert_args'];
             }
-            if (($error = shell_exec_error(($this->gm ? 'gm ' : '') . 'convert ' .
+            if (($error = Shell::shell_exec_error(($this->gm ? 'gm ' : '') . 'convert ' .
                 sprintf(
                     $convert_args,
                     $this->width,

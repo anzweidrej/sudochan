@@ -14,6 +14,9 @@ use Sudochan\Service\BoardService;
 use Sudochan\Service\MarkupService;
 use Sudochan\Resolver\DNSResolver;
 use Sudochan\Manager\PermissionManager;
+use Sudochan\Utils\TextFormatter;
+use Sudochan\Utils\Token;
+use Sudochan\Utils\Sanitize;
 
 class IpNoteController
 {
@@ -63,7 +66,7 @@ class IpNoteController
                 error($config['error']['noaccess']);
             }
 
-            $_POST['note'] = escape_markup_modifiers($_POST['note']);
+            $_POST['note'] = Sanitize::escape_markup_modifiers($_POST['note']);
             MarkupService::markup($_POST['note']);
             $query = prepare('INSERT INTO ``ip_notes`` VALUES (NULL, :ip, :mod, :time, :body)');
             $query->bindValue(':ip', $ip);
@@ -112,7 +115,7 @@ class IpNoteController
         }
 
         $args['boards'] = $boards;
-        $args['token'] = AuthManager::make_secure_link_token('ban');
+        $args['token'] = Token::make_secure_link_token('ban');
 
         if (PermissionManager::hasPermission($config['mod']['view_ban'])) {
             $args['bans'] = Bans::find($ip, false, true);
@@ -134,7 +137,7 @@ class IpNoteController
             $args['logs'] = [];
         }
 
-        $args['security_token'] = AuthManager::make_secure_link_token('IP/' . $ip);
+        $args['security_token'] = Token::make_secure_link_token('IP/' . $ip);
 
         mod_page(sprintf('%s: %s', _('IP'), $ip), 'mod/view_ip.html', $args, $args['hostname']);
     }

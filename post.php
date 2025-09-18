@@ -14,11 +14,18 @@ use Sudochan\Service\BoardService;
 use Sudochan\Service\PageService;
 use Sudochan\Service\PostService;
 use Sudochan\Service\MarkupService;
+use Sudochan\Service\AntiSpamService;
 use Sudochan\Handler\ErrorHandler;
 use Sudochan\Resolver\DNSResolver;
 use Sudochan\Manager\FileManager;
 use Sudochan\Manager\ThemeManager;
 use Sudochan\Manager\PermissionManager;
+use Sudochan\Utils\Shell;
+use Sudochan\Utils\DateRange;
+use Sudochan\Utils\TextFormatter;
+use Sudochan\Utils\StringFormatter;
+use Sudochan\Utils\TripcodeGenerator;
+use Sudochan\Utils\Sanitize;
 
 require_once 'bootstrap.php';
 
@@ -50,7 +57,7 @@ if (isset($_POST['delete'])) {
     }
 
     // Check if banned
-    checkBan($board['uri']);
+    Bans::checkBan($board['uri']);
 
     if (empty($delete)) {
         error($config['error']['nodelete']);
@@ -67,7 +74,7 @@ if (isset($_POST['delete'])) {
             }
 
             if ($post['time'] > time() - $config['delete_time']) {
-                error(sprintf($config['error']['delete_too_soon'], until($post['time'] + $config['delete_time'])));
+                error(sprintf($config['error']['delete_too_soon'], DateRange::until($post['time'] + $config['delete_time'])));
             }
 
             if (isset($_POST['file'])) {
@@ -119,7 +126,7 @@ if (isset($_POST['delete'])) {
     }
 
     // Check if banned
-    checkBan($board['uri']);
+    Bans::checkBan($board['uri']);
 
     if (empty($report)) {
         error($config['error']['noreport']);
@@ -129,7 +136,7 @@ if (isset($_POST['delete'])) {
         error($config['error']['toomanyreports']);
     }
 
-    $reason = escape_markup_modifiers($_POST['reason']);
+    $reason = Sanitize::escape_markup_modifiers($_POST['reason']);
     MarkupService::markup($reason);
 
     foreach ($report as &$id) {
@@ -217,7 +224,7 @@ if (isset($_POST['delete'])) {
     }
 
     // Check if banned
-    checkBan($board['uri']);
+    Bans::checkBan($board['uri']);
 
     // Check for CAPTCHA right after opening the board so the "return" link is in there
     if ($config['recaptcha']) {
@@ -255,7 +262,7 @@ if (isset($_POST['delete'])) {
     }
 
     if (!$post['mod']) {
-        $post['antispam_hash'] = checkSpam([$board['uri'], isset($post['thread']) && !($config['quick_reply'] && isset($_POST['quick-reply'])) ? $post['thread'] : ($config['try_smarter'] && isset($_POST['page']) ? 0 - (int) $_POST['page'] : null)]);
+        $post['antispam_hash'] = AntiSpamService::checkSpam([$board['uri'], isset($post['thread']) && !($config['quick_reply'] && isset($_POST['quick-reply'])) ? $post['thread'] : ($config['try_smarter'] && isset($_POST['page']) ? 0 - (int) $_POST['page'] : null)]);
         if ($post['antispam_hash'] === true) {
             error($config['error']['spam']);
         }
@@ -399,7 +406,7 @@ if (isset($_POST['delete'])) {
             error($config['error']['locked']);
         }
 
-        $numposts = numPosts($post['thread']);
+        $numposts = PageService::numPosts($post['thread']);
 
         if ($config['reply_hard_limit'] != 0 && $config['reply_hard_limit'] <= $numposts['replies']) {
             error($config['error']['reply_hard_limit']);
@@ -413,7 +420,7 @@ if (isset($_POST['delete'])) {
     if ($post['has_file']) {
         $size = $_FILES['file']['size'];
         if ($size > $config['max_filesize']) {
-            error(sprintf3($config['error']['filesize'], [
+            error(StringFormatter::sprintf3($config['error']['filesize'], [
                 'sz' => number_format($size),
                 'filesz' => number_format($size),
                 'maxsz' => number_format($config['max_filesize']),
@@ -434,13 +441,13 @@ if (isset($_POST['delete'])) {
                     in_array($cap, $config['mod']['capcode'][$mod['type']])
                 )) {
 
-                $post['capcode'] = utf8tohtml($cap);
+                $post['capcode'] = StringFormatter::utf8tohtml($cap);
                 $post['name'] = $name;
             }
         }
     }
 
-    $trip = generate_tripcode($post['name']);
+    $trip = TripcodeGenerator::generate_tripcode($post['name']);
     $post['name'] = $trip[0];
     $post['trip'] = isset($trip[1]) ? $trip[1] : '';
 
@@ -464,10 +471,10 @@ if (isset($_POST['delete'])) {
     }
 
     if ($config['strip_combining_chars']) {
-        $post['name'] = strip_combining_chars($post['name']);
-        $post['email'] = strip_combining_chars($post['email']);
-        $post['subject'] = strip_combining_chars($post['subject']);
-        $post['body'] = strip_combining_chars($post['body']);
+        $post['name'] = StringFormatter::strip_combining_chars($post['name']);
+        $post['email'] = StringFormatter::strip_combining_chars($post['email']);
+        $post['subject'] = StringFormatter::strip_combining_chars($post['subject']);
+        $post['body'] = StringFormatter::strip_combining_chars($post['body']);
     }
 
     // Check string lengths
@@ -487,9 +494,9 @@ if (isset($_POST['delete'])) {
         error(sprintf($config['error']['toolong'], 'password'));
     }
 
-    wordfilters($post['body']);
+    Sanitize::wordfilters($post['body']);
 
-    $post['body'] = escape_markup_modifiers($post['body']);
+    $post['body'] = Sanitize::escape_markup_modifiers($post['body']);
 
     if ($mod && isset($post['raw']) && $post['raw']) {
         $post['body'] .= "\n<tinyboard raw html>1</tinyboard>";
@@ -521,7 +528,7 @@ if (isset($_POST['delete'])) {
         $post['body_nomarkup'] = '';
         foreach ($chars as $char) {
             $o = 0;
-            $ord = ordutf8($char, $o);
+            $ord = StringFormatter::ordutf8($char, $o);
             if ($ord >= 0x010000) {
                 continue;
             }
@@ -552,7 +559,7 @@ if (isset($_POST['delete'])) {
     }
 
     if (!PermissionManager::hasPermission($config['mod']['bypass_filters'], $board['uri'])) {
-        do_filters($post);
+        AntiSpamService::do_filters($post);
     }
 
     if ($post['has_file']) {
@@ -581,7 +588,7 @@ if (isset($_POST['delete'])) {
                         $gm = in_array($config['thumb_method'], ['gm', 'gm+gifsicle']);
                         if (isset($exif['Orientation']) && $exif['Orientation'] != 1) {
                             if ($config['convert_manual_orient']) {
-                                $error = shell_exec_error(($gm ? 'gm ' : '') . 'convert ' .
+                                $error = Shell::shell_exec_error(($gm ? 'gm ' : '') . 'convert ' .
                                     escapeshellarg($upload) . ' ' .
                                     ImageConvert::jpeg_exif_orientation(false, $exif) . ' ' .
                                     (
@@ -590,7 +597,7 @@ if (isset($_POST['delete'])) {
                                     ) . ' ' .
                                     escapeshellarg($upload));
                                 if ($config['use_exiftool'] && !$config['strip_exif']) {
-                                    if ($exiftool_error = shell_exec_error(
+                                    if ($exiftool_error = Shell::shell_exec_error(
                                         'exiftool -overwrite_original -q -q -orientation=1 -n ' .
                                             escapeshellarg($upload),
                                     )) {
@@ -601,7 +608,7 @@ if (isset($_POST['delete'])) {
                                     // without needing `exiftool`.
                                 }
                             } else {
-                                $error = shell_exec_error(($gm ? 'gm ' : '') . 'convert ' .
+                                $error = Shell::shell_exec_error(($gm ? 'gm ' : '') . 'convert ' .
                                         escapeshellarg($upload) . ' -auto-orient ' . escapeshellarg($upload));
                             }
                             if ($error) {
@@ -659,7 +666,7 @@ if (isset($_POST['delete'])) {
 
             if ($config['redraw_image'] || (!@$post['exif_stripped'] && $config['strip_exif'] && ($post['extension'] == 'jpg' || $post['extension'] == 'jpeg'))) {
                 if (!$config['redraw_image'] && $config['use_exiftool']) {
-                    if ($error = shell_exec_error('exiftool -overwrite_original -ignoreMinorErrors -q -q -all= ' .
+                    if ($error = Shell::shell_exec_error('exiftool -overwrite_original -ignoreMinorErrors -q -q -all= ' .
                         escapeshellarg($upload))) {
                         error(_('Could not strip EXIF metadata!'), null, $error);
                     }
@@ -697,7 +704,7 @@ if (isset($_POST['delete'])) {
 
     if ($post['has_file']) {
         if ($config['image_reject_repost']) {
-            if ($p = getPostByHash($post['filehash'])) {
+            if ($p = PostService::getPostByHash($post['filehash'])) {
                 FileManager::undoImage($post);
                 error(sprintf(
                     $config['error']['fileexists'],
@@ -712,7 +719,7 @@ if (isset($_POST['delete'])) {
                 ));
             }
         } elseif (!$post['op'] && $config['image_reject_repost_in_thread']) {
-            if ($p = getPostByHashInThread($post['filehash'], $post['thread'])) {
+            if ($p = PostService::getPostByHashInThread($post['filehash'], $post['thread'])) {
                 FileManager::undoImage($post);
                 error(sprintf(
                     $config['error']['fileexistsinthread'],
@@ -760,7 +767,7 @@ if (isset($_POST['delete'])) {
     PostService::insertFloodPost($post);
 
     if (isset($post['antispam_hash'])) {
-        incrementSpamHash($post['antispam_hash']);
+        AntiSpamService::incrementSpamHash($post['antispam_hash']);
     }
 
     if (isset($post['tracked_cites']) && !empty($post['tracked_cites'])) {
@@ -876,7 +883,7 @@ if (isset($_POST['delete'])) {
     $query->bindValue(':message', $_POST['appeal']);
     $query->execute() or error(db_error($query));
 
-    displayBan($ban);
+    Bans::displayBan($ban);
 } else {
     if (!file_exists($config['has_installed'])) {
         header('Location: install.php', true, $config['redirect_http']);

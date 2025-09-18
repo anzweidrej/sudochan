@@ -2,6 +2,7 @@
 
 use Sudochan\Service\BoardService;
 use Sudochan\Manager\FileManager;
+use Sudochan\Utils\TextFormatter;
 
 require 'info.php';
 
@@ -104,7 +105,7 @@ class Index
             BoardService::openBoard($post['board']);
 
             $post['link'] = $config['root'] . $board['dir'] . $config['dir']['res'] . sprintf($config['file_page'], ($post['thread'] ? $post['thread'] : $post['id'])) . '#' . $post['id'];
-            $post['snippet'] = pm_snippet($post['body'], 30);
+            $post['snippet'] = TextFormatter::pm_snippet($post['body'], 30);
             $post['board_name'] = $board['name'];
 
             $recent_posts[] = $post;
@@ -148,7 +149,7 @@ class Index
                 $thread['src'] = $config['uri_thumb'] . $thread['thumb'];
                 $thread['thumbwidth'] = $thread['thumbwidth'] ?? 150;
                 $thread['thumbheight'] = $thread['thumbheight'] ?? 150;
-                $thread['snippet'] = pm_snippet($thread['body'], 30);
+                $thread['snippet'] = TextFormatter::pm_snippet($thread['body'], 30);
                 $thread['board_name'] = $board['name'];
 
                 $popular_threads[] = $thread;

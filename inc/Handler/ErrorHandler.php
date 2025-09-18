@@ -6,8 +6,18 @@
 
 namespace Sudochan\Handler;
 
+use Sudochan\Utils\StringFormatter;
+
 class ErrorHandler
 {
+    /**
+     * Display a minimal error page and optionally log to syslog.
+     *
+     * @param string     $message  Error message to display.
+     * @param int|bool   $priority Syslog priority or false to skip logging.
+     *
+     * @return void
+     */
     public static function basic_error_function_because_the_other_isnt_loaded_yet(string $message, int|bool $priority = true): void
     {
         global $config;
@@ -28,6 +38,12 @@ class ErrorHandler
             '<p class="c">This alternative error page is being displayed because the other couldn\'t be found or hasn\'t loaded yet.</p></body></html>');
     }
 
+    /**
+     * Shutdown handler to catch fatal errors and delegate to the primary error handler
+     * or the minimal fallback if necessary.
+     *
+     * @return void
+     */
     public static function fatal_error_handler(): void
     {
         if ($error = error_get_last()) {
@@ -41,6 +57,14 @@ class ErrorHandler
         }
     }
 
+    /**
+     * Write an error message to syslog, including client/request info when available.
+     *
+     * @param int    $priority Syslog priority.
+     * @param string $message  Message to log.
+     *
+     * @return void
+     */
     public static function _syslog(int $priority, string $message): void
     {
         if (isset($_SERVER['REMOTE_ADDR'], $_SERVER['REQUEST_METHOD'], $_SERVER['REQUEST_URI'])) {
@@ -51,12 +75,22 @@ class ErrorHandler
         }
     }
 
+    /**
+     * Verbose error handler that forwards errors to the main error() function with context.
+     *
+     * @param int         $errno   Error number.
+     * @param string      $errstr  Error message.
+     * @param string|null $errfile File where the error occurred.
+     * @param int|null    $errline Line number of the error.
+     *
+     * @return bool
+     */
     public static function verbose_error_handler(int $errno, string $errstr, ?string $errfile, ?int $errline): bool
     {
         if (error_reporting() == 0) {
             return false;
         } // Looks like this warning was suppressed by the @ operator.
-        error(utf8tohtml($errstr), true, [
+        error(StringFormatter::utf8tohtml($errstr), true, [
             'file' => $errfile . ':' . $errline,
             'errno' => $errno,
             'error' => $errstr,

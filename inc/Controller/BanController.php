@@ -12,6 +12,10 @@ use Sudochan\Entity\Thread;
 use Sudochan\Entity\Post;
 use Sudochan\Service\BoardService;
 use Sudochan\Manager\PermissionManager;
+use Sudochan\Utils\TextFormatter;
+use Sudochan\Utils\StringFormatter;
+use Sudochan\Utils\Math;
+use Sudochan\Utils\Token;
 
 class BanController
 {
@@ -24,7 +28,7 @@ class BanController
         }
 
         if (!isset($_POST['ip'], $_POST['reason'], $_POST['length'], $_POST['board'])) {
-            mod_page(_('New ban'), 'mod/ban_form.html', ['token' => AuthManager::make_secure_link_token('ban')]);
+            mod_page(_('New ban'), 'mod/ban_form.html', ['token' => Token::make_secure_link_token('ban')]);
             return;
         }
 
@@ -86,7 +90,7 @@ class BanController
         mod_page(_('Ban list'), 'mod/ban_list.html', [
             'bans' => $bans,
             'count' => Bans::count(),
-            'token' => AuthManager::make_secure_link_token('bans'),
+            'token' => Token::make_secure_link_token('bans'),
         ]);
     }
 
@@ -164,7 +168,7 @@ class BanController
 
         mod_page(_('Ban appeals'), 'mod/ban_appeals.html', [
             'ban_appeals' => $ban_appeals,
-            'token' => AuthManager::make_secure_link_token('ban-appeals'),
+            'token' => Token::make_secure_link_token('ban-appeals'),
         ]);
     }
 }

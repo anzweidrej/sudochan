@@ -6,9 +6,6 @@
 
 namespace Sudochan\Debug;
 
-/**
- * Debug wrapper for prepared queries.
- */
 class PreparedQueryDebug
 {
     protected \PDOStatement $query;
@@ -29,6 +26,13 @@ class PreparedQueryDebug
         }
     }
 
+    /**
+     * Proxy to the wrapped PDOStatement.
+     *
+     * @param string $function
+     * @param array  $args
+     * @return mixed
+     */
     public function __call(string $function, array $args): mixed
     {
         global $config, $debug;

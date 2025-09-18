@@ -1,5 +1,7 @@
 <?php
 
+use Sudochan\Utils\StringFormatter;
+
 $theme = [
     'name' => 'Index',
     'description' => 'Extremely basic imageboard homepage. Enabling boardlinks is recommended for this theme.',
@@ -81,13 +83,13 @@ if (!function_exists('build_install')) {
     function build_install($settings)
     {
         if (!is_numeric($settings['no_recent']) || $settings['no_recent'] < 0) {
-            return [false, '<strong>' . utf8tohtml($settings['no_recent']) . '</strong> is not a non-negative integer.'];
+            return [false, '<strong>' . StringFormatter::utf8tohtml($settings['no_recent']) . '</strong> is not a non-negative integer.'];
         }
         if (!is_numeric($settings['limit_images']) || $settings['limit_images'] < 0) {
-            return [false, '<strong>' . utf8tohtml($settings['limit_images']) . '</strong> is not a non-negative integer.'];
+            return [false, '<strong>' . StringFormatter::utf8tohtml($settings['limit_images']) . '</strong> is not a non-negative integer.'];
         }
         if (!is_numeric($settings['limit_posts']) || $settings['limit_posts'] < 0) {
-            return [false, '<strong>' . utf8tohtml($settings['limit_posts']) . '</strong> is not a non-negative integer.'];
+            return [false, '<strong>' . StringFormatter::utf8tohtml($settings['limit_posts']) . '</strong> is not a non-negative integer.'];
         }
     }
 }

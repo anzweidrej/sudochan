@@ -11,6 +11,15 @@ use Sudochan\Dispatcher\EventDispatcher;
 
 class FileManager
 {
+    /**
+     * Write data to a file or remote.
+     *
+     * @param string $path
+     * @param string $data
+     * @param bool $simple
+     * @param bool $skip_purge
+     * @return void
+     */
     public static function file_write(string $path, string $data, bool $simple = false, bool $skip_purge = false): void
     {
         global $config, $debug;
@@ -78,6 +87,12 @@ class FileManager
         EventDispatcher::event('write', $path);
     }
 
+    /**
+     * Delete a file and purge caches.
+     *
+     * @param string $path
+     * @return bool
+     */
     public static function file_unlink(string $path): bool
     {
         global $config, $debug;
@@ -111,6 +126,12 @@ class FileManager
         return $ret;
     }
 
+    /**
+     * Recursively remove a directory.
+     *
+     * @param string $dir
+     * @return void
+     */
     public static function rrmdir(string $dir): void
     {
         if (is_dir($dir)) {
@@ -129,6 +150,12 @@ class FileManager
         }
     }
 
+    /**
+     * Remove image files for a post.
+     *
+     * @param array $post
+     * @return void
+     */
     public static function undoImage(array $post): void
     {
         if (!$post['has_file']) {
@@ -143,6 +170,12 @@ class FileManager
         }
     }
 
+    /**
+     * Send PURGE requests for a URI.
+     *
+     * @param string $uri
+     * @return void
+     */
     public static function purge(string $uri): void
     {
         global $config, $debug;

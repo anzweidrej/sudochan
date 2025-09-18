@@ -16,6 +16,9 @@ use Sudochan\Service\MarkupService;
 use Sudochan\Manager\FileManager;
 use Sudochan\Manager\ThemeManager;
 use Sudochan\Manager\PermissionManager;
+use Sudochan\Utils\DateRange;
+use Sudochan\Utils\StringFormatter;
+use Sudochan\Utils\Token;
 
 class PostController
 {
@@ -304,7 +307,7 @@ class PostController
             error(_('Impossible to move thread; there is only one board.'));
         }
 
-        $security_token = AuthManager::make_secure_link_token($originBoard . '/move/' . $postID);
+        $security_token = Token::make_secure_link_token($originBoard . '/move/' . $postID);
 
         mod_page(_('Move thread'), 'mod/move.html', ['post' => $postID, 'board' => $originBoard, 'boards' => $boards, 'token' => $security_token]);
     }
@@ -321,7 +324,7 @@ class PostController
             error($config['error']['noaccess']);
         }
 
-        $security_token = AuthManager::make_secure_link_token($board . '/ban/' . $post);
+        $security_token = Token::make_secure_link_token($board . '/ban/' . $post);
 
         $query = prepare(sprintf('SELECT ' . ($config['ban_show_post'] ? '*' : '`ip`, `thread`') .
             ' FROM ``posts_%s`` WHERE `id` = :id', $board));
@@ -350,17 +353,17 @@ class PostController
 
             if (isset($_POST['public_message'], $_POST['message'])) {
                 // public ban message
-                $length_english = Bans::parse_time($_POST['length']) ? 'for ' . until(Bans::parse_time($_POST['length'])) : 'permanently';
+                $length_english = Bans::parse_time($_POST['length']) ? 'for ' . DateRange::until(Bans::parse_time($_POST['length'])) : 'permanently';
                 $_POST['message'] = preg_replace('/[\r\n]/', '', $_POST['message']);
                 $_POST['message'] = str_replace('%length%', $length_english, $_POST['message']);
                 $_POST['message'] = str_replace('%LENGTH%', strtoupper($length_english), $_POST['message']);
                 $query = prepare(sprintf('UPDATE ``posts_%s`` SET `body_nomarkup` = CONCAT(`body_nomarkup`, :body_nomarkup) WHERE `id` = :id', $board));
                 $query->bindValue(':id', $post);
-                $query->bindValue(':body_nomarkup', sprintf("\n<tinyboard ban message>%s</tinyboard>", utf8tohtml($_POST['message'])));
+                $query->bindValue(':body_nomarkup', sprintf("\n<tinyboard ban message>%s</tinyboard>", StringFormatter::utf8tohtml($_POST['message'])));
                 $query->execute() or error(db_error($query));
                 PostService::rebuildPost($post);
 
-                AuthManager::modLog("Attached a public ban message to post #{$post}: " . utf8tohtml($_POST['message']));
+                AuthManager::modLog("Attached a public ban message to post #{$post}: " . StringFormatter::utf8tohtml($_POST['message']));
                 PostService::buildThread($thread ? $thread : $post);
                 PageService::buildIndex();
             } elseif (isset($_POST['delete']) && (int) $_POST['delete']) {
@@ -405,7 +408,7 @@ class PostController
             error($config['error']['noaccess']);
         }
 
-        $security_token = AuthManager::make_secure_link_token($board . '/edit' . ($edit_raw_html ? '_raw' : '') . '/' . $postID);
+        $security_token = Token::make_secure_link_token($board . '/edit' . ($edit_raw_html ? '_raw' : '') . '/' . $postID);
 
         $query = prepare(sprintf('SELECT * FROM ``posts_%s`` WHERE `id` = :id', $board));
         $query->bindValue(':id', $postID);
@@ -446,8 +449,8 @@ class PostController
             header('Location: ?/' . sprintf($config['board_path'], $board) . $config['dir']['res'] . sprintf($config['file_page'], $post['thread'] ? $post['thread'] : $postID) . '#' . $postID, true, $config['redirect_http']);
         } else {
             if ($config['minify_html']) {
-                $post['body_nomarkup'] = str_replace("\n", '&#010;', utf8tohtml($post['body_nomarkup']));
-                $post['body'] = str_replace("\n", '&#010;', utf8tohtml($post['body']));
+                $post['body_nomarkup'] = str_replace("\n", '&#010;', StringFormatter::utf8tohtml($post['body_nomarkup']));
+                $post['body'] = str_replace("\n", '&#010;', StringFormatter::utf8tohtml($post['body']));
                 $post['body_nomarkup'] = str_replace("\r", '', $post['body_nomarkup']);
                 $post['body'] = str_replace("\r", '', $post['body']);
                 $post['body_nomarkup'] = str_replace("\t", '&#09;', $post['body_nomarkup']);

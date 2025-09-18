@@ -5,6 +5,8 @@
  */
 
 use Sudochan\Manager\AuthManager;
+use Sudochan\Controller\AuthController;
+use Sudochan\Utils\Token;
 
 require_once 'bootstrap.php';
 
@@ -83,14 +85,14 @@ foreach ($pages as $uri => $handler) {
                     if ($secure_post_only) {
                         error($config['error']['csrf']);
                     } else {
-                        mod_confirm(substr($query, 1));
+                        AuthController::mod_confirm(substr($query, 1));
                         exit;
                     }
                 }
 
                 // CSRF-protected page; validate security token
                 $actual_query = preg_replace('!/([a-f0-9]{8})$!', '', $query);
-                if ($token != AuthManager::make_secure_link_token(substr($actual_query, 1))) {
+                if ($token != Token::make_secure_link_token(substr($actual_query, 1))) {
                     error($config['error']['csrf']);
                 }
             }

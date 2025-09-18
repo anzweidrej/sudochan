@@ -9,6 +9,9 @@ namespace Sudochan\Controller;
 use Sudochan\Manager\AuthManager;
 use Sudochan\Service\BoardService;
 use Sudochan\Manager\PermissionManager;
+use Sudochan\Utils\Obfuscation;
+use Sudochan\Utils\Token;
+use Sudochan\Utils\TextFormatter;
 
 class DebugController
 {
@@ -74,10 +77,10 @@ class DebugController
         $flood_posts = $query->fetchAll(\PDO::FETCH_ASSOC);
 
         foreach ($posts as &$post) {
-            $post['snippet'] = pm_snippet($post['body']);
+            $post['snippet'] = TextFormatter::pm_snippet($post['body']);
             foreach ($flood_posts as $flood_post) {
                 if ($flood_post['time'] == $post['time'] &&
-                    $flood_post['posthash'] == make_comment_hex($post['body_nomarkup']) &&
+                    $flood_post['posthash'] == Obfuscation::make_comment_hex($post['body_nomarkup']) &&
                     $flood_post['filehash'] == $post['filehash']) {
                     $post['in_flood_table'] = true;
                 }
@@ -95,7 +98,7 @@ class DebugController
             error($config['error']['noaccess']);
         }
 
-        $args['security_token'] = AuthManager::make_secure_link_token('debug/sql');
+        $args['security_token'] = Token::make_secure_link_token('debug/sql');
 
         if (isset($_POST['query'])) {
             $args['query'] = $_POST['query'];

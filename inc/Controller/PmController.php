@@ -10,6 +10,10 @@ use Sudochan\Manager\AuthManager;
 use Sudochan\Cache;
 use Sudochan\Manager\PermissionManager;
 use Sudochan\Service\MarkupService;
+use Sudochan\Utils\StringFormatter;
+use Sudochan\Utils\TextFormatter;
+use Sudochan\Utils\Token;
+use Sudochan\Utils\Sanitize;
 
 class PmController
 {
@@ -64,8 +68,8 @@ class PmController
             mod_page(sprintf('%s %s', _('New PM for'), $pm['to_username']), 'mod/new_pm.html', [
                 'username' => $pm['username'],
                 'id' => $pm['sender'],
-                'message' => quote($pm['message']),
-                'token' => AuthManager::make_secure_link_token('new_PM/' . $pm['username']),
+                'message' => TextFormatter::quote($pm['message']),
+                'token' => Token::make_secure_link_token('new_PM/' . $pm['username']),
             ]);
         } else {
             mod_page(sprintf('%s &ndash; #%d', _('Private message'), $id), 'mod/pm.html', $pm);
@@ -87,7 +91,7 @@ class PmController
         $unread = $query->fetchColumn();
 
         foreach ($messages as &$message) {
-            $message['snippet'] = pm_snippet($message['message']);
+            $message['snippet'] = TextFormatter::pm_snippet($message['message']);
         }
 
         mod_page(sprintf('%s (%s)', _('PM inbox'), count($messages) > 0 ? $unread . ' unread' : 'empty'), 'mod/inbox.html', [
@@ -121,7 +125,7 @@ class PmController
         }
 
         if (isset($_POST['message'])) {
-            $_POST['message'] = escape_markup_modifiers($_POST['message']);
+            $_POST['message'] = Sanitize::escape_markup_modifiers($_POST['message']);
             MarkupService::markup($_POST['message']);
 
             $query = prepare("INSERT INTO ``pms`` VALUES (NULL, :me, :id, :message, :time, 1)");
@@ -136,7 +140,7 @@ class PmController
                 Cache::delete('pm_unreadcount_' . $id);
             }
 
-            AuthManager::modLog('Sent a PM to ' . utf8tohtml($username));
+            AuthManager::modLog('Sent a PM to ' . StringFormatter::utf8tohtml($username));
 
             header('Location: ?/', true, $config['redirect_http']);
         }
@@ -144,7 +148,7 @@ class PmController
         mod_page(sprintf('%s %s', _('New PM for'), $username), 'mod/new_pm.html', [
             'username' => $username,
             'id' => $id,
-            'token' => AuthManager::make_secure_link_token('new_PM/' . $username),
+            'token' => Token::make_secure_link_token('new_PM/' . $username),
         ]);
     }
 }

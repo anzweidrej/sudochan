@@ -7,9 +7,16 @@
 namespace Sudochan\Resolver;
 
 use Sudochan\Cache;
+use Sudochan\Utils\Shell;
 
 class DNSResolver
 {
+    /**
+     * Check the client's IP against configured DNSBLs and abort on match.
+     *
+     * @global array $config
+     * @return void
+     */
     public static function checkDNSBL(): void
     {
         global $config;
@@ -64,16 +71,33 @@ class DNSResolver
         }
     }
 
+    /**
+     * Determine whether the current remote address is IPv6.
+     *
+     * @return bool True if IPv6, false otherwise.
+     */
     public static function isIPv6(): bool
     {
         return strstr($_SERVER['REMOTE_ADDR'], ':') !== false;
     }
 
+    /**
+     * Reverse the octets of an IPv4 address.
+     *
+     * @param string $ip IPv4 address.
+     * @return string Reversed octet string.
+     */
     public static function ReverseIPOctets(string $ip): string
     {
         return implode('.', array_reverse(explode('.', $ip)));
     }
 
+    /**
+     * Perform a reverse DNS (PTR) lookup for an IP address.
+     *
+     * @param string $ip_addr IP address to lookup.
+     * @return string Hostname or the original IP on failure.
+     */
     public static function rDNS(string $ip_addr): string
     {
         global $config;
@@ -85,7 +109,7 @@ class DNSResolver
         if (!$config['dns_system']) {
             $host = gethostbyaddr($ip_addr);
         } else {
-            $resp = shell_exec_error('host -W 1 ' . $ip_addr);
+            $resp = Shell::shell_exec_error('host -W 1 ' . $ip_addr);
             if (preg_match('/domain name pointer ([^\s]+)$/', $resp, $m)) {
                 $host = $m[1];
             } else {
@@ -100,6 +124,12 @@ class DNSResolver
         return $host;
     }
 
+    /**
+     * Resolve a hostname to an IPv4 address.
+     *
+     * @param string $host Hostname to resolve.
+     * @return string|false IPv4 address string or false if resolution failed.
+     */
     public static function DNS(string $host): string|false
     {
         global $config;
@@ -114,7 +144,7 @@ class DNSResolver
                 $ip_addr = false;
             }
         } else {
-            $resp = shell_exec_error('host -W 1 ' . $host);
+            $resp = Shell::shell_exec_error('host -W 1 ' . $host);
             if (preg_match('/has address ([^\s]+)$/', $resp, $m)) {
                 $ip_addr = $m[1];
             } else {

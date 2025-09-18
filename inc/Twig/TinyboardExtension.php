@@ -16,22 +16,22 @@ class TinyboardExtension extends AbstractExtension
     public function getFilters(): array
     {
         return [
-            new TwigFilter('filesize', 'format_bytes'),
+            new TwigFilter('filesize', [TinyboardRuntime::class, 'format_bytes']),
             new TwigFilter('truncate', [TinyboardRuntime::class, 'twig_truncate_filter']),
             new TwigFilter('truncate_body', 'truncate'),
             new TwigFilter('truncate_filename', [TinyboardRuntime::class, 'twig_filename_truncate_filter']),
             new TwigFilter('extension', [TinyboardRuntime::class, 'twig_extension_filter']),
             new TwigFilter('sprintf', [TinyboardRuntime::class, 'twig_sprintf_filter']),
-            new TwigFilter('capcode', 'capcode'),
+            new TwigFilter('capcode', [TinyboardRuntime::class, 'capcode']),
             new TwigFilter('hasPermission', [TinyboardRuntime::class, 'twig_hasPermission_filter']),
             new TwigFilter('date', [TinyboardRuntime::class, 'twig_date_filter']),
-            new TwigFilter('poster_id', 'poster_id'),
+            new TwigFilter('poster_id', [TinyboardRuntime::class, 'poster_id']),
             new TwigFilter('remove_whitespace', [TinyboardRuntime::class, 'twig_remove_whitespace_filter']),
             new TwigFilter('count', 'count'),
-            new TwigFilter('ago', 'ago'),
+            new TwigFilter('ago', [TinyboardRuntime::class, 'ago']),
             new TwigFilter('until', 'until'),
             new TwigFilter('push', [TinyboardRuntime::class, 'twig_push_filter']),
-            new TwigFilter('bidi_cleanup', 'bidi_cleanup'),
+            new TwigFilter('bidi_cleanup', [TinyboardRuntime::class, 'bidi_cleanup']),
             new TwigFilter('addslashes', 'addslashes'),
         ];
     }

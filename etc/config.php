@@ -1106,14 +1106,7 @@ $config['mod']['groups'] = [
 ];
 
 // If you add stuff to the above, you'll need to call this function immediately after.
-foreach ($config['mod']['groups'] as $group_value => $group_name) {
-    $group_name = strtoupper($group_name);
-    if (!defined($group_name)) {
-        define($group_name, $group_value);
-    }
-}
-
-ksort($config['mod']['groups']);
+Sudochan\Manager\PermissionManager::define_groups();
 
 // Example: Adding a new permissions group.
 // $config['mod']['groups'][0] = 'NearlyPowerless';

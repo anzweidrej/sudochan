@@ -14,6 +14,8 @@ use Sudochan\Service\PostService;
 use Sudochan\Manager\ThemeManager;
 use Sudochan\Manager\PermissionManager;
 use Sudochan\Manager\FileManager;
+use Sudochan\Utils\Token;
+use Sudochan\Utils\StringFormatter;
 
 class BoardController
 {
@@ -121,7 +123,7 @@ class BoardController
         } else {
             mod_page(sprintf('%s: ' . $config['board_abbreviation'], _('Edit board'), $board['uri']), 'mod/board.html', [
                 'board' => $board,
-                'token' => AuthManager::make_secure_link_token('edit/' . $board['uri']),
+                'token' => Token::make_secure_link_token('edit/' . $board['uri']),
             ]);
         }
     }
@@ -151,7 +153,7 @@ class BoardController
             $chars = preg_split('//u', $_POST['uri'], -1, PREG_SPLIT_NO_EMPTY);
             foreach ($chars as $char) {
                 $o = 0;
-                $ord = ordutf8($char, $o);
+                $ord = StringFormatter::ordutf8($char, $o);
                 if ($ord > 0x0080) {
                     $bytes += 5;
                 } // @01ff
@@ -203,7 +205,7 @@ class BoardController
             header('Location: ?/' . $board['uri'] . '/' . $config['file_index'], true, $config['redirect_http']);
         }
 
-        mod_page(_('New board'), 'mod/board.html', ['new' => true, 'token' => AuthManager::make_secure_link_token('new-board')]);
+        mod_page(_('New board'), 'mod/board.html', ['new' => true, 'token' => Token::make_secure_link_token('new-board')]);
     }
 
     public function mod_view_board(string $boardName, int $page_no = 1): void

@@ -9,6 +9,8 @@ namespace Sudochan;
 defined('TINYBOARD') or exit;
 
 use Sudochan\Entity\Thread;
+use Sudochan\Utils\TextFormatter;
+use Sudochan\Utils\Sanitize;
 
 /**
  * Class for generating json API compatible with 4chan API
@@ -96,7 +98,7 @@ class Api
 
         // Handle country field
         if (isset($post->body_nomarkup) && $this->config['country_flags']) {
-            $modifiers = extract_modifiers($post->body_nomarkup);
+            $modifiers = Sanitize::extract_modifiers($post->body_nomarkup);
             if (isset($modifiers['flag']) && isset($modifiers['flag alt']) && preg_match('/^[a-z]{2}$/', $modifiers['flag'])) {
                 $country = strtoupper($modifiers['flag']);
                 if ($country) {

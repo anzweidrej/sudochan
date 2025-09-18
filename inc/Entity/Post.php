@@ -8,6 +8,13 @@ namespace Sudochan\Entity;
 
 use Sudochan\Manager\PermissionManager;
 use Sudochan\Service\MarkupService;
+use Sudochan\Utils\Math;
+use Sudochan\Utils\TextFormatter;
+use Sudochan\Utils\StringFormatter;
+use Sudochan\Manager\AuthManager;
+use Sudochan\Utils\LinkBuilder;
+use Sudochan\Utils\Token;
+use Sudochan\Utils\Sanitize;
 
 class Post
 {
@@ -53,16 +60,16 @@ class Post
             $this->{$key} = $value;
         }
 
-        $this->subject = utf8tohtml($this->subject ?? '');
-        $this->name = utf8tohtml($this->name ?? '');
+        $this->subject = StringFormatter::utf8tohtml($this->subject ?? '');
+        $this->name = StringFormatter::utf8tohtml($this->name ?? '');
         $this->mod = $mod;
         $this->root = $root;
 
         if ($this->embed) {
-            $this->embed = embed_html($this->embed);
+            $this->embed = LinkBuilder::embed_html($this->embed);
         }
 
-        $this->modifiers = extract_modifiers($this->body_nomarkup);
+        $this->modifiers = Sanitize::extract_modifiers($this->body_nomarkup);
 
         if ($config['always_regenerate_markup']) {
             $this->body = $this->body_nomarkup;
@@ -97,17 +104,17 @@ class Post
 
             // Delete
             if (PermissionManager::hasPermission($config['mod']['delete'], $board['uri'], $this->mod)) {
-                $built .= ' ' . secure_link_confirm($config['mod']['link_delete'], 'Delete', 'Are you sure you want to delete this?', $board['dir'] . 'delete/' . $this->id);
+                $built .= ' ' . Token::secure_link_confirm($config['mod']['link_delete'], 'Delete', 'Are you sure you want to delete this?', $board['dir'] . 'delete/' . $this->id);
             }
 
             // Delete all posts by IP
             if (PermissionManager::hasPermission($config['mod']['deletebyip'], $board['uri'], $this->mod)) {
-                $built .= ' ' . secure_link_confirm($config['mod']['link_deletebyip'], 'Delete all posts by IP', 'Are you sure you want to delete all posts by this IP address?', $board['dir'] . 'deletebyip/' . $this->id);
+                $built .= ' ' . Token::secure_link_confirm($config['mod']['link_deletebyip'], 'Delete all posts by IP', 'Are you sure you want to delete all posts by this IP address?', $board['dir'] . 'deletebyip/' . $this->id);
             }
 
             // Delete all posts by IP (global)
             if (PermissionManager::hasPermission($config['mod']['deletebyip_global'], $board['uri'], $this->mod)) {
-                $built .= ' ' . secure_link_confirm($config['mod']['link_deletebyip_global'], 'Delete all posts by IP across all boards', 'Are you sure you want to delete all posts by this IP address, across all boards?', $board['dir'] . 'deletebyip/' . $this->id . '/global');
+                $built .= ' ' . Token::secure_link_confirm($config['mod']['link_deletebyip_global'], 'Delete all posts by IP across all boards', 'Are you sure you want to delete all posts by this IP address, across all boards?', $board['dir'] . 'deletebyip/' . $this->id . '/global');
             }
 
             // Ban
@@ -122,12 +129,12 @@ class Post
 
             // Delete file (keep post)
             if (!empty($this->file) && PermissionManager::hasPermission($config['mod']['deletefile'], $board['uri'], $this->mod)) {
-                $built .= ' ' . secure_link_confirm($config['mod']['link_deletefile'], _('Delete file'), _('Are you sure you want to delete this file?'), $board['dir'] . 'deletefile/' . $this->id);
+                $built .= ' ' . Token::secure_link_confirm($config['mod']['link_deletefile'], _('Delete file'), _('Are you sure you want to delete this file?'), $board['dir'] . 'deletefile/' . $this->id);
             }
 
             // Spoiler file (keep post)
             if (!empty($this->file)  && $this->file != 'deleted' && $this->thumb != 'spoiler' && PermissionManager::hasPermission($config['mod']['spoilerimage'], $board['uri'], $this->mod) && $config['spoiler_images']) {
-                $built .= ' ' . secure_link_confirm($config['mod']['link_spoilerimage'], 'Spoiler File', 'Are you sure you want to spoiler this file?', $board['uri'] . '/spoiler/' . $this->id);
+                $built .= ' ' . Token::secure_link_confirm($config['mod']['link_spoilerimage'], 'Spoiler File', 'Are you sure you want to spoiler this file?', $board['uri'] . '/spoiler/' . $this->id);
             }
 
             // Edit post
@@ -144,7 +151,7 @@ class Post
 
     public function ratio(): string
     {
-        return fraction($this->filewidth, $this->fileheight, ':');
+        return Math::fraction($this->filewidth, $this->fileheight, ':');
     }
 
     public function build(bool $index = false): string

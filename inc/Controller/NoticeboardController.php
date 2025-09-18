@@ -10,6 +10,9 @@ use Sudochan\Manager\AuthManager;
 use Sudochan\Cache;
 use Sudochan\Manager\PermissionManager;
 use Sudochan\Service\MarkupService;
+use Sudochan\Utils\Token;
+use Sudochan\Utils\TextFormatter;
+use Sudochan\Utils\Sanitize;
 
 class NoticeboardController
 {
@@ -30,7 +33,7 @@ class NoticeboardController
                 error($config['error']['noaccess']);
             }
 
-            $_POST['body'] = escape_markup_modifiers($_POST['body']);
+            $_POST['body'] = Sanitize::escape_markup_modifiers($_POST['body']);
             MarkupService::markup($_POST['body']);
 
             $query = prepare('INSERT INTO ``noticeboard`` VALUES (NULL, :mod, :time, :subject, :body)');
@@ -60,7 +63,7 @@ class NoticeboardController
         }
 
         foreach ($noticeboard as &$entry) {
-            $entry['delete_token'] = AuthManager::make_secure_link_token('noticeboard/delete/' . $entry['id']);
+            $entry['delete_token'] = Token::make_secure_link_token('noticeboard/delete/' . $entry['id']);
         }
 
         $query = prepare("SELECT COUNT(*) FROM ``noticeboard``");
@@ -70,7 +73,7 @@ class NoticeboardController
         mod_page(_('Noticeboard'), 'mod/noticeboard.html', [
             'noticeboard' => $noticeboard,
             'count' => $count,
-            'token' => AuthManager::make_secure_link_token('noticeboard'),
+            'token' => Token::make_secure_link_token('noticeboard'),
         ]);
     }
 

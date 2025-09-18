@@ -13,7 +13,14 @@ use Sudochan\Handler\ErrorHandler;
 
 class AuthManager
 {
-    // create a hash/salt pair for validate logins
+    /**
+     * Create a salted hash for validating logins.
+     *
+     * @param string $username
+     * @param string $password
+     * @param string|false $salt
+     * @return array|string Hash and salt pair if salt not provided, otherwise hash string
+     */
     public static function mkhash(string $username, string $password, string|false $salt = false): array|string
     {
         global $config;
@@ -48,12 +55,25 @@ class AuthManager
         }
     }
 
+    /**
+     * Generate a random salt string.
+     *
+     * @return string
+     */
     public static function generate_salt(): string
     {
         mt_srand(microtime(true) * 100000 + memory_get_usage(true));
         return md5(uniqid(mt_rand(), true));
     }
 
+    /**
+     * Attempt to log in a moderator.
+     *
+     * @param string $username
+     * @param string $password Plain or pre-hashed password depending on $makehash
+     * @param bool $makehash True to sha1 the password first
+     * @return array|false Moderator data on success, false on failure
+     */
     public static function login(string $username, string $password, bool $makehash = true): array|false
     {
         global $mod;
@@ -82,6 +102,11 @@ class AuthManager
         return false;
     }
 
+    /**
+     * Set moderator auth cookies.
+     *
+     * @return void
+     */
     public static function setCookies(): void
     {
         global $mod, $config;
@@ -107,6 +132,11 @@ class AuthManager
         );
     }
 
+    /**
+     * Destroy moderator auth cookies.
+     *
+     * @return void
+     */
     public static function destroyCookies(): void
     {
         global $config;
@@ -125,6 +155,13 @@ class AuthManager
         );
     }
 
+    /**
+     * Log a moderator action.
+     *
+     * @param string $action
+     * @param string|null $_board
+     * @return void
+     */
     public static function modLog(string $action, ?string $_board = null): void
     {
         global $mod, $board, $config;
@@ -147,6 +184,11 @@ class AuthManager
         }
     }
 
+    /**
+     * Authenticate moderator from cookies.
+     *
+     * @return void Exits and redirects on failure
+     */
     public static function authenticate(): void
     {
         global $config, $mod;
@@ -186,6 +228,11 @@ class AuthManager
         ];
     }
 
+    /**
+     * Create PM header info.
+     *
+     * @return array|false Array with id and waiting count, or false if none
+     */
     public static function create_pm_header(): array|false
     {
         global $mod, $config;
@@ -220,11 +267,5 @@ class AuthManager
         }
 
         return $header;
-    }
-
-    public static function make_secure_link_token(string $uri): string
-    {
-        global $mod, $config;
-        return substr(sha1($config['cookies']['salt'] . '-' . $uri . '-' . $mod['id']), 0, 8);
     }
 }

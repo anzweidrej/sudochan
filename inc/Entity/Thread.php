@@ -10,6 +10,12 @@ use Sudochan\Dispatcher\EventDispatcher;
 use Sudochan\Entity\Post;
 use Sudochan\Manager\PermissionManager;
 use Sudochan\Service\MarkupService;
+use Sudochan\Utils\Math;
+use Sudochan\Utils\TextFormatter;
+use Sudochan\Utils\StringFormatter;
+use Sudochan\Utils\Token;
+use Sudochan\Utils\LinkBuilder;
+use Sudochan\Utils\Sanitize;
 
 class Thread
 {
@@ -59,8 +65,8 @@ class Thread
             $this->{$key} = $value;
         }
 
-        $this->subject = utf8tohtml($this->subject ?? '');
-        $this->name = utf8tohtml($this->name ?? '');
+        $this->subject = StringFormatter::utf8tohtml($this->subject ?? '');
+        $this->name = StringFormatter::utf8tohtml($this->name ?? '');
         $this->mod = $mod;
         $this->root = $root;
         $this->hr = $hr;
@@ -70,10 +76,10 @@ class Thread
         $this->omitted_images = 0;
 
         if ($this->embed) {
-            $this->embed = embed_html($this->embed);
+            $this->embed = LinkBuilder::embed_html($this->embed);
         }
 
-        $this->modifiers = extract_modifiers($this->body_nomarkup);
+        $this->modifiers = Sanitize::extract_modifiers($this->body_nomarkup);
 
         if ($config['always_regenerate_markup']) {
             $this->body = $this->body_nomarkup;
@@ -112,17 +118,17 @@ class Thread
             // Mod controls (on posts)
             // Delete
             if (PermissionManager::hasPermission($config['mod']['delete'], $board['uri'], $this->mod)) {
-                $built .= ' ' . secure_link_confirm($config['mod']['link_delete'], _('Delete'), _('Are you sure you want to delete this?'), $board['dir'] . 'delete/' . $this->id);
+                $built .= ' ' . Token::secure_link_confirm($config['mod']['link_delete'], _('Delete'), _('Are you sure you want to delete this?'), $board['dir'] . 'delete/' . $this->id);
             }
 
             // Delete all posts by IP
             if (PermissionManager::hasPermission($config['mod']['deletebyip'], $board['uri'], $this->mod)) {
-                $built .= ' ' . secure_link_confirm($config['mod']['link_deletebyip'], _('Delete all posts by IP'), _('Are you sure you want to delete all posts by this IP address?'), $board['dir'] . 'deletebyip/' . $this->id);
+                $built .= ' ' . Token::secure_link_confirm($config['mod']['link_deletebyip'], _('Delete all posts by IP'), _('Are you sure you want to delete all posts by this IP address?'), $board['dir'] . 'deletebyip/' . $this->id);
             }
 
             // Delete all posts by IP (global)
             if (PermissionManager::hasPermission($config['mod']['deletebyip_global'], $board['uri'], $this->mod)) {
-                $built .= ' ' . secure_link_confirm($config['mod']['link_deletebyip_global'], _('Delete all posts by IP across all boards'), _('Are you sure you want to delete all posts by this IP address, across all boards?'), $board['dir'] . 'deletebyip/' . $this->id . '/global');
+                $built .= ' ' . Token::secure_link_confirm($config['mod']['link_deletebyip_global'], _('Delete all posts by IP across all boards'), _('Are you sure you want to delete all posts by this IP address, across all boards?'), $board['dir'] . 'deletebyip/' . $this->id . '/global');
             }
 
             // Ban
@@ -137,37 +143,37 @@ class Thread
 
             // Delete file (keep post)
             if (!empty($this->file) && $this->file != 'deleted' && PermissionManager::hasPermission($config['mod']['deletefile'], $board['uri'], $this->mod)) {
-                $built .= ' ' . secure_link_confirm($config['mod']['link_deletefile'], _('Delete file'), _('Are you sure you want to delete this file?'), $board['dir'] . 'deletefile/' . $this->id);
+                $built .= ' ' . Token::secure_link_confirm($config['mod']['link_deletefile'], _('Delete file'), _('Are you sure you want to delete this file?'), $board['dir'] . 'deletefile/' . $this->id);
             }
 
             // Spoiler file (keep post)
             if (!empty($this->file)  && $this->file != 'deleted' && $this->thumb != 'spoiler' && PermissionManager::hasPermission($config['mod']['spoilerimage'], $board['uri'], $this->mod) && $config['spoiler_images']) {
-                $built .= ' ' . secure_link_confirm($config['mod']['link_spoilerimage'], 'Spoiler File', 'Are you sure you want to spoiler this file?', $board['uri'] . '/spoiler/' . $this->id);
+                $built .= ' ' . Token::secure_link_confirm($config['mod']['link_spoilerimage'], 'Spoiler File', 'Are you sure you want to spoiler this file?', $board['uri'] . '/spoiler/' . $this->id);
             }
 
             // Sticky
             if (PermissionManager::hasPermission($config['mod']['sticky'], $board['uri'], $this->mod)) {
                 if ($this->sticky) {
-                    $built .= ' <a title="' . _('Make thread not sticky') . '" href="?/' . secure_link($board['dir'] . 'unsticky/' . $this->id) . '">' . $config['mod']['link_desticky'] . '</a>';
+                    $built .= ' <a title="' . _('Make thread not sticky') . '" href="?/' . Token::secure_link($board['dir'] . 'unsticky/' . $this->id) . '">' . $config['mod']['link_desticky'] . '</a>';
                 } else {
-                    $built .= ' <a title="' . _('Make thread sticky') . '" href="?/' . secure_link($board['dir'] . 'sticky/' . $this->id) . '">' . $config['mod']['link_sticky'] . '</a>';
+                    $built .= ' <a title="' . _('Make thread sticky') . '" href="?/' . Token::secure_link($board['dir'] . 'sticky/' . $this->id) . '">' . $config['mod']['link_sticky'] . '</a>';
                 }
             }
 
             if (PermissionManager::hasPermission($config['mod']['bumplock'], $board['uri'], $this->mod)) {
                 if ($this->sage) {
-                    $built .= ' <a title="' . _('Allow thread to be bumped') . '" href="?/' . secure_link($board['dir'] . 'bumpunlock/' . $this->id) . '">' . $config['mod']['link_bumpunlock'] . '</a>';
+                    $built .= ' <a title="' . _('Allow thread to be bumped') . '" href="?/' . Token::secure_link($board['dir'] . 'bumpunlock/' . $this->id) . '">' . $config['mod']['link_bumpunlock'] . '</a>';
                 } else {
-                    $built .= ' <a title="' . _('Prevent thread from being bumped') . '" href="?/' . secure_link($board['dir'] . 'bumplock/' . $this->id) . '">' . $config['mod']['link_bumplock'] . '</a>';
+                    $built .= ' <a title="' . _('Prevent thread from being bumped') . '" href="?/' . Token::secure_link($board['dir'] . 'bumplock/' . $this->id) . '">' . $config['mod']['link_bumplock'] . '</a>';
                 }
             }
 
             // Lock
             if (PermissionManager::hasPermission($config['mod']['lock'], $board['uri'], $this->mod)) {
                 if ($this->locked) {
-                    $built .= ' <a title="' . _('Unlock thread') . '" href="?/' . secure_link($board['dir'] . 'unlock/' . $this->id) . '">' . $config['mod']['link_unlock'] . '</a>';
+                    $built .= ' <a title="' . _('Unlock thread') . '" href="?/' . Token::secure_link($board['dir'] . 'unlock/' . $this->id) . '">' . $config['mod']['link_unlock'] . '</a>';
                 } else {
-                    $built .= ' <a title="' . _('Lock thread') . '" href="?/' . secure_link($board['dir'] . 'lock/' . $this->id) . '">' . $config['mod']['link_lock'] . '</a>';
+                    $built .= ' <a title="' . _('Lock thread') . '" href="?/' . Token::secure_link($board['dir'] . 'lock/' . $this->id) . '">' . $config['mod']['link_lock'] . '</a>';
                 }
             }
 
@@ -189,7 +195,7 @@ class Thread
 
     public function ratio(): string
     {
-        return fraction($this->filewidth, $this->fileheight, ':');
+        return Math::fraction($this->filewidth, $this->fileheight, ':');
     }
 
     public function build(bool $index = false): string

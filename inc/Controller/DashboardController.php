@@ -13,6 +13,7 @@ use Sudochan\Service\PageService;
 use Sudochan\Service\PostService;
 use Sudochan\Manager\ThemeManager;
 use Sudochan\Manager\PermissionManager;
+use Sudochan\Utils\Token;
 
 class DashboardController
 {
@@ -109,7 +110,7 @@ class DashboardController
             }
         }
 
-        $args['logout_token'] = AuthManager::make_secure_link_token('logout');
+        $args['logout_token'] = Token::make_secure_link_token('logout');
 
         mod_page(_('Dashboard'), 'mod/dashboard.html', $args);
     }
@@ -195,7 +196,7 @@ class DashboardController
 
         mod_page(_('Rebuild'), 'mod/rebuild.html', [
             'boards' => BoardService::listBoards(),
-            'token' => AuthManager::make_secure_link_token('rebuild'),
+            'token' => Token::make_secure_link_token('rebuild'),
         ]);
     }
 }

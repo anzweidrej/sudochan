@@ -13,6 +13,8 @@ use Sudochan\Api;
 use Sudochan\Entity\Thread;
 use Sudochan\Entity\Post;
 use Sudochan\Service\MarkupService;
+use Sudochan\Utils\Obfuscation;
+use Sudochan\Factory\AntiBotFactory;
 
 class PostService
 {
@@ -79,7 +81,7 @@ class PostService
         $query->bindValue(':ip', $_SERVER['REMOTE_ADDR']);
         $query->bindValue(':board', $board['uri']);
         $query->bindValue(':time', time());
-        $query->bindValue(':posthash', make_comment_hex($post['body_nomarkup']));
+        $query->bindValue(':posthash', Obfuscation::make_comment_hex($post['body_nomarkup']));
         if ($post['has_file']) {
             $query->bindValue(':filehash', $post['filehash']);
         } else {
@@ -421,7 +423,7 @@ class PostService
             'config' => $config,
             'id' => $id,
             'mod' => $mod,
-            'antibot' => $mod || $return ? false : create_antibot($board['uri'], $id),
+            'antibot' => $mod || $return ? false : AntiBotFactory::create_antibot($board['uri'], $id),
             'boardlist' => BoardService::createBoardlist($mod),
             'return' => ($mod ? '?' . $board['url'] . $config['file_index'] : $config['root'] . $board['dir'] . $config['file_index']),
         ]);
@@ -445,5 +447,34 @@ class PostService
         }
 
         return null;
+    }
+
+    public static function getPostByHash(string $hash): array|false
+    {
+        global $board;
+        $query = prepare(sprintf("SELECT `id`,`thread` FROM ``posts_%s`` WHERE `filehash` = :hash", $board['uri']));
+        $query->bindValue(':hash', $hash, \PDO::PARAM_STR);
+        $query->execute() or error(db_error($query));
+
+        if ($post = $query->fetch(\PDO::FETCH_ASSOC)) {
+            return $post;
+        }
+
+        return false;
+    }
+
+    public static function getPostByHashInThread(string $hash, int $thread): array|false
+    {
+        global $board;
+        $query = prepare(sprintf("SELECT `id`,`thread` FROM ``posts_%s`` WHERE `filehash` = :hash AND ( `thread` = :thread OR `id` = :thread )", $board['uri']));
+        $query->bindValue(':hash', $hash, \PDO::PARAM_STR);
+        $query->bindValue(':thread', $thread, \PDO::PARAM_INT);
+        $query->execute() or error(db_error($query));
+
+        if ($post = $query->fetch(\PDO::FETCH_ASSOC)) {
+            return $post;
+        }
+
+        return false;
     }
 }

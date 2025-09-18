@@ -12,6 +12,7 @@ use Sudochan\Cache;
 use Sudochan\Api;
 use Sudochan\Manager\FileManager;
 use Sudochan\Service\BoardService;
+use Sudochan\Factory\AntiBotFactory;
 
 class PageService
 {
@@ -58,7 +59,7 @@ class PageService
                 $replies = array_reverse($posts->fetchAll(\PDO::FETCH_ASSOC));
 
                 if (count($replies) == ($th['sticky'] ? $config['threads_preview_sticky'] : $config['threads_preview'])) {
-                    $count = numPosts($th['id']);
+                    $count = self::numPosts($th['id']);
                     $omitted = ['post_count' => $count['replies'], 'image_count' => $count['images']];
                 } else {
                     $omitted = false;
@@ -183,7 +184,7 @@ class PageService
 
         $pages = self::getPages();
         if (!$config['try_smarter']) {
-            $antibot = create_antibot($board['uri']);
+            $antibot = AntiBotFactory::create_antibot($board['uri']);
         }
 
         if ($config['api']['enabled']) {
@@ -204,7 +205,7 @@ class PageService
             }
 
             if ($config['try_smarter']) {
-                $antibot = create_antibot($board['uri'], 0 - $page);
+                $antibot = AntiBotFactory::create_antibot($board['uri'], 0 - $page);
                 $content['current_page'] = $page;
             }
             $antibot->reset();
@@ -281,5 +282,16 @@ class PageService
         }
 
         FileManager::file_write($config['file_script'], $script);
+    }
+
+    // Returns an associative array with 'replies' and 'images' keys
+    public static function numPosts(int $id): array
+    {
+        global $board;
+        $query = prepare(sprintf("SELECT COUNT(*) AS `replies`, COUNT(NULLIF(`file`, 0)) AS `images` FROM ``posts_%s`` WHERE `thread` = :thread", $board['uri']));
+        $query->bindValue(':thread', $id, \PDO::PARAM_INT);
+        $query->execute() or error(db_error($query));
+
+        return $query->fetch(\PDO::FETCH_ASSOC);
     }
 }

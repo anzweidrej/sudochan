@@ -11,6 +11,8 @@ use Sudochan\Entity\Post;
 use Sudochan\Entity\Thread;
 use Sudochan\Service\BoardService;
 use Sudochan\Manager\PermissionManager;
+use Sudochan\Utils\TextFormatter;
+use Sudochan\Utils\Token;
 
 class ReportController
 {
@@ -73,12 +75,12 @@ class ReportController
                 'report' => $report,
                 'config' => $config,
                 'mod' => $mod,
-                'token' => AuthManager::make_secure_link_token('reports/' . $report['id'] . '/dismiss'),
-                'token_all' => AuthManager::make_secure_link_token('reports/' . $report['id'] . '/dismissall'),
+                'token' => Token::make_secure_link_token('reports/' . $report['id'] . '/dismiss'),
+                'token_all' => Token::make_secure_link_token('reports/' . $report['id'] . '/dismissall'),
             ]);
 
             // Bug fix for https://github.com/savetheinternet/Tinyboard/issues/21
-            $po->body = truncate($po->body, $po->link(), $config['body_truncate'] - substr_count($append_html, '<br>'));
+            $po->body = TextFormatter::truncate($po->body, $po->link(), $config['body_truncate'] - substr_count($append_html, '<br>'));
 
             if (mb_strlen($po->body) + mb_strlen($append_html) > $config['body_truncate_char']) {
                 // still too long; temporarily increase limit in the config

@@ -9,6 +9,7 @@ namespace Sudochan\Controller;
 use Sudochan\Bans;
 use Sudochan\Service\BoardService;
 use Sudochan\Manager\PermissionManager;
+use Sudochan\Utils\TextFormatter;
 
 class SearchController
 {
@@ -193,7 +194,7 @@ class SearchController
 
         if ($type == 'posts') {
             foreach ($results as &$post) {
-                $post['snippet'] = pm_snippet($post['body']);
+                $post['snippet'] = TextFormatter::pm_snippet($post['body']);
             }
         }
 
