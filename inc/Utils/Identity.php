@@ -1,5 +1,9 @@
 <?php
 
+/*
+ *  Copyright (c) 2010-2013 Tinyboard Development Group
+ */
+
 namespace Sudochan\Utils;
 
 use Sudochan\Dispatcher\EventDispatcher;
