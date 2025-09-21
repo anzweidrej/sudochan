@@ -6,8 +6,6 @@
 
 namespace Sudochan\Resource;
 
-defined('TINYBOARD') or exit;
-
 use Sudochan\Manager\FileManager;
 use Sudochan\Resource\ImageBase;
 

@@ -13,12 +13,17 @@ use Twig\TwigFunction;
 
 class TinyboardExtension extends AbstractExtension
 {
+    /**
+     * Returns the list of filters
+     *
+     * @return array An array of filters
+     */
     public function getFilters(): array
     {
         return [
             new TwigFilter('filesize', [TinyboardRuntime::class, 'format_bytes']),
             new TwigFilter('truncate', [TinyboardRuntime::class, 'twig_truncate_filter']),
-            new TwigFilter('truncate_body', 'truncate'),
+            new TwigFilter('truncate_body', [TinyboardRuntime::class,'truncate']),
             new TwigFilter('truncate_filename', [TinyboardRuntime::class, 'twig_filename_truncate_filter']),
             new TwigFilter('extension', [TinyboardRuntime::class, 'twig_extension_filter']),
             new TwigFilter('sprintf', [TinyboardRuntime::class, 'twig_sprintf_filter']),
@@ -29,13 +34,18 @@ class TinyboardExtension extends AbstractExtension
             new TwigFilter('remove_whitespace', [TinyboardRuntime::class, 'twig_remove_whitespace_filter']),
             new TwigFilter('count', 'count'),
             new TwigFilter('ago', [TinyboardRuntime::class, 'ago']),
-            new TwigFilter('until', 'until'),
+            new TwigFilter('until', [TinyboardRuntime::class, 'until']),
             new TwigFilter('push', [TinyboardRuntime::class, 'twig_push_filter']),
             new TwigFilter('bidi_cleanup', [TinyboardRuntime::class, 'bidi_cleanup']),
             new TwigFilter('addslashes', 'addslashes'),
         ];
     }
 
+    /**
+     * Returns the list of functions.
+     *
+     * @return array An array of functions
+     */
     public function getFunctions(): array
     {
         return [
@@ -47,6 +57,11 @@ class TinyboardExtension extends AbstractExtension
         ];
     }
 
+    /**
+     * Returns the name of the extension.
+     *
+     * @return string The extension name
+     */
     public function getName(): string
     {
         return 'tinyboard';

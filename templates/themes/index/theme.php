@@ -26,12 +26,12 @@ class Index
         $excluded = isset($settings['exclude']) ? explode(' ', $settings['exclude']) : [];
 
         if (
-            $action == 'all' ||
-            $action == 'news' ||
-            $action == 'boards' ||
-            $action == 'post' ||
-            $action == 'post-thread' ||
-            $action == 'post-delete'
+            $action == 'all'
+            || $action == 'news'
+            || $action == 'boards'
+            || $action == 'post'
+            || $action == 'post-thread'
+            || $action == 'post-delete'
         ) {
             FileManager::file_write($config['dir']['home'] . $settings['html'], self::homepage($settings, $excluded));
         }

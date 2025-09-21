@@ -239,9 +239,9 @@ class PostController
                 if (!empty($post['tracked_cites'])) {
                     $insert_rows = [];
                     foreach ($post['tracked_cites'] as $cite) {
-                        $insert_rows[] = '(' .
-                            $pdo->quote($board['uri']) . ', ' . $newPostID . ', ' .
-                            $pdo->quote($cite[0]) . ', ' . (int) $cite[1] . ')';
+                        $insert_rows[] = '('
+                            . $pdo->quote($board['uri']) . ', ' . $newPostID . ', '
+                            . $pdo->quote($cite[0]) . ', ' . (int) $cite[1] . ')';
                     }
                     query('INSERT INTO ``cites`` VALUES ' . implode(', ', $insert_rows)) or error(db_error());
                 }
@@ -291,8 +291,8 @@ class PostController
 
                 PageService::buildIndex();
 
-                header('Location: ?/' . sprintf($config['board_path'], $originBoard) . $config['dir']['res'] . sprintf($config['file_page'], $postID) .
-                    '#' . $botID, true, $config['redirect_http']);
+                header('Location: ?/' . sprintf($config['board_path'], $originBoard) . $config['dir']['res'] . sprintf($config['file_page'], $postID)
+                    . '#' . $botID, true, $config['redirect_http']);
             } else {
                 PostService::deletePost($postID);
                 PageService::buildIndex();
@@ -326,8 +326,8 @@ class PostController
 
         $security_token = Token::make_secure_link_token($board . '/ban/' . $post);
 
-        $query = prepare(sprintf('SELECT ' . ($config['ban_show_post'] ? '*' : '`ip`, `thread`') .
-            ' FROM ``posts_%s`` WHERE `id` = :id', $board));
+        $query = prepare(sprintf('SELECT ' . ($config['ban_show_post'] ? '*' : '`ip`, `thread`')
+            . ' FROM ``posts_%s`` WHERE `id` = :id', $board));
         $query->bindValue(':id', $post);
         $query->execute() or error(db_error($query));
         if (!$_post = $query->fetch(\PDO::FETCH_ASSOC)) {

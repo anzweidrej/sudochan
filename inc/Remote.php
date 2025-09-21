@@ -6,8 +6,6 @@
 
 namespace Sudochan;
 
-defined('TINYBOARD') or exit;
-
 use Sudochan\Manager\FileManager;
 
 class Remote

@@ -6,8 +6,6 @@
 
 namespace Sudochan\Manager;
 
-defined('TINYBOARD') or exit;
-
 use Sudochan\Cache;
 use Sudochan\Handler\ErrorHandler;
 
@@ -35,10 +33,10 @@ class AuthManager
         $hash = substr(
             base64_encode(
                 md5(
-                    $username . $config['cookies']['salt'] .
-                    sha1(
-                        $username . $password . $salt .
-                        ($config['mod']['lock_ip'] ? $_SERVER['REMOTE_ADDR'] : ''),
+                    $username . $config['cookies']['salt']
+                    . sha1(
+                        $username . $password . $salt
+                        . ($config['mod']['lock_ip'] ? $_SERVER['REMOTE_ADDR'] : ''),
                         true,
                     ),
                     true,
@@ -116,11 +114,11 @@ class AuthManager
 
         setcookie(
             $config['cookies']['mod'],
-            $mod['username'] . // username
-            ':' .
-            $mod['hash'][0] . // password
-            ':' .
-            $mod['hash'][1], // salt
+            $mod['username'] // username
+            . ':'
+            . $mod['hash'][0] // password
+            . ':'
+            . $mod['hash'][1], // salt
             [
                 'expires'  => time() + $config['cookies']['expire'],
                 'path'     => $config['cookies']['jail'] ? $config['cookies']['path'] : '/',
@@ -238,8 +236,8 @@ class AuthManager
         global $mod, $config;
 
         if (
-            $config['cache']['enabled'] &&
-            ($header = Cache::get('pm_unread_' . $mod['id'])) !== false
+            $config['cache']['enabled']
+            && ($header = Cache::get('pm_unread_' . $mod['id'])) !== false
         ) {
             if ($header === true) {
                 return false;

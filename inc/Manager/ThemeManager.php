@@ -4,6 +4,13 @@ namespace Sudochan\Manager;
 
 class ThemeManager
 {
+    /**
+     * Rebuild all themes by performing the given action.
+     *
+     * @param string $action Action to perform for each theme.
+     * @param string|false $board Optional board identifier or false for global.
+     * @return void
+     */
     public static function rebuildThemes(string $action, string|false $board = false): void
     {
         // List themes
@@ -14,6 +21,13 @@ class ThemeManager
         }
     }
 
+    /**
+     * Load a theme's info.php and return its $theme array.
+     *
+     * @param string $_theme
+     * @global array $config
+     * @return array|false
+     */
     public static function loadThemeConfig(string $_theme): array|false
     {
         global $config;
@@ -28,6 +42,16 @@ class ThemeManager
         return $theme;
     }
 
+    /**
+     * Rebuild a theme: set $_theme, load config, include theme.php and call its build function.
+     *
+     * @param string $theme
+     * @param string $action
+     * @param string|false $board
+     * @global array $config
+     * @global string $_theme
+     * @return void
+     */
     public static function rebuildTheme(string $theme, string $action, string|false $board = false): void
     {
         global $config, $_theme;
@@ -42,6 +66,12 @@ class ThemeManager
         }
     }
 
+    /**
+     * Get theme settings.
+     *
+     * @param string $theme Theme identifier.
+     * @return array<string,string>
+     */
     public static function themeSettings(string $theme): array
     {
         $query = prepare("SELECT `name`, `value` FROM ``theme_settings`` WHERE `theme` = :theme AND `name` IS NOT NULL");

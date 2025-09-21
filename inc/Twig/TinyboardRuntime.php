@@ -70,7 +70,7 @@ class TinyboardRuntime implements RuntimeExtensionInterface
      * @param string|null $board Optional board identifier
      * @return bool True if allowed
      */
-    public function twig_hasPermission_filter(mixed $mod, mixed $permission, string|null $board = null): bool
+    public function twig_hasPermission_filter(mixed $mod, mixed $permission, ?string $board = null): bool
     {
         return PermissionManager::hasPermission($permission, $board, $mod);
     }
@@ -197,53 +197,7 @@ class TinyboardRuntime implements RuntimeExtensionInterface
      */
     public function bidi_cleanup(string $data): string
     {
-        // Closes all embedded RTL and LTR unicode formatting blocks in a string so that
-        // it can be used inside another without controlling its direction.
-
-        $explicits	= '\xE2\x80\xAA|\xE2\x80\xAB|\xE2\x80\xAD|\xE2\x80\xAE';
-        $pdf		= '\xE2\x80\xAC';
-
-        preg_match_all("!$explicits!", $data, $m1, PREG_OFFSET_CAPTURE | PREG_SET_ORDER);
-        preg_match_all("!$pdf!", $data, $m2, PREG_OFFSET_CAPTURE | PREG_SET_ORDER);
-
-        if (count($m1) || count($m2)) {
-
-            $p = [];
-            foreach ($m1 as $m) {
-                $p[$m[0][1]] = 'push';
-            }
-            foreach ($m2 as $m) {
-                $p[$m[0][1]] = 'pop';
-            }
-            ksort($p);
-
-            $offset = 0;
-            $stack = 0;
-            foreach ($p as $pos => $type) {
-
-                if ($type == 'push') {
-                    $stack++;
-                } else {
-                    if ($stack) {
-                        $stack--;
-                    } else {
-                        # we have a pop without a push - remove it
-                        $data = substr($data, 0, $pos - $offset)
-                            . substr($data, $pos + 3 - $offset);
-                        $offset += 3;
-                    }
-                }
-            }
-
-            # now add some pops if your stack is bigger than 0
-            for ($i = 0; $i < $stack; $i++) {
-                $data .= "\xE2\x80\xAC";
-            }
-
-            return $data;
-        }
-
-        return $data;
+        return \Sudochan\Utils\StringFormatter::bidi_cleanup($data);
     }
 
     /**
@@ -254,30 +208,7 @@ class TinyboardRuntime implements RuntimeExtensionInterface
      */
     public function capcode(string|false $cap): array|false
     {
-        global $config;
-
-        if (!$cap) {
-            return false;
-        }
-
-        $capcode = [];
-        if (isset($config['custom_capcode'][$cap])) {
-            if (is_array($config['custom_capcode'][$cap])) {
-                $capcode['cap'] = sprintf($config['custom_capcode'][$cap][0], $cap);
-                if (isset($config['custom_capcode'][$cap][1])) {
-                    $capcode['name'] = $config['custom_capcode'][$cap][1];
-                }
-                if (isset($config['custom_capcode'][$cap][2])) {
-                    $capcode['trip'] = $config['custom_capcode'][$cap][2];
-                }
-            } else {
-                $capcode['cap'] = sprintf($config['custom_capcode'][$cap], $cap);
-            }
-        } else {
-            $capcode['cap'] = sprintf($config['capcode'], $cap);
-        }
-
-        return $capcode;
+        return \Sudochan\Utils\Identity::capcode($cap);
     }
 
     /**
@@ -289,14 +220,7 @@ class TinyboardRuntime implements RuntimeExtensionInterface
      */
     public function poster_id(string $ip, int $thread): string
     {
-        global $config;
-
-        if ($id = EventDispatcher::event('poster-id', $ip, $thread)) {
-            return $id;
-        }
-
-        // Confusing, hard to brute-force, but simple algorithm
-        return substr(sha1(sha1($ip . $config['secure_trip_salt'] . $thread) . $config['secure_trip_salt']), 0, $config['poster_id_length']);
+        return \Sudochan\Utils\Identity::poster_id($ip, $thread);
     }
 
     /**
@@ -307,20 +231,7 @@ class TinyboardRuntime implements RuntimeExtensionInterface
      */
     public function ago(int $timestamp): string
     {
-        $difference = time() - $timestamp;
-        if ($difference < 60) {
-            return $difference . ' ' . ngettext('second', 'seconds', $difference);
-        } elseif ($difference < 60 * 60) {
-            return ($num = round($difference / (60))) . ' ' . ngettext('minute', 'minutes', $num);
-        } elseif ($difference < 60 * 60 * 24) {
-            return ($num = round($difference / (60 * 60))) . ' ' . ngettext('hour', 'hours', $num);
-        } elseif ($difference < 60 * 60 * 24 * 7) {
-            return ($num = round($difference / (60 * 60 * 24))) . ' ' . ngettext('day', 'days', $num);
-        } elseif ($difference < 60 * 60 * 24 * 365) {
-            return ($num = round($difference / (60 * 60 * 24 * 7))) . ' ' . ngettext('week', 'weeks', $num);
-        }
-
-        return ($num = round($difference / (60 * 60 * 24 * 365))) . ' ' . ngettext('year', 'years', $num);
+        return \Sudochan\Utils\DateRange::ago($timestamp);
     }
 
     /**
@@ -331,10 +242,31 @@ class TinyboardRuntime implements RuntimeExtensionInterface
      */
     public function format_bytes(int|float $size): string
     {
-        $units = [' B', ' KB', ' MB', ' GB', ' TB'];
-        for ($i = 0; $size >= 1024 && $i < 4; $i++) {
-            $size /= 1024;
-        }
-        return round($size, 2) . $units[$i];
+        return \Sudochan\Utils\Filesize::format_bytes($size);
+    }
+
+    /**
+     * Truncate a post body to a given length.
+     *
+     * @param string $body Post body
+     * @param int $length Max length
+     * @param bool $preserve Preserve whole words when true
+     * @param string $separator Trailing separator to append
+     * @return string Truncated body
+     */
+    public function truncate(string $body, string $url, int|false $max_lines = false, int|false $max_chars = false): string
+    {
+        return \Sudochan\Utils\TextFormatter::truncate($body, $url, $max_lines, $max_chars);
+    }
+
+    /**
+     * Get a human-readable, localized time span until the given timestamp.
+     *
+     * @param int $timestamp Unix timestamp to count down to.
+     * @return string Localized string (e.g. "3 days", "1 hour") using ngettext for pluralization.
+     */
+    public function until(int $timestamp): string
+    {
+        return \Sudochan\Utils\DateRange::until($timestamp);
     }
 }

@@ -115,20 +115,19 @@ class PageService
                     // There is no previous page.
                     $btn['prev'] = _('Previous');
                 } else {
-                    $loc = ($mod ? '?/' . $board['uri'] . '/' : '') .
-                        (
-                            $num == 1 ?
-                            $config['file_index']
-                        :
-                            sprintf($config['file_page'], $num)
+                    $loc = ($mod ? '?/' . $board['uri'] . '/' : '')
+                        . (
+                            $num == 1
+                            ? $config['file_index']
+                            : sprintf($config['file_page'], $num)
                         );
 
-                    $btn['prev'] = '<form action="' . ($mod ? '' : $root . $loc) . '" method="get">' .
-                        ($mod ?
-                            '<input type="hidden" name="status" value="301" />' .
-                            '<input type="hidden" name="r" value="' . htmlentities($loc) . '" />'
-                        : '') .
-                    '<input type="submit" value="' . _('Previous') . '" /></form>';
+                    $btn['prev'] = '<form action="' . ($mod ? '' : $root . $loc) . '" method="get">'
+                        . ($mod
+                            ? '<input type="hidden" name="status" value="301" />'
+                            . '<input type="hidden" name="r" value="' . htmlentities($loc) . '" />'
+                        : '')
+                    . '<input type="submit" value="' . _('Previous') . '" /></form>';
                 }
 
                 if ($num == count($pages) - 1) {
@@ -137,12 +136,12 @@ class PageService
                 } else {
                     $loc = ($mod ? '?/' . $board['uri'] . '/' : '') . sprintf($config['file_page'], $num + 2);
 
-                    $btn['next'] = '<form action="' . ($mod ? '' : $root . $loc) . '" method="get">' .
-                        ($mod ?
-                            '<input type="hidden" name="status" value="301" />' .
-                            '<input type="hidden" name="r" value="' . htmlentities($loc) . '" />'
-                        : '') .
-                    '<input type="submit" value="' . _('Next') . '" /></form>';
+                    $btn['next'] = '<form action="' . ($mod ? '' : $root . $loc) . '" method="get">'
+                        . ($mod
+                            ? '<input type="hidden" name="status" value="301" />'
+                            . '<input type="hidden" name="r" value="' . htmlentities($loc) . '" />'
+                        : '')
+                    . '<input type="submit" value="' . _('Next') . '" /></form>';
                 }
             }
         }

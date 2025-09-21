@@ -4,8 +4,6 @@
  *  Copyright (c) 2010-2013 Tinyboard Development Group
  */
 
-defined('TINYBOARD') or exit;
-
 use PhpMyAdmin\Twig\Extensions\I18nExtension;
 use Sudochan\Manager\AuthManager;
 use Sudochan\Twig\TinyboardExtension;
@@ -54,10 +52,10 @@ function element(string $templateFile, array $options): string
     }
 
     if (
-        class_exists('Auth') &&
-        method_exists('Auth', 'create_pm_header') &&
-        ((isset($options['mod']) && $options['mod']) || isset($options['__mod'])) &&
-        !preg_match('!^mod/!', $templateFile)
+        class_exists('Auth')
+        && method_exists('Auth', 'create_pm_header')
+        && ((isset($options['mod']) && $options['mod']) || isset($options['__mod']))
+        && !preg_match('!^mod/!', $templateFile)
     ) {
         $options['pm'] = AuthManager::create_pm_header();
     }
@@ -77,10 +75,10 @@ function element(string $templateFile, array $options): string
         $_debug['memory'] = round(memory_get_usage(true) / (1024 * 1024), 2) . ' MiB';
         $_debug['time']['db_queries'] = '~' . round($_debug['time']['db_queries'] * 1000, 2) . 'ms';
         $_debug['time']['exec'] = '~' . round($_debug['time']['exec'] * 1000, 2) . 'ms';
-        $options['body'] .=
-            '<h3>Debug</h3><pre style="white-space: pre-wrap;font-size: 10px;">' .
-            str_replace("\n", '<br/>', StringFormatter::utf8tohtml(print_r($_debug, true))) .
-            '</pre>';
+        $options['body']
+            .= '<h3>Debug</h3><pre style="white-space: pre-wrap;font-size: 10px;">'
+            . str_replace("\n", '<br/>', StringFormatter::utf8tohtml(print_r($_debug, true)))
+            . '</pre>';
     }
 
     // Read the template file

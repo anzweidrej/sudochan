@@ -222,8 +222,8 @@ class Bans
 
             $mask = self::range_to_string([$ban['ipstart'], $ban['ipend']]);
 
-            AuthManager::modLog("Removed ban #{$ban_id} for " .
-                (filter_var($mask, FILTER_VALIDATE_IP) !== false ? "<a href=\"?/IP/$mask\">$mask</a>" : $mask));
+            AuthManager::modLog("Removed ban #{$ban_id} for "
+                . (filter_var($mask, FILTER_VALIDATE_IP) !== false ? "<a href=\"?/IP/$mask\">$mask</a>" : $mask));
         }
 
         query("DELETE FROM ``bans`` WHERE `id` = " . (int) $ban_id) or error(db_error());
@@ -295,14 +295,14 @@ class Bans
         $query->execute() or error(db_error($query));
 
         if (isset($mod['id']) && $mod['id'] == $mod_id) {
-            AuthManager::modLog('Created a new ' .
-                ($length > 0 ? preg_replace('/^(\d+) (\w+?)s?$/', '$1-$2', DateRange::until($length)) : 'permanent') .
-                ' ban on ' .
-                ($ban_board ? '/' . $ban_board . '/' : 'all boards') .
-                ' for ' .
-                (filter_var($mask, FILTER_VALIDATE_IP) !== false ? "<a href=\"?/IP/$mask\">$mask</a>" : $mask) .
-                ' (<small>#' . $pdo->lastInsertId() . '</small>)' .
-                ' with ' . ($reason ? 'reason: ' . StringFormatter::utf8tohtml($reason) . '' : 'no reason'));
+            AuthManager::modLog('Created a new '
+                . ($length > 0 ? preg_replace('/^(\d+) (\w+?)s?$/', '$1-$2', DateRange::until($length)) : 'permanent')
+                . ' ban on '
+                . ($ban_board ? '/' . $ban_board . '/' : 'all boards')
+                . ' for '
+                . (filter_var($mask, FILTER_VALIDATE_IP) !== false ? "<a href=\"?/IP/$mask\">$mask</a>" : $mask)
+                . ' (<small>#' . $pdo->lastInsertId() . '</small>)'
+                . ' with ' . ($reason ? 'reason: ' . StringFormatter::utf8tohtml($reason) . '' : 'no reason'));
         }
         return $pdo->lastInsertId();
     }
@@ -319,8 +319,8 @@ class Bans
         if ($ban['post'] && isset($ban['post']['board'], $ban['post']['id'])) {
             if (BoardService::openBoard($ban['post']['board'])) {
 
-                $query = query(sprintf("SELECT `thumb`, `file` FROM ``posts_%s`` WHERE `id` = " .
-                    (int) $ban['post']['id'], $board['uri']));
+                $query = query(sprintf("SELECT `thumb`, `file` FROM ``posts_%s`` WHERE `id` = "
+                    . (int) $ban['post']['id'], $board['uri']));
                 if ($_post = $query->fetch(\PDO::FETCH_ASSOC)) {
                     $ban['post'] = array_merge($ban['post'], $_post);
                 } else {

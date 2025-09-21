@@ -28,14 +28,14 @@ class ErrorHandler
         }
 
         // Yes, this is horrible.
-        die('<!DOCTYPE html><html><head><title>Error</title>' .
-            '<style type="text/css">' .
-                'body{text-align:center;font-family:arial, helvetica, sans-serif;font-size:10pt;}' .
-                'p{padding:0;margin:20px 0;}' .
-                'p.c{font-size:11px;}' .
-            '</style></head>' .
-            '<body><h2>Error</h2>' . $message . '<hr/>' .
-            '<p class="c">This alternative error page is being displayed because the other couldn\'t be found or hasn\'t loaded yet.</p></body></html>');
+        die('<!DOCTYPE html><html><head><title>Error</title>'
+            . '<style type="text/css">'
+                . 'body{text-align:center;font-family:arial, helvetica, sans-serif;font-size:10pt;}'
+                . 'p{padding:0;margin:20px 0;}'
+                . 'p.c{font-size:11px;}'
+            . '</style></head>'
+            . '<body><h2>Error</h2>' . $message . '<hr/>'
+            . '<p class="c">This alternative error page is being displayed because the other couldn\'t be found or hasn\'t loaded yet.</p></body></html>');
     }
 
     /**

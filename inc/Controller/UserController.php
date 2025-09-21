@@ -273,8 +273,8 @@ class UserController
         $query->bindValue(':group_value', $new_group);
         $query->execute() or error(db_error($query));
 
-        AuthManager::modLog(($action == 'promote' ? 'Promoted' : 'Demoted') . ' user "' .
-            StringFormatter::utf8tohtml($mod['username']) . '" to ' . $config['mod']['groups'][$new_group]);
+        AuthManager::modLog(($action == 'promote' ? 'Promoted' : 'Demoted') . ' user "'
+            . StringFormatter::utf8tohtml($mod['username']) . '" to ' . $config['mod']['groups'][$new_group]);
 
         header('Location: ?/users', true, $config['redirect_http']);
     }

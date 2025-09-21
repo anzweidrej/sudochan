@@ -4,8 +4,6 @@
  *  Copyright (c) 2010-2013 Tinyboard Development Group
  */
 
-defined('TINYBOARD') or exit;
-
 use Sudochan\Debug\PreparedQueryDebug;
 
 /**
@@ -26,9 +24,9 @@ function sql_open(): PDO|true
         ? substr($config['db']['server'], 1)
         : false;
 
-    $dsn = $config['db']['type'] . ':' .
-        ($unix_socket ? 'unix_socket=' . $unix_socket : 'host=' . $config['db']['server']) .
-        ';dbname=' . $config['db']['database'];
+    $dsn = $config['db']['type'] . ':'
+        . ($unix_socket ? 'unix_socket=' . $unix_socket : 'host=' . $config['db']['server'])
+        . ';dbname=' . $config['db']['database'];
 
     if (!empty($config['db']['dsn'])) {
         $dsn .= ';' . $config['db']['dsn'];

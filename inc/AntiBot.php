@@ -6,8 +6,6 @@
 
 namespace Sudochan;
 
-defined('TINYBOARD') or exit;
-
 use Sudochan\Utils\StringFormatter;
 
 $hidden_inputs_twig = [];

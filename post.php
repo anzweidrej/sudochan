@@ -87,8 +87,8 @@ if (isset($_POST['delete'])) {
 
             ErrorHandler::_syslog(
                 LOG_INFO,
-                'Deleted post: ' .
-                '/' . $board['dir'] . $config['dir']['res'] . sprintf($config['file_page'], $post['thread'] ? $post['thread'] : $id) . ($post['thread'] ? '#' . $id : ''),
+                'Deleted post: '
+                . '/' . $board['dir'] . $config['dir']['res'] . sprintf($config['file_page'], $post['thread'] ? $post['thread'] : $id) . ($post['thread'] ? '#' . $id : ''),
             );
         }
     }
@@ -149,9 +149,9 @@ if (isset($_POST['delete'])) {
         if ($config['syslog']) {
             ErrorHandler::_syslog(
                 LOG_INFO,
-                'Reported post: ' .
-                '/' . $board['dir'] . $config['dir']['res'] . sprintf($config['file_page'], $thread ? $thread : $id) . ($thread ? '#' . $id : '') .
-                ' for "' . $reason . '"',
+                'Reported post: '
+                . '/' . $board['dir'] . $config['dir']['res'] . sprintf($config['file_page'], $thread ? $thread : $id) . ($thread ? '#' . $id : '')
+                . ' for "' . $reason . '"',
             );
         }
         $query = prepare("INSERT INTO ``reports`` VALUES (NULL, :time, :ip, :board, :post, :reason)");
@@ -205,14 +205,14 @@ if (isset($_POST['delete'])) {
         $post['op'] = true;
     }
 
-    if (!(($post['op'] && $_POST['post'] == $config['button_newtopic']) ||
-        (!$post['op'] && $_POST['post'] == $config['button_reply']))) {
+    if (!(($post['op'] && $_POST['post'] == $config['button_newtopic'])
+        || (!$post['op'] && $_POST['post'] == $config['button_reply']))) {
         error($config['error']['bot']);
     }
 
     // Check the referrer
-    if ($config['referer_match'] !== false &&
-        (!isset($_SERVER['HTTP_REFERER']) || !preg_match($config['referer_match'], urldecode($_SERVER['HTTP_REFERER'])))) {
+    if ($config['referer_match'] !== false
+        && (!isset($_SERVER['HTTP_REFERER']) || !preg_match($config['referer_match'], urldecode($_SERVER['HTTP_REFERER'])))) {
         error($config['error']['referer']);
     }
 
@@ -435,10 +435,10 @@ if (isset($_POST['delete'])) {
         $cap = $matches[3];
 
         if (isset($config['mod']['capcode'][$mod['type']])) {
-            if ($config['mod']['capcode'][$mod['type']] === true ||
-                (
-                    is_array($config['mod']['capcode'][$mod['type']]) &&
-                    in_array($cap, $config['mod']['capcode'][$mod['type']])
+            if ($config['mod']['capcode'][$mod['type']] === true
+                || (
+                    is_array($config['mod']['capcode'][$mod['type']])
+                    && in_array($cap, $config['mod']['capcode'][$mod['type']])
                 )) {
 
                 $post['capcode'] = StringFormatter::utf8tohtml($cap);
@@ -510,8 +510,8 @@ if (isset($_POST['delete'])) {
             $country_name = $record->country->name;
 
             if ($country_code && !in_array(strtolower($country_code), ['eu', 'ap', 'o1', 'a1', 'a2'])) {
-                $post['body'] .= "\n<tinyboard flag>" . strtolower($country_code) . "</tinyboard>" .
-                    "\n<tinyboard flag alt>" . $country_name . "</tinyboard>";
+                $post['body'] .= "\n<tinyboard flag>" . strtolower($country_code) . "</tinyboard>"
+                    . "\n<tinyboard flag alt>" . $country_name . "</tinyboard>";
             }
         } catch (\Exception $e) {
             error('GeoIP2 error: ' . $e->getMessage());
@@ -588,18 +588,18 @@ if (isset($_POST['delete'])) {
                         $gm = in_array($config['thumb_method'], ['gm', 'gm+gifsicle']);
                         if (isset($exif['Orientation']) && $exif['Orientation'] != 1) {
                             if ($config['convert_manual_orient']) {
-                                $error = Shell::shell_exec_error(($gm ? 'gm ' : '') . 'convert ' .
-                                    escapeshellarg($upload) . ' ' .
-                                    ImageConvert::jpeg_exif_orientation(false, $exif) . ' ' .
-                                    (
-                                        $config['strip_exif'] ? '+profile "*"' :
-                                        ($config['use_exiftool'] ? '' : '+profile "*"')
-                                    ) . ' ' .
-                                    escapeshellarg($upload));
+                                $error = Shell::shell_exec_error(($gm ? 'gm ' : '') . 'convert '
+                                    . escapeshellarg($upload) . ' '
+                                    . ImageConvert::jpeg_exif_orientation(false, $exif) . ' '
+                                    . (
+                                        $config['strip_exif'] ? '+profile "*"'
+                                        : ($config['use_exiftool'] ? '' : '+profile "*"')
+                                    ) . ' '
+                                    . escapeshellarg($upload));
                                 if ($config['use_exiftool'] && !$config['strip_exif']) {
                                     if ($exiftool_error = Shell::shell_exec_error(
-                                        'exiftool -overwrite_original -q -q -orientation=1 -n ' .
-                                            escapeshellarg($upload),
+                                        'exiftool -overwrite_original -q -q -orientation=1 -n '
+                                            . escapeshellarg($upload),
                                     )) {
                                         error('exiftool failed!', null, $exiftool_error);
                                     }
@@ -608,8 +608,8 @@ if (isset($_POST['delete'])) {
                                     // without needing `exiftool`.
                                 }
                             } else {
-                                $error = Shell::shell_exec_error(($gm ? 'gm ' : '') . 'convert ' .
-                                        escapeshellarg($upload) . ' -auto-orient ' . escapeshellarg($upload));
+                                $error = Shell::shell_exec_error(($gm ? 'gm ' : '') . 'convert '
+                                        . escapeshellarg($upload) . ' -auto-orient ' . escapeshellarg($upload));
                             }
                             if ($error) {
                                 error('Could not auto-orient image!', null, $error);
@@ -639,10 +639,10 @@ if (isset($_POST['delete'])) {
                 $size = @getimagesize($config['spoiler_image']);
                 $post['thumbwidth'] = $size[0];
                 $post['thumbheight'] = $size[1];
-            } elseif ($config['minimum_copy_resize'] &&
-                $image->size->width <= $config['thumb_width'] &&
-                $image->size->height <= $config['thumb_height'] &&
-                $post['extension'] == ($config['thumb_ext'] ? $config['thumb_ext'] : $post['extension'])) {
+            } elseif ($config['minimum_copy_resize']
+                && $image->size->width <= $config['thumb_width']
+                && $image->size->height <= $config['thumb_height']
+                && $post['extension'] == ($config['thumb_ext'] ? $config['thumb_ext'] : $post['extension'])) {
 
                 // Copy, because there's nothing to resize
                 copy($upload, $post['thumb']);
@@ -666,8 +666,8 @@ if (isset($_POST['delete'])) {
 
             if ($config['redraw_image'] || (!@$post['exif_stripped'] && $config['strip_exif'] && ($post['extension'] == 'jpg' || $post['extension'] == 'jpeg'))) {
                 if (!$config['redraw_image'] && $config['use_exiftool']) {
-                    if ($error = Shell::shell_exec_error('exiftool -overwrite_original -ignoreMinorErrors -q -q -all= ' .
-                        escapeshellarg($upload))) {
+                    if ($error = Shell::shell_exec_error('exiftool -overwrite_original -ignoreMinorErrors -q -q -all= '
+                        . escapeshellarg($upload))) {
                         error(_('Could not strip EXIF metadata!'), null, $error);
                     }
                 } else {
@@ -683,8 +683,8 @@ if (isset($_POST['delete'])) {
 
             $size = @getimagesize(sprintf(
                 $config['file_thumb'],
-                isset($config['file_icons'][$post['extension']]) ?
-                    $config['file_icons'][$post['extension']] : $config['file_icons']['default'],
+                isset($config['file_icons'][$post['extension']])
+                    ? $config['file_icons'][$post['extension']] : $config['file_icons']['default'],
             ));
             $post['thumbwidth'] = $size[0];
             $post['thumbheight'] = $size[1];
@@ -708,13 +708,12 @@ if (isset($_POST['delete'])) {
                 FileManager::undoImage($post);
                 error(sprintf(
                     $config['error']['fileexists'],
-                    ($post['mod'] ? $config['root'] . $config['file_mod'] . '?/' : $config['root']) .
-                    ($board['dir'] . $config['dir']['res'] .
-                        (
-                            $p['thread'] ?
-                            $p['thread'] . '.html#' . $p['id']
-                        :
-                            $p['id'] . '.html'
+                    ($post['mod'] ? $config['root'] . $config['file_mod'] . '?/' : $config['root'])
+                    . ($board['dir'] . $config['dir']['res']
+                        . (
+                            $p['thread']
+                            ? $p['thread'] . '.html#' . $p['id']
+                            : $p['id'] . '.html'
                         )),
                 ));
             }
@@ -723,13 +722,12 @@ if (isset($_POST['delete'])) {
                 FileManager::undoImage($post);
                 error(sprintf(
                     $config['error']['fileexistsinthread'],
-                    ($post['mod'] ? $config['root'] . $config['file_mod'] . '?/' : $config['root']) .
-                    ($board['dir'] . $config['dir']['res'] .
-                        (
-                            $p['thread'] ?
-                            $p['thread'] . '.html#' . $p['id']
-                        :
-                            $p['id'] . '.html'
+                    ($post['mod'] ? $config['root'] . $config['file_mod'] . '?/' : $config['root'])
+                    . ($board['dir'] . $config['dir']['res']
+                        . (
+                            $p['thread']
+                            ? $p['thread'] . '.html#' . $p['id']
+                            : $p['id'] . '.html'
                         )),
                 ));
             }
@@ -773,9 +771,9 @@ if (isset($_POST['delete'])) {
     if (isset($post['tracked_cites']) && !empty($post['tracked_cites'])) {
         $insert_rows = [];
         foreach ($post['tracked_cites'] as $cite) {
-            $insert_rows[] = '(' .
-                $pdo->quote($board['uri']) . ', ' . (int) $id . ', ' .
-                $pdo->quote($cite[0]) . ', ' . (int) $cite[1] . ')';
+            $insert_rows[] = '('
+                . $pdo->quote($board['uri']) . ', ' . (int) $id . ', '
+                . $pdo->quote($cite[0]) . ', ' . (int) $cite[1] . ')';
         }
         query('INSERT INTO ``cites`` VALUES ' . implode(', ', $insert_rows)) or error(db_error());
     }
@@ -814,15 +812,15 @@ if (isset($_POST['delete'])) {
     $root = $post['mod'] ? $config['root'] . $config['file_mod'] . '?/' : $config['root'];
 
     if ($config['always_noko'] || $noko) {
-        $redirect = $root . $board['dir'] . $config['dir']['res'] .
-            sprintf($config['file_page'], $post['op'] ? $id : $post['thread']) . (!$post['op'] ? '#' . $id : '');
+        $redirect = $root . $board['dir'] . $config['dir']['res']
+            . sprintf($config['file_page'], $post['op'] ? $id : $post['thread']) . (!$post['op'] ? '#' . $id : '');
     } else {
         $redirect = $root . $board['dir'] . $config['file_index'];
     }
 
     if ($config['syslog']) {
-        ErrorHandler::_syslog(LOG_INFO, 'New post: /' . $board['dir'] . $config['dir']['res'] .
-            sprintf($config['file_page'], $post['op'] ? $id : $post['thread']) . (!$post['op'] ? '#' . $id : ''));
+        ErrorHandler::_syslog(LOG_INFO, 'New post: /' . $board['dir'] . $config['dir']['res']
+            . sprintf($config['file_page'], $post['op'] ? $id : $post['thread']) . (!$post['op'] ? '#' . $id : ''));
     }
 
     if ($post['op']) {

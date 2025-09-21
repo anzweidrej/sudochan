@@ -145,8 +145,8 @@ class BanController
 
             if ($ban['post'] && isset($ban['post']['board'], $ban['post']['id'])) {
                 if (BoardService::openBoard($ban['post']['board'])) {
-                    $query = query(sprintf("SELECT `thumb`, `file` FROM ``posts_%s`` WHERE `id` = " .
-                        (int) $ban['post']['id'], $board['uri']));
+                    $query = query(sprintf("SELECT `thumb`, `file` FROM ``posts_%s`` WHERE `id` = "
+                        . (int) $ban['post']['id'], $board['uri']));
                     if ($_post = $query->fetch(\PDO::FETCH_ASSOC)) {
                         $ban['post'] = array_merge($ban['post'], $_post);
                     } else {

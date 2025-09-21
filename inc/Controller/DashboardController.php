@@ -81,12 +81,12 @@ class DashboardController
                                 $current['minor']--;
                             }
                             // Check if it's newer
-                            if (!($latest['massive'] > $current['massive'] ||
-                                $latest['major'] > $current['major'] ||
-                                    (
-                                        $latest['massive'] == $current['massive'] &&
-                                        $latest['major'] == $current['major'] &&
-                                        $latest['minor'] > $current['minor']
+                            if (!($latest['massive'] > $current['massive']
+                                || $latest['major'] > $current['major']
+                                    || (
+                                        $latest['massive'] == $current['massive']
+                                        && $latest['major'] == $current['major']
+                                        && $latest['minor'] > $current['minor']
                                     ))) {
                                 $latest = false;
                             }

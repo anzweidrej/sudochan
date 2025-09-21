@@ -79,22 +79,22 @@ class ConfigLoader
         // Referer match regex
         if (!isset($config['referer_match'])) {
             if (isset($_SERVER['HTTP_HOST'])) {
-                $config['referer_match'] = '/^' .
-                    (preg_match('@^https?://@', $config['root']) ? '' : 'https?:\/\/' . $_SERVER['HTTP_HOST']) .
-                    preg_quote($config['root'], '/') .
-                    '(' .
-                        str_replace('%s', $config['board_regex'], preg_quote($config['board_path'], '/')) .
-                        '(' .
-                            preg_quote($config['file_index'], '/') . '|' .
-                            str_replace('%d', '\d+', preg_quote($config['file_page'])) .
-                        ')?' .
-                    '|' .
-                        str_replace('%s', $config['board_regex'], preg_quote($config['board_path'], '/')) .
-                        preg_quote($config['dir']['res'], '/') .
-                        str_replace('%d', '\d+', preg_quote($config['file_page'], '/')) .
-                    '|' .
-                        preg_quote($config['file_mod'], '/') . '\?\/.+' .
-                    ')([#?](.+)?)?$/ui';
+                $config['referer_match'] = '/^'
+                    . (preg_match('@^https?://@', $config['root']) ? '' : 'https?:\/\/' . $_SERVER['HTTP_HOST'])
+                    . preg_quote($config['root'], '/')
+                    . '('
+                        . str_replace('%s', $config['board_regex'], preg_quote($config['board_path'], '/'))
+                        . '('
+                            . preg_quote($config['file_index'], '/') . '|'
+                            . str_replace('%d', '\d+', preg_quote($config['file_page']))
+                        . ')?'
+                    . '|'
+                        . str_replace('%s', $config['board_regex'], preg_quote($config['board_path'], '/'))
+                        . preg_quote($config['dir']['res'], '/')
+                        . str_replace('%d', '\d+', preg_quote($config['file_page'], '/'))
+                    . '|'
+                        . preg_quote($config['file_mod'], '/') . '\?\/.+'
+                    . ')([#?](.+)?)?$/ui';
             } else {
                 $config['referer_match'] = '//'; // CLI mode
             }

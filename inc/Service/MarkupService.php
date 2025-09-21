@@ -120,8 +120,8 @@ class MarkupService
             }
             $search_cites = array_unique($search_cites);
 
-            $query = query(sprintf('SELECT `thread`, `id` FROM ``posts_%s`` WHERE ' .
-                implode(' OR ', $search_cites), $board['uri'])) or error(db_error());
+            $query = query(sprintf('SELECT `thread`, `id` FROM ``posts_%s`` WHERE '
+                . implode(' OR ', $search_cites), $board['uri'])) or error(db_error());
 
             $cited_posts = [];
             while ($cited = $query->fetch(\PDO::FETCH_ASSOC)) {
@@ -137,11 +137,11 @@ class MarkupService
                 }
 
                 if (isset($cited_posts[$cite])) {
-                    $replacement = '<a onclick="highlightReply(\'' . $cite . '\');" href="' .
-                        $config['root'] . $board['dir'] . $config['dir']['res'] .
-                        ($cited_posts[$cite] ? $cited_posts[$cite] : $cite) . '.html#' . $cite . '">' .
-                        '&gt;&gt;' . $cite .
-                        '</a>';
+                    $replacement = '<a onclick="highlightReply(\'' . $cite . '\');" href="'
+                        . $config['root'] . $board['dir'] . $config['dir']['res']
+                        . ($cited_posts[$cite] ? $cited_posts[$cite] : $cite) . '.html#' . $cite . '">'
+                        . '&gt;&gt;' . $cite
+                        . '</a>';
 
                     $body = self::mb_substr_replace($body, $matches[1][0] . $replacement . $matches[3][0], $matches[0][1] + $skip_chars, mb_strlen($matches[0][0]));
                     $skip_chars += mb_strlen($matches[1][0] . $replacement . $matches[3][0]) - mb_strlen($matches[0][0]);
@@ -165,8 +165,8 @@ class MarkupService
             if (isset($cited_posts)) {
                 // Carry found posts from local board >>X links
                 foreach ($cited_posts as $cite => $thread) {
-                    $cited_posts[$cite] = $config['root'] . $board['dir'] . $config['dir']['res'] .
-                        ($thread ? $thread : $cite) . '.html#' . $cite;
+                    $cited_posts[$cite] = $config['root'] . $board['dir'] . $config['dir']['res']
+                        . ($thread ? $thread : $cite) . '.html#' . $cite;
                 }
 
                 $cited_posts = [
@@ -210,12 +210,12 @@ class MarkupService
                 if (!empty($clauses)) {
                     $cited_posts[$_board] = [];
 
-                    $query = query(sprintf('SELECT `thread`, `id` FROM ``posts_%s`` WHERE ' .
-                        implode(' OR ', $clauses), $board['uri'])) or error(db_error());
+                    $query = query(sprintf('SELECT `thread`, `id` FROM ``posts_%s`` WHERE '
+                        . implode(' OR ', $clauses), $board['uri'])) or error(db_error());
 
                     while ($cite = $query->fetch(\PDO::FETCH_ASSOC)) {
-                        $cited_posts[$_board][$cite['id']] = $config['root'] . $board['dir'] . $config['dir']['res'] .
-                            ($cite['thread'] ? $cite['thread'] : $cite['id']) . '.html#' . $cite['id'];
+                        $cited_posts[$_board][$cite['id']] = $config['root'] . $board['dir'] . $config['dir']['res']
+                            . ($cite['thread'] ? $cite['thread'] : $cite['id']) . '.html#' . $cite['id'];
                     }
                 }
 
@@ -240,12 +240,12 @@ class MarkupService
                     if (isset($cited_posts[$_board][$cite])) {
                         $link = $cited_posts[$_board][$cite];
 
-                        $replacement = '<a ' .
-                            ($_board == $board['uri'] ?
-                                'onclick="highlightReply(\'' . $cite . '\');" '
-                            : '') . 'href="' . $link . '">' .
-                            '&gt;&gt;&gt;/' . $_board . '/' . $cite .
-                            '</a>';
+                        $replacement = '<a '
+                            . ($_board == $board['uri']
+                                ? 'onclick="highlightReply(\'' . $cite . '\');" '
+                            : '') . 'href="' . $link . '">'
+                            . '&gt;&gt;&gt;/' . $_board . '/' . $cite
+                            . '</a>';
 
                         $body = self::mb_substr_replace($body, $matches[1][0] . $replacement . $matches[4][0], $matches[0][1] + $skip_chars, mb_strlen($matches[0][0]));
                         $skip_chars += mb_strlen($matches[1][0] . $replacement . $matches[4][0]) - mb_strlen($matches[0][0]);
@@ -255,9 +255,9 @@ class MarkupService
                         }
                     }
                 } elseif (isset($crossboard_indexes[$_board])) {
-                    $replacement = '<a href="' . $crossboard_indexes[$_board] . '">' .
-                            '&gt;&gt;&gt;/' . $_board . '/' .
-                            '</a>';
+                    $replacement = '<a href="' . $crossboard_indexes[$_board] . '">'
+                            . '&gt;&gt;&gt;/' . $_board . '/'
+                            . '</a>';
                     $body = self::mb_substr_replace($body, $matches[1][0] . $replacement . $matches[4][0], $matches[0][1] + $skip_chars, mb_strlen($matches[0][0]));
                     $skip_chars += mb_strlen($matches[1][0] . $replacement . $matches[4][0]) - mb_strlen($matches[0][0]);
                 }

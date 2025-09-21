@@ -69,14 +69,14 @@ class ImageConvert extends ImageBase
 
         if (!$this->temp) {
             if ($config['strip_exif']) {
-                if ($error = Shell::shell_exec_error(($this->gm ? 'gm ' : '') . 'convert ' .
-                    escapeshellarg($this->src) . ' -auto-orient -strip ' . escapeshellarg($src))) {
+                if ($error = Shell::shell_exec_error(($this->gm ? 'gm ' : '') . 'convert '
+                    . escapeshellarg($this->src) . ' -auto-orient -strip ' . escapeshellarg($src))) {
                     $this->destroy();
                     error(_('Failed to redraw image!'), null, $error);
                 }
             } else {
-                if ($error = Shell::shell_exec_error(($this->gm ? 'gm ' : '') . 'convert ' .
-                    escapeshellarg($this->src) . ' -auto-orient ' . escapeshellarg($src))) {
+                if ($error = Shell::shell_exec_error(($this->gm ? 'gm ' : '') . 'convert '
+                    . escapeshellarg($this->src) . ' -auto-orient ' . escapeshellarg($src))) {
                     $this->destroy();
                     error(_('Failed to redraw image!'), null, $error);
                 }
@@ -118,9 +118,9 @@ class ImageConvert extends ImageBase
 
         if ($this->format === 'gif' && ($config['thumb_ext'] === 'gif' || $config['thumb_ext'] === '') && $config['thumb_keep_animation_frames'] > 1) {
             if ($this->gifsicle) {
-                if (($error = shell_exec("gifsicle -w --unoptimize -O2 --resize {$this->width}x{$this->height} < " .
-                    escapeshellarg($this->src . '') . " \"#0-{$config['thumb_keep_animation_frames']}\" -o " .
-                    escapeshellarg($this->temp))) || !file_exists($this->temp)) {
+                if (($error = shell_exec("gifsicle -w --unoptimize -O2 --resize {$this->width}x{$this->height} < "
+                    . escapeshellarg($this->src . '') . " \"#0-{$config['thumb_keep_animation_frames']}\" -o "
+                    . escapeshellarg($this->temp))) || !file_exists($this->temp)) {
                     $this->destroy();
                     error(_('Failed to resize image!'), null, $error);
                 }
@@ -132,8 +132,8 @@ class ImageConvert extends ImageBase
                 } else {
                     $convert_args = $config['convert_args'];
                 }
-                if (($error = Shell::shell_exec_error(($this->gm ? 'gm ' : '') . 'convert ' .
-                    sprintf(
+                if (($error = Shell::shell_exec_error(($this->gm ? 'gm ' : '') . 'convert '
+                    . sprintf(
                         $convert_args,
                         $this->width,
                         $this->height,
@@ -158,8 +158,8 @@ class ImageConvert extends ImageBase
             } else {
                 $convert_args = $config['convert_args'];
             }
-            if (($error = Shell::shell_exec_error(($this->gm ? 'gm ' : '') . 'convert ' .
-                sprintf(
+            if (($error = Shell::shell_exec_error(($this->gm ? 'gm ' : '') . 'convert '
+                . sprintf(
                     $convert_args,
                     $this->width,
                     $this->height,

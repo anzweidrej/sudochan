@@ -6,8 +6,6 @@
 
 namespace Sudochan;
 
-defined('TINYBOARD') or exit;
-
 class Cache
 {
     private static mixed $cache = null;

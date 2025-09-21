@@ -6,8 +6,6 @@
 
 namespace Sudochan\Dispatcher;
 
-defined('TINYBOARD') or exit;
-
 class EventDispatcher
 {
     private static array $events = [];

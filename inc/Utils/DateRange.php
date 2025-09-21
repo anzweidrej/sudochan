@@ -31,4 +31,28 @@ class DateRange
 
         return ($num = round($difference / (60 * 60 * 24 * 365))) . ' ' . ngettext('year', 'years', $num);
     }
+
+    /**
+     * Return a human readable "ago" time string.
+     *
+     * @param int $timestamp Unix timestamp
+     * @return string Relative time string (e.g. "5 minutes")
+     */
+    public static function ago(int $timestamp): string
+    {
+        $difference = time() - $timestamp;
+        if ($difference < 60) {
+            return $difference . ' ' . ngettext('second', 'seconds', $difference);
+        } elseif ($difference < 60 * 60) {
+            return ($num = round($difference / (60))) . ' ' . ngettext('minute', 'minutes', $num);
+        } elseif ($difference < 60 * 60 * 24) {
+            return ($num = round($difference / (60 * 60))) . ' ' . ngettext('hour', 'hours', $num);
+        } elseif ($difference < 60 * 60 * 24 * 7) {
+            return ($num = round($difference / (60 * 60 * 24))) . ' ' . ngettext('day', 'days', $num);
+        } elseif ($difference < 60 * 60 * 24 * 365) {
+            return ($num = round($difference / (60 * 60 * 24 * 7))) . ' ' . ngettext('week', 'weeks', $num);
+        }
+
+        return ($num = round($difference / (60 * 60 * 24 * 365))) . ' ' . ngettext('year', 'years', $num);
+    }
 }

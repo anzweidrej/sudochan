@@ -79,9 +79,9 @@ class DebugController
         foreach ($posts as &$post) {
             $post['snippet'] = TextFormatter::pm_snippet($post['body']);
             foreach ($flood_posts as $flood_post) {
-                if ($flood_post['time'] == $post['time'] &&
-                    $flood_post['posthash'] == Obfuscation::make_comment_hex($post['body_nomarkup']) &&
-                    $flood_post['filehash'] == $post['filehash']) {
+                if ($flood_post['time'] == $post['time']
+                    && $flood_post['posthash'] == Obfuscation::make_comment_hex($post['body_nomarkup'])
+                    && $flood_post['filehash'] == $post['filehash']) {
                     $post['in_flood_table'] = true;
                 }
             }

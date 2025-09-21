@@ -906,8 +906,10 @@ $config['error']['csrf']		= _('Invalid security token! Please go back and try ag
  * =========================
  */
 
-// The root directory, including the trailing slash, for Tinyboard.
-// Examples: '/', 'http://boards.chan.org/', '/chan/'.
+// Determine application root from REQUEST_URI.
+// Strip query string if present, normalize backslashes to slashes,
+// and ensure the root path ends with a trailing slash (use '/' for CLI/root).
+// Examples: '/', 'http://boards.chan.org/', '/chan/'
 if (isset($_SERVER['REQUEST_URI'])) {
     $request_uri = $_SERVER['REQUEST_URI'];
     if (isset($_SERVER['QUERY_STRING']) && $_SERVER['QUERY_STRING'] !== '') {

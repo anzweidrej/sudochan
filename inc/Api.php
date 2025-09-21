@@ -6,8 +6,6 @@
 
 namespace Sudochan;
 
-defined('TINYBOARD') or exit;
-
 use Sudochan\Entity\Thread;
 use Sudochan\Utils\TextFormatter;
 use Sudochan\Utils\Sanitize;

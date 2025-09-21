@@ -18,9 +18,9 @@ class PreparedQueryDebug
 
         $this->query = $pdo->prepare($query);
         if (
-            $config['debug'] &&
-            $config['debug_explain'] &&
-            preg_match('/^(SELECT|INSERT|UPDATE|DELETE) /i', $query)
+            $config['debug']
+            && $config['debug_explain']
+            && preg_match('/^(SELECT|INSERT|UPDATE|DELETE) /i', $query)
         ) {
             $this->explain_query = $pdo->prepare("EXPLAIN $query");
         }
