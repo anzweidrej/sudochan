@@ -16,9 +16,23 @@ use Sudochan\Manager\PermissionManager;
 use Sudochan\Manager\FileManager;
 use Sudochan\Utils\Token;
 use Sudochan\Utils\StringFormatter;
+use Sudochan\Repository\BoardRepository;
 
 class BoardController
 {
+    private BoardRepository $repository;
+
+    public function __construct(?BoardRepository $repository = null)
+    {
+        $this->repository = $repository ?? new BoardRepository();
+    }
+
+    /**
+     * Edit or delete a board.
+     *
+     * @param string $boardName Board URI to edit.
+     * @return void
+     */
     public function mod_edit_board(string $boardName): void
     {
         global $board, $config;
@@ -37,9 +51,8 @@ class BoardController
                     error($config['error']['deleteboard']);
                 }
 
-                $query = prepare('DELETE FROM ``boards`` WHERE `uri` = :uri');
-                $query->bindValue(':uri', $board['uri']);
-                $query->execute() or error(db_error($query));
+                // Delete board row
+                $this->repository->deleteBoardUri($board['uri']);
 
                 if ($config['cache']['enabled']) {
                     Cache::delete('board_' . $board['uri']);
@@ -49,22 +62,16 @@ class BoardController
                 AuthManager::modLog('Deleted board: ' . sprintf($config['board_abbreviation'], $board['uri']), false);
 
                 // Delete posting table
-                $query = query(sprintf('DROP TABLE IF EXISTS ``posts_%s``', $board['uri'])) or error(db_error());
+                $this->repository->dropPostsTable($board['uri']);
 
                 // Clear reports
-                $query = prepare('DELETE FROM ``reports`` WHERE `board` = :id');
-                $query->bindValue(':id', $board['uri'], \PDO::PARAM_INT);
-                $query->execute() or error(db_error($query));
+                $this->repository->deleteReportsForBoard($board['uri']);
 
-                // Delete from table
-                $query = prepare('DELETE FROM ``boards`` WHERE `uri` = :uri');
-                $query->bindValue(':uri', $board['uri'], \PDO::PARAM_STR);
-                $query->execute() or error(db_error($query));
+                // Delete from boards table
+                $this->repository->deleteBoardsWhereUri($board['uri']);
 
-                $query = prepare("SELECT `board`, `post` FROM ``cites`` WHERE `target_board` = :board ORDER BY `board`");
-                $query->bindValue(':board', $board['uri']);
-                $query->execute() or error(db_error($query));
-                while ($cite = $query->fetch(\PDO::FETCH_ASSOC)) {
+                $cites = $this->repository->selectCitesByTargetBoard($board['uri']);
+                foreach ($cites as $cite) {
                     if ($board['uri'] != $cite['board']) {
                         if (!isset($tmp_board)) {
                             $tmp_board = $board;
@@ -78,36 +85,23 @@ class BoardController
                     $board = $tmp_board;
                 }
 
-                $query = prepare('DELETE FROM ``cites`` WHERE `board` = :board OR `target_board` = :board');
-                $query->bindValue(':board', $board['uri']);
-                $query->execute() or error(db_error($query));
-
-                $query = prepare('DELETE FROM ``antispam`` WHERE `board` = :board');
-                $query->bindValue(':board', $board['uri']);
-                $query->execute() or error(db_error($query));
+                $this->repository->deleteCitesForBoard($board['uri']);
+                $this->repository->deleteAntispamForBoard($board['uri']);
 
                 // Remove board from users/permissions table
-                $query = query('SELECT `id`,`boards` FROM ``mods``') or error(db_error());
-                while ($user = $query->fetch(\PDO::FETCH_ASSOC)) {
+                $users = $this->repository->selectAllMods();
+                foreach ($users as $user) {
                     $user_boards = explode(',', $user['boards']);
                     if (in_array($board['uri'], $user_boards)) {
                         unset($user_boards[array_search($board['uri'], $user_boards)]);
-                        $_query = prepare('UPDATE ``mods`` SET `boards` = :boards WHERE `id` = :id');
-                        $_query->bindValue(':boards', implode(',', $user_boards));
-                        $_query->bindValue(':id', $user['id']);
-                        $_query->execute() or error(db_error($_query));
+                        $this->repository->updateModBoards($user['id'], implode(',', $user_boards));
                     }
                 }
 
                 // Delete entire board directory
                 FileManager::rrmdir($board['uri'] . '/');
             } else {
-                $query = prepare('UPDATE ``boards`` SET `title` = :title, `subtitle` = :subtitle, `category` = :category WHERE `uri` = :uri');
-                $query->bindValue(':uri', $board['uri']);
-                $query->bindValue(':title', $_POST['title']);
-                $query->bindValue(':subtitle', $_POST['subtitle']);
-                $query->bindValue(':category', $_POST['category']);
-                $query->execute() or error(db_error($query));
+                $this->repository->updateBoardInfo($board['uri'], $_POST['title'], $_POST['subtitle'], $_POST['category']);
 
                 AuthManager::modLog('Edited board information for ' . sprintf($config['board_abbreviation'], $board['uri']), false);
             }
@@ -128,6 +122,11 @@ class BoardController
         }
     }
 
+    /**
+     * Create a new board.
+     *
+     * @return void
+     */
     public function mod_new_board(): void
     {
         global $config, $board;
@@ -172,12 +171,7 @@ class BoardController
                 error(sprintf($config['error']['boardexists'], $board['url']));
             }
 
-            $query = prepare('INSERT INTO ``boards`` VALUES (:uri, :title, :subtitle, :category)');
-            $query->bindValue(':uri', $_POST['uri']);
-            $query->bindValue(':title', $_POST['title']);
-            $query->bindValue(':subtitle', $_POST['subtitle']);
-            $query->bindValue(':category', $_POST['category']);
-            $query->execute() or error(db_error($query));
+            $this->repository->insertBoard($_POST['uri'], $_POST['title'], $_POST['subtitle'], $_POST['category']);
 
             AuthManager::modLog('Created a new board: ' . sprintf($config['board_abbreviation'], $_POST['uri']));
 
@@ -191,7 +185,7 @@ class BoardController
                 $query = preg_replace('/(CHARSET=|CHARACTER SET )utf8mb4/', '$1utf8', $query);
             }
 
-            query($query) or error(db_error());
+            $this->repository->executeSql($query);
 
             if ($config['cache']['enabled']) {
                 Cache::delete('all_boards');
@@ -208,6 +202,13 @@ class BoardController
         mod_page(_('New board'), 'mod/board.html', ['new' => true, 'token' => Token::make_secure_link_token('new-board')]);
     }
 
+    /**
+     * View a board index.
+     *
+     * @param string $boardName Board URI to view.
+     * @param int $page_no Page number (1-based).
+     * @return void
+     */
     public function mod_view_board(string $boardName, int $page_no = 1): void
     {
         global $config, $mod;
@@ -229,6 +230,13 @@ class BoardController
         echo element('index.html', $page);
     }
 
+    /**
+     * View a thread.
+     *
+     * @param string $boardName Board URI containing the thread.
+     * @param int $thread Thread ID.
+     * @return void
+     */
     public function mod_view_thread(string $boardName, int $thread): void
     {
         global $config, $mod;

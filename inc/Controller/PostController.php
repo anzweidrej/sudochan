@@ -19,9 +19,17 @@ use Sudochan\Manager\PermissionManager;
 use Sudochan\Utils\DateRange;
 use Sudochan\Utils\StringFormatter;
 use Sudochan\Utils\Token;
+use Sudochan\Repository\PostRepository;
 
 class PostController
 {
+    private PostRepository $repository;
+
+    public function __construct(PostRepository $repository)
+    {
+        $this->repository = $repository;
+    }
+
     public function mod_lock(string $board, bool $unlock, int $post): void
     {
         global $config;
@@ -34,10 +42,7 @@ class PostController
             error($config['error']['noaccess']);
         }
 
-        $query = prepare(sprintf('UPDATE ``posts_%s`` SET `locked` = :locked WHERE `id` = :id AND `thread` IS NULL', $board));
-        $query->bindValue(':id', $post);
-        $query->bindValue(':locked', $unlock ? 0 : 1);
-        $query->execute() or error(db_error($query));
+        $query = $this->repository->updateLock($board, $post, $unlock ? 0 : 1);
         if ($query->rowCount()) {
             AuthManager::modLog(($unlock ? 'Unlocked' : 'Locked') . " thread #{$post}");
             PostService::buildThread($post);
@@ -45,10 +50,7 @@ class PostController
         }
 
         if ($config['mod']['dismiss_reports_on_lock']) {
-            $query = prepare('DELETE FROM ``reports`` WHERE `board` = :board AND `post` = :id');
-            $query->bindValue(':board', $board);
-            $query->bindValue(':id', $post);
-            $query->execute() or error(db_error($query));
+            $this->repository->deleteReportsForPost($board, $post);
         }
 
         header('Location: ?/' . sprintf($config['board_path'], $board) . $config['file_index'], true, $config['redirect_http']);
@@ -72,10 +74,7 @@ class PostController
             error($config['error']['noaccess']);
         }
 
-        $query = prepare(sprintf('UPDATE ``posts_%s`` SET `sticky` = :sticky WHERE `id` = :id AND `thread` IS NULL', $board));
-        $query->bindValue(':id', $post);
-        $query->bindValue(':sticky', $unsticky ? 0 : 1);
-        $query->execute() or error(db_error($query));
+        $query = $this->repository->updateSticky($board, $post, $unsticky ? 0 : 1);
         if ($query->rowCount()) {
             AuthManager::modLog(($unsticky ? 'Unstickied' : 'Stickied') . " thread #{$post}");
             PostService::buildThread($post);
@@ -97,10 +96,7 @@ class PostController
             error($config['error']['noaccess']);
         }
 
-        $query = prepare(sprintf('UPDATE ``posts_%s`` SET `sage` = :bumplock WHERE `id` = :id AND `thread` IS NULL', $board));
-        $query->bindValue(':id', $post);
-        $query->bindValue(':bumplock', $unbumplock ? 0 : 1);
-        $query->execute() or error(db_error($query));
+        $query = $this->repository->updateBumplock($board, $post, $unbumplock ? 0 : 1);
         if ($query->rowCount()) {
             AuthManager::modLog(($unbumplock ? 'Unbumplocked' : 'Bumplocked') . " thread #{$post}");
             PostService::buildThread($post);
@@ -122,10 +118,8 @@ class PostController
             error($config['error']['noaccess']);
         }
 
-        $query = prepare(sprintf('SELECT * FROM ``posts_%s`` WHERE `id` = :id AND `thread` IS NULL', $originBoard));
-        $query->bindValue(':id', $postID);
-        $query->execute() or error(db_error($query));
-        if (!$post = $query->fetch(\PDO::FETCH_ASSOC)) {
+        $post = $this->repository->selectThreadById($originBoard, $postID);
+        if (!$post) {
             error($config['error']['404']);
         }
 
@@ -175,13 +169,9 @@ class PostController
             // go back to the original board to fetch replies
             BoardService::openBoard($originBoard);
 
-            $query = prepare(sprintf('SELECT * FROM ``posts_%s`` WHERE `thread` = :id ORDER BY `id`', $originBoard));
-            $query->bindValue(':id', $postID, \PDO::PARAM_INT);
-            $query->execute() or error(db_error($query));
+            $replies = $this->repository->selectRepliesByThread($originBoard, $postID);
 
-            $replies = [];
-
-            while ($post = $query->fetch(\PDO::FETCH_ASSOC)) {
+            foreach ($replies as &$post) {
                 $post['mod'] = true;
                 $post['thread'] = $newID;
 
@@ -195,8 +185,6 @@ class PostController
                 } else {
                     $post['has_file'] = false;
                 }
-
-                $replies[] = $post;
             }
 
             $newIDs = [$postID => $newID];
@@ -204,13 +192,10 @@ class PostController
             BoardService::openBoard($targetBoard);
 
             foreach ($replies as &$post) {
-                $query = prepare('SELECT `target` FROM ``cites`` WHERE `target_board` = :board AND `board` = :board AND `post` = :post');
-                $query->bindValue(':board', $originBoard);
-                $query->bindValue(':post', $post['id'], \PDO::PARAM_INT);
-                $query->execute() or error(db_error($query));
+                $cites = $this->repository->selectCitesTarget($originBoard, $post['id']);
 
                 // correct >>X links
-                while ($cite = $query->fetch(\PDO::FETCH_ASSOC)) {
+                foreach ($cites as $cite) {
                     if (isset($newIDs[$cite['target']])) {
                         $post['body_nomarkup'] = preg_replace(
                             '/(>>(>\/' . preg_quote($originBoard, '/') . '\/)?)' . preg_quote($cite['target'], '/') . '/',
@@ -243,7 +228,7 @@ class PostController
                             . $pdo->quote($board['uri']) . ', ' . $newPostID . ', '
                             . $pdo->quote($cite[0]) . ', ' . (int) $cite[1] . ')';
                     }
-                    query('INSERT INTO ``cites`` VALUES ' . implode(', ', $insert_rows)) or error(db_error());
+                    $this->repository->insertCitesValues(implode(', ', $insert_rows));
                 }
             }
 
@@ -263,9 +248,7 @@ class PostController
 
             if ($shadow) {
                 // lock old thread
-                $query = prepare(sprintf('UPDATE ``posts_%s`` SET `locked` = 1 WHERE `id` = :id', $originBoard));
-                $query->bindValue(':id', $postID, \PDO::PARAM_INT);
-                $query->execute() or error(db_error($query));
+                $query = $this->repository->updateLock($originBoard, $postID, 1);
 
                 // leave a reply, linking to the new thread
                 $post = [
@@ -326,11 +309,8 @@ class PostController
 
         $security_token = Token::make_secure_link_token($board . '/ban/' . $post);
 
-        $query = prepare(sprintf('SELECT ' . ($config['ban_show_post'] ? '*' : '`ip`, `thread`')
-            . ' FROM ``posts_%s`` WHERE `id` = :id', $board));
-        $query->bindValue(':id', $post);
-        $query->execute() or error(db_error($query));
-        if (!$_post = $query->fetch(\PDO::FETCH_ASSOC)) {
+        $_post = $this->repository->selectPostByIdForBan($board, $post);
+        if (!$_post) {
             error($config['error']['404']);
         }
 
@@ -357,10 +337,8 @@ class PostController
                 $_POST['message'] = preg_replace('/[\r\n]/', '', $_POST['message']);
                 $_POST['message'] = str_replace('%length%', $length_english, $_POST['message']);
                 $_POST['message'] = str_replace('%LENGTH%', strtoupper($length_english), $_POST['message']);
-                $query = prepare(sprintf('UPDATE ``posts_%s`` SET `body_nomarkup` = CONCAT(`body_nomarkup`, :body_nomarkup) WHERE `id` = :id', $board));
-                $query->bindValue(':id', $post);
-                $query->bindValue(':body_nomarkup', sprintf("\n<tinyboard ban message>%s</tinyboard>", StringFormatter::utf8tohtml($_POST['message'])));
-                $query->execute() or error(db_error($query));
+                $body_nomarkup = sprintf("\n<tinyboard ban message>%s</tinyboard>", StringFormatter::utf8tohtml($_POST['message']));
+                $this->repository->updateBodyAppendForBan($board, $post, $body_nomarkup);
                 PostService::rebuildPost($post);
 
                 AuthManager::modLog("Attached a public ban message to post #{$post}: " . StringFormatter::utf8tohtml($_POST['message']));
@@ -410,30 +388,18 @@ class PostController
 
         $security_token = Token::make_secure_link_token($board . '/edit' . ($edit_raw_html ? '_raw' : '') . '/' . $postID);
 
-        $query = prepare(sprintf('SELECT * FROM ``posts_%s`` WHERE `id` = :id', $board));
-        $query->bindValue(':id', $postID);
-        $query->execute() or error(db_error($query));
-
-        if (!$post = $query->fetch(\PDO::FETCH_ASSOC)) {
+        $post = $this->repository->selectPostById($board, $postID);
+        if (!$post) {
             error($config['error']['404']);
         }
 
         if (isset($_POST['name'], $_POST['email'], $_POST['subject'], $_POST['body'])) {
             if ($edit_raw_html) {
-                $query = prepare(sprintf('UPDATE ``posts_%s`` SET `name` = :name, `email` = :email, `subject` = :subject, `body` = :body, `body_nomarkup` = :body_nomarkup WHERE `id` = :id', $board));
-            } else {
-                $query = prepare(sprintf('UPDATE ``posts_%s`` SET `name` = :name, `email` = :email, `subject` = :subject, `body_nomarkup` = :body WHERE `id` = :id', $board));
-            }
-            $query->bindValue(':id', $postID);
-            $query->bindValue('name', $_POST['name']);
-            $query->bindValue(':email', $_POST['email']);
-            $query->bindValue(':subject', $_POST['subject']);
-            $query->bindValue(':body', $_POST['body']);
-            if ($edit_raw_html) {
                 $body_nomarkup = $_POST['body'] . "\n<tinyboard raw html>1</tinyboard>";
-                $query->bindValue(':body_nomarkup', $body_nomarkup);
+                $this->repository->updatePostRaw($board, $postID, $_POST['name'], $_POST['email'], $_POST['subject'], $_POST['body'], $body_nomarkup);
+            } else {
+                $this->repository->updatePost($board, $postID, $_POST['name'], $_POST['email'], $_POST['subject'], $_POST['body']);
             }
-            $query->execute() or error(db_error($query));
 
             if ($edit_raw_html) {
                 AuthManager::modLog("Edited raw HTML of post #{$postID}");
@@ -524,20 +490,12 @@ class PostController
         }
 
         // Delete file
-        $query = prepare(sprintf("SELECT `thumb`, `thread` FROM ``posts_%s`` WHERE id = :id", $board));
-        $query->bindValue(':id', $post, \PDO::PARAM_INT);
-        $query->execute() or error(db_error($query));
-        $result = $query->fetch(\PDO::FETCH_ASSOC);
+        $result = $this->repository->selectThumbAndThread($board, $post);
 
         FileManager::file_unlink($board . '/' . $config['dir']['thumb'] . $result['thumb']);
 
         // Make thumbnail spoiler
-        $query = prepare(sprintf("UPDATE ``posts_%s`` SET `thumb` = :thumb, `thumbwidth` = :thumbwidth, `thumbheight` = :thumbheight WHERE `id` = :id", $board));
-        $query->bindValue(':thumb', "spoiler");
-        $query->bindValue(':thumbwidth', 128, \PDO::PARAM_INT);
-        $query->bindValue(':thumbheight', 128, \PDO::PARAM_INT);
-        $query->bindValue(':id', $post, \PDO::PARAM_INT);
-        $query->execute() or error(db_error($query));
+        $this->repository->updateThumb($board, $post, "spoiler", 128, 128);
 
         // Record the action
         AuthManager::modLog("Spoilered file from post #{$post}");
@@ -574,26 +532,16 @@ class PostController
         }
 
         // Find IP address
-        $query = prepare(sprintf('SELECT `ip` FROM ``posts_%s`` WHERE `id` = :id', $boardName));
-        $query->bindValue(':id', $post);
-        $query->execute() or error(db_error($query));
-        if (!$ip = $query->fetchColumn()) {
+        $ip = $this->repository->selectIpById($boardName, $post);
+        if (!$ip) {
             error($config['error']['invalidpost']);
         }
 
         $boards = $global ? BoardService::listBoards() : [['uri' => $boardName]];
 
-        $query = '';
-        foreach ($boards as $_board) {
-            $query .= sprintf("SELECT `thread`, `id`, '%s' AS `board` FROM ``posts_%s`` WHERE `ip` = :ip UNION ALL ", $_board['uri'], $_board['uri']);
-        }
-        $query = preg_replace('/UNION ALL $/', '', $query);
+        $found = $this->repository->selectPostsByIp($boards, $ip);
 
-        $query = prepare($query);
-        $query->bindValue(':ip', $ip);
-        $query->execute() or error(db_error($query));
-
-        if ($query->rowCount() < 1) {
+        if (count($found) < 1) {
             error($config['error']['invalidpost']);
         }
 
@@ -601,7 +549,7 @@ class PostController
 
         $threads_to_rebuild = [];
         $threads_deleted = [];
-        while ($post = $query->fetch(\PDO::FETCH_ASSOC)) {
+        foreach ($found as $post) {
             BoardService::openBoard($post['board']);
 
             PostService::deletePost($post['id'], false, false);

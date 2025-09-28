@@ -13,12 +13,26 @@ use Sudochan\Service\MarkupService;
 use Sudochan\Utils\Token;
 use Sudochan\Utils\TextFormatter;
 use Sudochan\Utils\Sanitize;
+use Sudochan\Repository\NoticeboardRepository;
 
 class NoticeboardController
 {
+    private NoticeboardRepository $repository;
+
+    public function __construct(?NoticeboardRepository $repository = null)
+    {
+        $this->repository = $repository ?? new NoticeboardRepository();
+    }
+
+    /**
+     * Display and handle the moderator noticeboard page.
+     *
+     * @param int $page_no Page number.
+     * @return void
+     */
     public function mod_noticeboard(int $page_no = 1): void
     {
-        global $config, $pdo, $mod;
+        global $config, $mod;
 
         if ($page_no < 1) {
             error($config['error']['404']);
@@ -36,12 +50,7 @@ class NoticeboardController
             $_POST['body'] = Sanitize::escape_markup_modifiers($_POST['body']);
             MarkupService::markup($_POST['body']);
 
-            $query = prepare('INSERT INTO ``noticeboard`` VALUES (NULL, :mod, :time, :subject, :body)');
-            $query->bindValue(':mod', $mod['id']);
-            $query->bindValue(':time', time());
-            $query->bindValue(':subject', $_POST['subject']);
-            $query->bindValue(':body', $_POST['body']);
-            $query->execute() or error(db_error($query));
+            $id = $this->repository->insertNotice($mod['id'], time(), $_POST['subject'], $_POST['body']);
 
             if ($config['cache']['enabled']) {
                 Cache::delete('noticeboard_preview');
@@ -49,14 +58,11 @@ class NoticeboardController
 
             AuthManager::modLog('Posted a noticeboard entry');
 
-            header('Location: ?/noticeboard#' . $pdo->lastInsertId(), true, $config['redirect_http']);
+            header('Location: ?/noticeboard#' . $id, true, $config['redirect_http']);
         }
 
-        $query = prepare("SELECT ``noticeboard``.*, `username` FROM ``noticeboard`` LEFT JOIN ``mods`` ON ``mods``.`id` = `mod` ORDER BY `id` DESC LIMIT :offset, :limit");
-        $query->bindValue(':limit', $config['mod']['noticeboard_page'], \PDO::PARAM_INT);
-        $query->bindValue(':offset', ($page_no - 1) * $config['mod']['noticeboard_page'], \PDO::PARAM_INT);
-        $query->execute() or error(db_error($query));
-        $noticeboard = $query->fetchAll(\PDO::FETCH_ASSOC);
+        $offset = ($page_no - 1) * $config['mod']['noticeboard_page'];
+        $noticeboard = $this->repository->fetchNoticeboard($offset, $config['mod']['noticeboard_page']);
 
         if (empty($noticeboard) && $page_no > 1) {
             error($config['error']['404']);
@@ -66,9 +72,7 @@ class NoticeboardController
             $entry['delete_token'] = Token::make_secure_link_token('noticeboard/delete/' . $entry['id']);
         }
 
-        $query = prepare("SELECT COUNT(*) FROM ``noticeboard``");
-        $query->execute() or error(db_error($query));
-        $count = $query->fetchColumn();
+        $count = $this->repository->countNoticeboard();
 
         mod_page(_('Noticeboard'), 'mod/noticeboard.html', [
             'noticeboard' => $noticeboard,
@@ -77,6 +81,12 @@ class NoticeboardController
         ]);
     }
 
+    /**
+     * Delete a noticeboard entry.
+     *
+     * @param int $id Notice ID to delete.
+     * @return void
+     */
     public function mod_noticeboard_delete(int $id): void
     {
         global $config;
@@ -85,9 +95,7 @@ class NoticeboardController
             error($config['error']['noaccess']);
         }
 
-        $query = prepare('DELETE FROM ``noticeboard`` WHERE `id` = :id');
-        $query->bindValue(':id', $id);
-        $query->execute() or error(db_error($query));
+        $this->repository->deleteNotice($id);
 
         AuthManager::modLog('Deleted a noticeboard entry');
 

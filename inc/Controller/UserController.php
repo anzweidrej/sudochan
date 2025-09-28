@@ -11,9 +11,23 @@ use Sudochan\Service\BoardService;
 use Sudochan\Manager\PermissionManager;
 use Sudochan\Utils\StringFormatter;
 use Sudochan\Utils\Token;
+use Sudochan\Repository\UserRepository;
 
 class UserController
 {
+    private UserRepository $repository;
+
+    public function __construct(?UserRepository $repository = null)
+    {
+        $this->repository = $repository ?? new UserRepository();
+    }
+
+    /**
+     * Edit a moderator account.
+     *
+     * @param int $uid User ID to edit.
+     * @return void
+     */
     public function mod_user(int $uid): void
     {
         global $config, $mod;
@@ -22,10 +36,8 @@ class UserController
             error($config['error']['noaccess']);
         }
 
-        $query = prepare('SELECT * FROM ``mods`` WHERE `id` = :id');
-        $query->bindValue(':id', $uid);
-        $query->execute() or error(db_error($query));
-        if (!$user = $query->fetch(\PDO::FETCH_ASSOC)) {
+        $user = $this->repository->getById($uid);
+        if (!$user) {
             error($config['error']['404']);
         }
 
@@ -51,9 +63,7 @@ class UserController
                     error($config['error']['noaccess']);
                 }
 
-                $query = prepare('DELETE FROM ``mods`` WHERE `id` = :id');
-                $query->bindValue(':id', $uid);
-                $query->execute() or error(db_error($query));
+                $this->repository->deleteById($uid);
 
                 AuthManager::modLog('Deleted user ' . StringFormatter::utf8tohtml($user['username']) . ' <small>(#' . $user['id'] . ')</small>');
 
@@ -66,11 +76,7 @@ class UserController
                 error(sprintf($config['error']['required'], 'username'));
             }
 
-            $query = prepare('UPDATE ``mods`` SET `username` = :username, `boards` = :boards WHERE `id` = :id');
-            $query->bindValue(':id', $uid);
-            $query->bindValue(':username', $_POST['username']);
-            $query->bindValue(':boards', implode(',', $boards));
-            $query->execute() or error(db_error($query));
+            $this->repository->updateUsernameBoards($uid, $_POST['username'], implode(',', $boards));
 
             if ($user['username'] !== $_POST['username']) {
                 // account was renamed
@@ -81,11 +87,7 @@ class UserController
                 $salt = AuthManager::generate_salt();
                 $password = hash('sha256', $salt . sha1($_POST['password']));
 
-                $query = prepare('UPDATE ``mods`` SET `password` = :password, `salt` = :salt WHERE `id` = :id');
-                $query->bindValue(':id', $uid);
-                $query->bindValue(':password', $password);
-                $query->bindValue(':salt', $salt);
-                $query->execute() or error(db_error($query));
+                $this->repository->updatePasswordAndSalt($uid, $password, $salt);
 
                 AuthManager::modLog('Changed password for ' . StringFormatter::utf8tohtml($_POST['username']) . ' <small>(#' . $user['id'] . ')</small>');
 
@@ -109,11 +111,7 @@ class UserController
                 $salt = AuthManager::generate_salt();
                 $password = hash('sha256', $salt . sha1($_POST['password']));
 
-                $query = prepare('UPDATE ``mods`` SET `password` = :password, `salt` = :salt WHERE `id` = :id');
-                $query->bindValue(':id', $uid);
-                $query->bindValue(':password', $password);
-                $query->bindValue(':salt', $salt);
-                $query->execute() or error(db_error($query));
+                $this->repository->updatePasswordAndSalt($uid, $password, $salt);
 
                 AuthManager::modLog('Changed own password');
 
@@ -131,10 +129,7 @@ class UserController
         }
 
         if (PermissionManager::hasPermission($config['mod']['modlog'])) {
-            $query = prepare('SELECT * FROM ``modlogs`` WHERE `mod` = :id ORDER BY `time` DESC LIMIT 5');
-            $query->bindValue(':id', $uid);
-            $query->execute() or error(db_error($query));
-            $log = $query->fetchAll(\PDO::FETCH_ASSOC);
+            $log = $this->repository->getModLogs($uid, 5);
         } else {
             $log = [];
         }
@@ -149,9 +144,14 @@ class UserController
         ]);
     }
 
+    /**
+     * Create a new moderator account.
+     *
+     * @return void
+     */
     public function mod_user_new(): void
     {
-        global $pdo, $config;
+        global $config;
 
         if (!PermissionManager::hasPermission($config['mod']['createusers'])) {
             error($config['error']['noaccess']);
@@ -189,15 +189,7 @@ class UserController
             $salt = AuthManager::generate_salt();
             $password = hash('sha256', $salt . sha1($_POST['password']));
 
-            $query = prepare('INSERT INTO ``mods`` VALUES (NULL, :username, :password, :salt, :type, :boards)');
-            $query->bindValue(':username', $_POST['username']);
-            $query->bindValue(':password', $password);
-            $query->bindValue(':salt', $salt);
-            $query->bindValue(':type', $type);
-            $query->bindValue(':boards', implode(',', $boards));
-            $query->execute() or error(db_error($query));
-
-            $userID = $pdo->lastInsertId();
+            $userID = (int) $this->repository->insertUser($_POST['username'], $password, $salt, $type, implode(',', $boards));
 
             AuthManager::modLog('Created a new user: ' . StringFormatter::utf8tohtml($_POST['username']) . ' <small>(#' . $userID . ')</small>');
 
@@ -208,6 +200,11 @@ class UserController
         mod_page(_('New user'), 'mod/user.html', ['new' => true, 'boards' => BoardService::listBoards(), 'token' => Token::make_secure_link_token('users/new')]);
     }
 
+    /**
+     * List all moderator accounts with promote/demote tokens.
+     *
+     * @return void
+     */
     public function mod_users(): void
     {
         global $config;
@@ -216,12 +213,7 @@ class UserController
             error($config['error']['noaccess']);
         }
 
-        $query = query("SELECT
-            *,
-            (SELECT `time` FROM ``modlogs`` WHERE `mod` = `id` ORDER BY `time` DESC LIMIT 1) AS `last`,
-            (SELECT `text` FROM ``modlogs`` WHERE `mod` = `id` ORDER BY `time` DESC LIMIT 1) AS `action`
-            FROM ``mods`` ORDER BY `type` DESC,`id`") or error(db_error());
-        $users = $query->fetchAll(\PDO::FETCH_ASSOC);
+        $users = $this->repository->getAllUsers();
 
         foreach ($users as &$user) {
             $user['promote_token'] = Token::make_secure_link_token("users/{$user['id']}/promote");
@@ -231,6 +223,13 @@ class UserController
         mod_page(sprintf('%s (%d)', _('Manage users'), count($users)), 'mod/users.html', ['users' => $users]);
     }
 
+    /**
+     * Promote or demote a moderator account to the next/previous group.
+     *
+     * @param int    $uid    User ID to change.
+     * @param string $action 'promote' or 'demote'.
+     * @return void
+     */
     public function mod_user_promote(int $uid, string $action): void
     {
         global $config;
@@ -239,11 +238,8 @@ class UserController
             error($config['error']['noaccess']);
         }
 
-        $query = prepare("SELECT `type`, `username` FROM ``mods`` WHERE `id` = :id");
-        $query->bindValue(':id', $uid);
-        $query->execute() or error(db_error($query));
-
-        if (!$mod = $query->fetch(\PDO::FETCH_ASSOC)) {
+        $mod = $this->repository->getTypeAndUsername($uid);
+        if (!$mod) {
             error($config['error']['404']);
         }
 
@@ -268,15 +264,11 @@ class UserController
             error(_('Impossible to promote/demote user.'));
         }
 
-        $query = prepare("UPDATE ``mods`` SET `type` = :group_value WHERE `id` = :id");
-        $query->bindValue(':id', $uid);
-        $query->bindValue(':group_value', $new_group);
-        $query->execute() or error(db_error($query));
+        $this->repository->updateType($uid, $new_group);
 
         AuthManager::modLog(($action == 'promote' ? 'Promoted' : 'Demoted') . ' user "'
             . StringFormatter::utf8tohtml($mod['username']) . '" to ' . $config['mod']['groups'][$new_group]);
 
         header('Location: ?/users', true, $config['redirect_http']);
     }
-
 }

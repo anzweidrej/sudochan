@@ -7,9 +7,23 @@
 namespace Sudochan\Controller;
 
 use Sudochan\Manager\PermissionManager;
+use Sudochan\Repository\LogRepository;
 
 class LogController
 {
+    private LogRepository $repository;
+
+    public function __construct(LogRepository $repository = null)
+    {
+        $this->repository = $repository ?? new LogRepository();
+    }
+
+    /**
+     * Display the global moderation log with pagination.
+     *
+     * @param int $page_no Page number.
+     * @return void
+     */
     public function mod_log(int $page_no = 1): void
     {
         global $config;
@@ -22,23 +36,27 @@ class LogController
             error($config['error']['noaccess']);
         }
 
-        $query = prepare("SELECT `username`, `mod`, `ip`, `board`, `time`, `text` FROM ``modlogs`` LEFT JOIN ``mods`` ON `mod` = ``mods``.`id` ORDER BY `time` DESC LIMIT :offset, :limit");
-        $query->bindValue(':limit', $config['mod']['modlog_page'], \PDO::PARAM_INT);
-        $query->bindValue(':offset', ($page_no - 1) * $config['mod']['modlog_page'], \PDO::PARAM_INT);
-        $query->execute() or error(db_error($query));
-        $logs = $query->fetchAll(\PDO::FETCH_ASSOC);
+        $offset = ($page_no - 1) * $config['mod']['modlog_page'];
+        $limit = $config['mod']['modlog_page'];
+
+        $logs = $this->repository->getLogs($offset, $limit);
 
         if (empty($logs) && $page_no > 1) {
             error($config['error']['404']);
         }
 
-        $query = prepare("SELECT COUNT(*) FROM ``modlogs``");
-        $query->execute() or error(db_error($query));
-        $count = $query->fetchColumn();
+        $count = $this->repository->countLogs();
 
         mod_page(_('Moderation log'), 'mod/log.html', ['logs' => $logs, 'count' => $count]);
     }
 
+    /**
+     * Display the moderation log for a specific user with pagination.
+     *
+     * @param string $username Username to filter logs by.
+     * @param int    $page_no  Page number.
+     * @return void
+     */
     public function mod_user_log(string $username, int $page_no = 1): void
     {
         global $config;
@@ -51,21 +69,16 @@ class LogController
             error($config['error']['noaccess']);
         }
 
-        $query = prepare("SELECT `username`, `mod`, `ip`, `board`, `time`, `text` FROM ``modlogs`` LEFT JOIN ``mods`` ON `mod` = ``mods``.`id` WHERE `username` = :username ORDER BY `time` DESC LIMIT :offset, :limit");
-        $query->bindValue(':username', $username);
-        $query->bindValue(':limit', $config['mod']['modlog_page'], \PDO::PARAM_INT);
-        $query->bindValue(':offset', ($page_no - 1) * $config['mod']['modlog_page'], \PDO::PARAM_INT);
-        $query->execute() or error(db_error($query));
-        $logs = $query->fetchAll(\PDO::FETCH_ASSOC);
+        $offset = ($page_no - 1) * $config['mod']['modlog_page'];
+        $limit = $config['mod']['modlog_page'];
+
+        $logs = $this->repository->getUserLogs($username, $offset, $limit);
 
         if (empty($logs) && $page_no > 1) {
             error($config['error']['404']);
         }
 
-        $query = prepare("SELECT COUNT(*) FROM ``modlogs`` LEFT JOIN ``mods`` ON `mod` = ``mods``.`id` WHERE `username` = :username");
-        $query->bindValue(':username', $username);
-        $query->execute() or error(db_error($query));
-        $count = $query->fetchColumn();
+        $count = $this->repository->countUserLogs($username);
 
         mod_page(_('Moderation log'), 'mod/log.html', ['logs' => $logs, 'count' => $count, 'username' => $username]);
     }

@@ -16,6 +16,12 @@ use Sudochan\Utils\Token;
 
 class ConfigController
 {
+    /**
+     * Handle the moderator config editor page and submission.
+     *
+     * @param string|false $board_config Board identifier to edit, or false for global.
+     * @return void
+     */
     public function mod_config(string|false $board_config = false): void
     {
         global $config, $mod, $board;

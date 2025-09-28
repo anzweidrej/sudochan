@@ -13,9 +13,22 @@ use Sudochan\Service\BoardService;
 use Sudochan\Manager\PermissionManager;
 use Sudochan\Utils\TextFormatter;
 use Sudochan\Utils\Token;
+use Sudochan\Repository\ReportRepository;
 
 class ReportController
 {
+    private ReportRepository $repository;
+
+    public function __construct(?ReportRepository $repository = null)
+    {
+        $this->repository = $repository ?? new ReportRepository();
+    }
+
+    /**
+     * Display the report queue.
+     *
+     * @return void
+     */
     public function mod_reports(): void
     {
         global $config, $mod;
@@ -24,10 +37,7 @@ class ReportController
             error($config['error']['noaccess']);
         }
 
-        $query = prepare("SELECT * FROM ``reports`` ORDER BY `time` DESC LIMIT :limit");
-        $query->bindValue(':limit', $config['mod']['recent_reports'], \PDO::PARAM_INT);
-        $query->execute() or error(db_error($query));
-        $reports = $query->fetchAll(\PDO::FETCH_ASSOC);
+        $reports = $this->repository->getRecentReports($config['mod']['recent_reports']);
 
         $report_queries = [];
         foreach ($reports as $report) {
@@ -39,12 +49,7 @@ class ReportController
 
         $report_posts = [];
         foreach ($report_queries as $board => $posts) {
-            $report_posts[$board] = [];
-
-            $query = query(sprintf('SELECT * FROM ``posts_%s`` WHERE `id` = ' . implode(' OR `id` = ', $posts), $board)) or error(db_error());
-            while ($post = $query->fetch(\PDO::FETCH_ASSOC)) {
-                $report_posts[$board][$post['id']] = $post;
-            }
+            $report_posts[$board] = $this->repository->getPostsForBoard($posts, $board);
         }
 
         $count = 0;
@@ -52,10 +57,7 @@ class ReportController
         foreach ($reports as $report) {
             if (!isset($report_posts[$report['board']][$report['post']])) {
                 // // Invalid report (post has since been deleted)
-                $query = prepare("DELETE FROM ``reports`` WHERE `post` = :id AND `board` = :board");
-                $query->bindValue(':id', $report['post'], \PDO::PARAM_INT);
-                $query->bindValue(':board', $report['board']);
-                $query->execute() or error(db_error($query));
+                $this->repository->deleteReportByPostAndBoard((int) $report['post'], $report['board']);
                 continue;
             }
 
@@ -102,14 +104,19 @@ class ReportController
         mod_page(sprintf('%s (%d)', _('Report queue'), $count), 'mod/reports.html', ['reports' => $body, 'count' => $count]);
     }
 
+    /**
+     * Dismiss a report or dismiss all reports from the same IP.
+     *
+     * @param int  $id  Report ID to dismiss.
+     * @param bool $all True to dismiss all reports by the same IP.
+     * @return void
+     */
     public function mod_report_dismiss(int $id, bool $all = false): void
     {
         global $config;
 
-        $query = prepare("SELECT `post`, `board`, `ip` FROM ``reports`` WHERE `id` = :id");
-        $query->bindValue(':id', $id);
-        $query->execute() or error(db_error($query));
-        if ($report = $query->fetch(\PDO::FETCH_ASSOC)) {
+        $report = $this->repository->getReportById($id);
+        if ($report) {
             $ip = $report['ip'];
             $board = $report['board'];
             $post = $report['post'];
@@ -126,14 +133,10 @@ class ReportController
         }
 
         if ($all) {
-            $query = prepare("DELETE FROM ``reports`` WHERE `ip` = :ip");
-            $query->bindValue(':ip', $ip);
+            $this->repository->deleteReportsByIp($ip);
         } else {
-            $query = prepare("DELETE FROM ``reports`` WHERE `id` = :id");
-            $query->bindValue(':id', $id);
+            $this->repository->deleteReportById($id);
         }
-        $query->execute() or error(db_error($query));
-
 
         if ($all) {
             AuthManager::modLog("Dismissed all reports by <a href=\"?/IP/$ip\">$ip</a>");

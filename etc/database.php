@@ -12,8 +12,32 @@ use Sudochan\Debug\PreparedQueryDebug;
 function sql_open(): PDO|true
 {
     global $pdo, $config, $debug;
-    if (isset($pdo) && $pdo) {
-        return true;
+
+    $envHost = getenv('MYSQL_HOST');
+    $envPort = getenv('MYSQL_PORT');
+    $envUser = getenv('MYSQL_USER');
+    $envPass = getenv('MYSQL_PASSWORD');
+    $envDb   = getenv('MYSQL_DATABASE');
+    $envDsn  = getenv('MYSQL_DSN');
+
+    if ($envHost !== false && $envHost !== '') {
+        $config['db']['server'] = $envHost . (($envPort !== false && $envPort !== '') ? ':' . $envPort : '');
+    }
+    if ($envUser !== false && $envUser !== '') {
+        $config['db']['user'] = $envUser;
+    }
+    if ($envPass !== false && $envPass !== '') {
+        $config['db']['password'] = $envPass;
+    }
+    if ($envDb !== false && $envDb !== '') {
+        $config['db']['database'] = $envDb;
+    }
+    if ($envDsn !== false && $envDsn !== '') {
+        $config['db']['dsn'] = $envDsn;
+    }
+
+    if (isset($pdo) && $pdo instanceof \PDO) {
+        return $pdo;
     }
 
     if ($config['debug']) {

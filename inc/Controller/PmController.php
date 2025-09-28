@@ -14,9 +14,24 @@ use Sudochan\Utils\StringFormatter;
 use Sudochan\Utils\TextFormatter;
 use Sudochan\Utils\Token;
 use Sudochan\Utils\Sanitize;
+use Sudochan\Repository\PmRepository;
 
 class PmController
 {
+    private PmRepository $repository;
+
+    public function __construct(?PmRepository $repository = null)
+    {
+        $this->repository = $repository ?? new PmRepository();
+    }
+
+    /**
+     * View a PM, optionally render a reply form, and handle deletion/read actions.
+     *
+     * @param int  $id    PM ID.
+     * @param bool $reply If true, show reply form instead of viewing the PM.
+     * @return void
+     */
     public function mod_pm(int $id, bool $reply = false): void
     {
         global $mod, $config;
@@ -25,18 +40,13 @@ class PmController
             error($config['error']['noaccess']);
         }
 
-        $query = prepare("SELECT ``mods``.`username`, `mods_to`.`username` AS `to_username`, ``pms``.* FROM ``pms`` LEFT JOIN ``mods`` ON ``mods``.`id` = `sender` LEFT JOIN ``mods`` AS `mods_to` ON `mods_to`.`id` = `to` WHERE ``pms``.`id` = :id");
-        $query->bindValue(':id', $id);
-        $query->execute() or error(db_error($query));
-
-        if ((!$pm = $query->fetch(\PDO::FETCH_ASSOC)) || ($pm['to'] != $mod['id'] && !PermissionManager::hasPermission($config['mod']['master_pm']))) {
+        $pm = $this->repository->getById($id);
+        if ((!$pm) || ($pm['to'] != $mod['id'] && !PermissionManager::hasPermission($config['mod']['master_pm']))) {
             error($config['error']['404']);
         }
 
         if (isset($_POST['delete'])) {
-            $query = prepare("DELETE FROM ``pms`` WHERE `id` = :id");
-            $query->bindValue(':id', $id);
-            $query->execute() or error(db_error($query));
+            $this->repository->deleteById($id);
 
             if ($config['cache']['enabled']) {
                 Cache::delete('pm_unread_' . $mod['id']);
@@ -48,9 +58,7 @@ class PmController
         }
 
         if ($pm['unread'] && $pm['to'] == $mod['id']) {
-            $query = prepare("UPDATE ``pms`` SET `unread` = 0 WHERE `id` = :id");
-            $query->bindValue(':id', $id);
-            $query->execute() or error(db_error($query));
+            $this->repository->markAsRead($id);
 
             if ($config['cache']['enabled']) {
                 Cache::delete('pm_unread_' . $mod['id']);
@@ -76,19 +84,17 @@ class PmController
         }
     }
 
+    /**
+     * Show the moderator's inbox with message snippets and unread count.
+     *
+     * @return void
+     */
     public function mod_inbox(): void
     {
         global $config, $mod;
 
-        $query = prepare('SELECT `unread`,``pms``.`id`, `time`, `sender`, `to`, `message`, `username` FROM ``pms`` LEFT JOIN ``mods`` ON ``mods``.`id` = `sender` WHERE `to` = :mod ORDER BY `unread` DESC, `time` DESC');
-        $query->bindValue(':mod', $mod['id']);
-        $query->execute() or error(db_error($query));
-        $messages = $query->fetchAll(\PDO::FETCH_ASSOC);
-
-        $query = prepare('SELECT COUNT(*) FROM ``pms`` WHERE `to` = :mod AND `unread` = 1');
-        $query->bindValue(':mod', $mod['id']);
-        $query->execute() or error(db_error($query));
-        $unread = $query->fetchColumn();
+        $messages = $this->repository->getInboxForMod($mod['id']);
+        $unread = $this->repository->countUnreadForMod($mod['id']);
 
         foreach ($messages as &$message) {
             $message['snippet'] = TextFormatter::pm_snippet($message['message']);
@@ -101,6 +107,12 @@ class PmController
     }
 
 
+    /**
+     * Create a new PM to another moderator and handle submission.
+     *
+     * @param string $username Recipient username.
+     * @return void
+     */
     public function mod_new_pm(string $username): void
     {
         global $config, $mod;
@@ -109,31 +121,23 @@ class PmController
             error($config['error']['noaccess']);
         }
 
-        $query = prepare("SELECT `id` FROM ``mods`` WHERE `username` = :username");
-        $query->bindValue(':username', $username);
-        $query->execute() or error(db_error($query));
-        if (!$id = $query->fetchColumn()) {
+        $id = $this->repository->findModIdByUsername($username);
+        if (!$id) {
             // Old style ?/PM: by user ID
-            $query = prepare("SELECT `username` FROM ``mods`` WHERE `id` = :username");
-            $query->bindValue(':username', $username);
-            $query->execute() or error(db_error($query));
-            if ($username = $query->fetchColumn()) {
+            $username = $this->repository->findModUsernameById($username);
+            if ($username) {
                 header('Location: ?/new_PM/' . $username, true, $config['redirect_http']);
             } else {
                 error($config['error']['404']);
             }
+            return;
         }
 
         if (isset($_POST['message'])) {
             $_POST['message'] = Sanitize::escape_markup_modifiers($_POST['message']);
             MarkupService::markup($_POST['message']);
 
-            $query = prepare("INSERT INTO ``pms`` VALUES (NULL, :me, :id, :message, :time, 1)");
-            $query->bindValue(':me', $mod['id']);
-            $query->bindValue(':id', $id);
-            $query->bindValue(':message', $_POST['message']);
-            $query->bindValue(':time', time());
-            $query->execute() or error(db_error($query));
+            $this->repository->insertPm($mod['id'], $id, $_POST['message'], time());
 
             if ($config['cache']['enabled']) {
                 Cache::delete('pm_unread_' . $id);

@@ -27,5 +27,6 @@ vendor/
 !static/
 !stylesheets/
 !templates/
+!tests/
 !tmp/
 !tools/

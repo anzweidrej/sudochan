@@ -13,6 +13,12 @@ use Sudochan\Utils\Token;
 
 class AuthController
 {
+    /**
+     * Handle moderator login page and submission.
+     *
+     * @param string|false $redirect Optional redirect query string on success.
+     * @return void
+     */
     public function mod_login(string|false $redirect = false): void
     {
         global $config;
@@ -51,6 +57,11 @@ class AuthController
         mod_page(_('Login'), 'mod/login.html', $args);
     }
 
+    /**
+     * Log out the current moderator by destroying auth cookies and redirecting.
+     *
+     * @return void
+     */
     public function mod_logout(): void
     {
         global $config;
@@ -59,6 +70,14 @@ class AuthController
         header('Location: ?/', true, $config['redirect_http']);
     }
 
+    /**
+     * Render the login form.
+     *
+     * @param string|false $error    Optional error message to display.
+     * @param string|false $username Optional username to pre-fill.
+     * @param string|false $redirect Optional redirect query string.
+     * @return never This function terminates execution with die().
+     */
     public function loginForm(string|false $error = false, string|false $username = false, string|false $redirect = false): never
     {
         global $config;
@@ -79,6 +98,12 @@ class AuthController
         ]));
     }
 
+    /**
+     * Render a confirmation page for a moderator action.
+     *
+     * @param string $request Action identifier to confirm.
+     * @return void
+     */
     public static function mod_confirm(string $request): void
     {
         mod_page(_('Confirm action'), 'mod/confirm.html', ['request' => $request, 'token' => Token::make_secure_link_token($request)]);

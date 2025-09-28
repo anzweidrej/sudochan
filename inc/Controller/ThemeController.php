@@ -10,9 +10,22 @@ use Sudochan\Manager\AuthManager;
 use Sudochan\Manager\ThemeManager;
 use Sudochan\Manager\PermissionManager;
 use Sudochan\Utils\Token;
+use Sudochan\Repository\ThemeRepository;
 
 class ThemeController
 {
+    private ThemeRepository $repository;
+
+    public function __construct(?ThemeRepository $repository = null)
+    {
+        $this->repository = $repository ?? new ThemeRepository();
+    }
+
+    /**
+     * List available themes and show management actions.
+     *
+     * @return void
+     */
     public function mod_themes_list(): void
     {
         global $config;
@@ -28,8 +41,7 @@ class ThemeController
             error(_('Cannot open themes directory; check permissions.'));
         }
 
-        $query = query('SELECT `theme` FROM ``theme_settings`` WHERE `name` IS NULL AND `value` IS NULL') or error(db_error());
-        $themes_in_use = $query->fetchAll(\PDO::FETCH_COLUMN);
+        $themes_in_use = $this->repository->getThemesInUse();
 
         // Scan directory for themes
         $themes = [];
@@ -51,6 +63,12 @@ class ThemeController
         ]);
     }
 
+    /**
+     * Configure or install a specific theme.
+     *
+     * @param string $theme_name Theme directory/name to configure.
+     * @return void
+     */
     public function mod_theme_configure(string $theme_name): void
     {
         global $config;
@@ -72,25 +90,18 @@ class ThemeController
             }
 
             // Clear previous settings
-            $query = prepare("DELETE FROM ``theme_settings`` WHERE `theme` = :theme");
-            $query->bindValue(':theme', $theme_name);
-            $query->execute() or error(db_error($query));
+            $this->repository->clearThemeSettings($theme_name);
 
             foreach ($theme['config'] as &$conf) {
-                $query = prepare("INSERT INTO ``theme_settings`` VALUES(:theme, :name, :value)");
-                $query->bindValue(':theme', $theme_name);
-                $query->bindValue(':name', $conf['name']);
                 if ($conf['type'] == 'checkbox') {
-                    $query->bindValue(':value', isset($_POST[$conf['name']]) ? 1 : 0);
+                    $value = isset($_POST[$conf['name']]) ? 1 : 0;
                 } else {
-                    $query->bindValue(':value', $_POST[$conf['name']]);
+                    $value = $_POST[$conf['name']];
                 }
-                $query->execute() or error(db_error($query));
+                $this->repository->insertThemeSetting($theme_name, $conf['name'], $value);
             }
 
-            $query = prepare("INSERT INTO ``theme_settings`` VALUES(:theme, NULL, NULL)");
-            $query->bindValue(':theme', $theme_name);
-            $query->execute() or error(db_error($query));
+            $this->repository->insertThemeSetting($theme_name, null, null);
 
             $result = true;
             $message = false;
@@ -106,9 +117,7 @@ class ThemeController
 
             if (!$result) {
                 // Install failed
-                $query = prepare("DELETE FROM ``theme_settings`` WHERE `theme` = :theme");
-                $query->bindValue(':theme', $theme_name);
-                $query->execute() or error(db_error($query));
+                $this->repository->clearThemeSettings($theme_name);
             }
 
             // Build themes
@@ -133,6 +142,12 @@ class ThemeController
         ]);
     }
 
+    /**
+     * Uninstall a theme by clearing its settings.
+     *
+     * @param string $theme_name Theme to uninstall.
+     * @return void
+     */
     public function mod_theme_uninstall(string $theme_name): void
     {
         global $config;
@@ -141,13 +156,17 @@ class ThemeController
             error($config['error']['noaccess']);
         }
 
-        $query = prepare("DELETE FROM ``theme_settings`` WHERE `theme` = :theme");
-        $query->bindValue(':theme', $theme_name);
-        $query->execute() or error(db_error($query));
+        $this->repository->clearThemeSettings($theme_name);
 
         header('Location: ?/themes', true, $config['redirect_http']);
     }
 
+    /**
+     * Rebuild a theme's caches/resources.
+     *
+     * @param string $theme_name Theme to rebuild.
+     * @return void
+     */
     public function mod_theme_rebuild(string $theme_name): void
     {
         global $config;

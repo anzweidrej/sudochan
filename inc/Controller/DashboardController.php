@@ -14,9 +14,22 @@ use Sudochan\Service\PostService;
 use Sudochan\Manager\ThemeManager;
 use Sudochan\Manager\PermissionManager;
 use Sudochan\Utils\Token;
+use Sudochan\Repository\DashboardRepository;
 
 class DashboardController
 {
+    private DashboardRepository $repository;
+
+    public function __construct(?DashboardRepository $repository = null)
+    {
+        $this->repository = $repository ?? new DashboardRepository();
+    }
+
+    /**
+     * Render the admin dashboard.
+     *
+     * @return void
+     */
     public function mod_dashboard(): void
     {
         global $config, $mod;
@@ -27,10 +40,7 @@ class DashboardController
 
         if (PermissionManager::hasPermission($config['mod']['noticeboard'])) {
             if (!$config['cache']['enabled'] || !$args['noticeboard'] = Cache::get('noticeboard_preview')) {
-                $query = prepare("SELECT ``noticeboard``.*, `username` FROM ``noticeboard`` LEFT JOIN ``mods`` ON ``mods``.`id` = `mod` ORDER BY `id` DESC LIMIT :limit");
-                $query->bindValue(':limit', $config['mod']['noticeboard_dashboard'], \PDO::PARAM_INT);
-                $query->execute() or error(db_error($query));
-                $args['noticeboard'] = $query->fetchAll(\PDO::FETCH_ASSOC);
+                $args['noticeboard'] = $this->repository->getNoticeboardPreview($config['mod']['noticeboard_dashboard']);
 
                 if ($config['cache']['enabled']) {
                     Cache::set('noticeboard_preview', $args['noticeboard']);
@@ -39,18 +49,14 @@ class DashboardController
         }
 
         if (!$config['cache']['enabled'] || ($args['unread_pms'] = Cache::get('pm_unreadcount_' . $mod['id'])) === false) {
-            $query = prepare('SELECT COUNT(*) FROM ``pms`` WHERE `to` = :id AND `unread` = 1');
-            $query->bindValue(':id', $mod['id']);
-            $query->execute() or error(db_error($query));
-            $args['unread_pms'] = $query->fetchColumn();
+            $args['unread_pms'] = $this->repository->getUnreadPmCount($mod['id']);
 
             if ($config['cache']['enabled']) {
                 Cache::set('pm_unreadcount_' . $mod['id'], $args['unread_pms']);
             }
         }
 
-        $query = query('SELECT COUNT(*) FROM ``reports``') or error(db_error($query));
-        $args['reports'] = $query->fetchColumn();
+        $args['reports'] = $this->repository->getReportsCount();
 
         if ($mod['type'] >= ADMIN && $config['check_updates']) {
             if (!$config['version']) {
@@ -115,6 +121,11 @@ class DashboardController
         mod_page(_('Dashboard'), 'mod/dashboard.html', $args);
     }
 
+    /**
+     * Rebuild selected caches, themes, scripts and board/thread pages.
+     *
+     * @return void
+     */
     public function mod_rebuild(): void
     {
         global $config, $twig;
@@ -182,8 +193,8 @@ class DashboardController
                 }
 
                 if (isset($_POST['rebuild_thread'])) {
-                    $query = query(sprintf("SELECT `id` FROM ``posts_%s`` WHERE `thread` IS NULL", $board['uri'])) or error(db_error());
-                    while ($post = $query->fetch(\PDO::FETCH_ASSOC)) {
+                    $posts = $this->repository->getPostsWithoutThread($board['uri']);
+                    foreach ($posts as $post) {
                         $log[] = '<strong>' . sprintf($config['board_abbreviation'], $board['uri']) . '</strong>: Rebuilding thread #' . $post['id'];
                         PostService::buildThread($post['id']);
                     }

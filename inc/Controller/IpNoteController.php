@@ -17,9 +17,24 @@ use Sudochan\Manager\PermissionManager;
 use Sudochan\Utils\TextFormatter;
 use Sudochan\Utils\Token;
 use Sudochan\Utils\Sanitize;
+use Sudochan\Repository\IpNoteRepository;
 
 class IpNoteController
 {
+    private IpNoteRepository $repository;
+
+    public function __construct(IpNoteRepository $repository = null)
+    {
+        $this->repository = $repository ?: new IpNoteRepository();
+    }
+
+    /**
+     * Remove a moderator note for a given IP.
+     *
+     * @param string $ip  IP address.
+     * @param int    $id  Note ID to remove.
+     * @return void
+     */
     public function mod_ip_remove_note(string $ip, int $id): void
     {
         global $config, $mod;
@@ -32,16 +47,19 @@ class IpNoteController
             error("Invalid IP address.");
         }
 
-        $query = prepare('DELETE FROM ``ip_notes`` WHERE `ip` = :ip AND `id` = :id');
-        $query->bindValue(':ip', $ip);
-        $query->bindValue(':id', $id);
-        $query->execute() or error(db_error($query));
+        $this->repository->removeNote($ip, $id);
 
         AuthManager::modLog("Removed a note for <a href=\"?/IP/{$ip}\">{$ip}</a>");
 
         header('Location: ?/IP/' . $ip . '#notes', true, $config['redirect_http']);
     }
 
+    /**
+     * Display the IP page for moderators and handle note/ban actions.
+     *
+     * @param string $ip IP address to view.
+     * @return void
+     */
     public function mod_page_ip(string $ip): void
     {
         global $config, $mod;
@@ -68,12 +86,8 @@ class IpNoteController
 
             $_POST['note'] = Sanitize::escape_markup_modifiers($_POST['note']);
             MarkupService::markup($_POST['note']);
-            $query = prepare('INSERT INTO ``ip_notes`` VALUES (NULL, :ip, :mod, :time, :body)');
-            $query->bindValue(':ip', $ip);
-            $query->bindValue(':mod', $mod['id']);
-            $query->bindValue(':time', time());
-            $query->bindValue(':body', $_POST['note']);
-            $query->execute() or error(db_error($query));
+
+            $this->repository->insertNote($ip, $mod['id'], $_POST['note']);
 
             AuthManager::modLog("Added a note for <a href=\"?/IP/{$ip}\">{$ip}</a>");
 
@@ -95,12 +109,10 @@ class IpNoteController
             if (!PermissionManager::hasPermission($config['mod']['show_ip'], $board['uri'])) {
                 continue;
             }
-            $query = prepare(sprintf('SELECT * FROM ``posts_%s`` WHERE `ip` = :ip ORDER BY `sticky` DESC, `id` DESC LIMIT :limit', $board['uri']));
-            $query->bindValue(':ip', $ip);
-            $query->bindValue(':limit', $config['mod']['ip_recentposts'], \PDO::PARAM_INT);
-            $query->execute() or error(db_error($query));
 
-            while ($post = $query->fetch(\PDO::FETCH_ASSOC)) {
+            $posts = $this->repository->getPostsQuery($board, $ip);
+
+            foreach ($posts as $post) {
                 if (!$post['thread']) {
                     $po = new Thread($post, '?/', $mod, false);
                 } else {
@@ -122,17 +134,11 @@ class IpNoteController
         }
 
         if (PermissionManager::hasPermission($config['mod']['view_notes'])) {
-            $query = prepare("SELECT ``ip_notes``.*, `username` FROM ``ip_notes`` LEFT JOIN ``mods`` ON `mod` = ``mods``.`id` WHERE `ip` = :ip ORDER BY `time` DESC");
-            $query->bindValue(':ip', $ip);
-            $query->execute() or error(db_error($query));
-            $args['notes'] = $query->fetchAll(\PDO::FETCH_ASSOC);
+            $args['notes'] = $this->repository->getIpNotesQuery($ip);
         }
 
         if (PermissionManager::hasPermission($config['mod']['modlog_ip'])) {
-            $query = prepare("SELECT `username`, `mod`, `ip`, `board`, `time`, `text` FROM ``modlogs`` LEFT JOIN ``mods`` ON `mod` = ``mods``.`id` WHERE `text` LIKE :search ORDER BY `time` DESC LIMIT 50");
-            $query->bindValue(':search', '%' . $ip . '%');
-            $query->execute() or error(db_error($query));
-            $args['logs'] = $query->fetchAll(\PDO::FETCH_ASSOC);
+            $args['logs'] = $this->repository->getModLogsByIpQuery($ip);
         } else {
             $args['logs'] = [];
         }

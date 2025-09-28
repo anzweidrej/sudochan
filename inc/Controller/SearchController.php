@@ -13,6 +13,11 @@ use Sudochan\Utils\TextFormatter;
 
 class SearchController
 {
+    /**
+     * Handle search form submission and redirect to the appropriate search URL.
+     *
+     * @return void
+     */
     public function mod_search_redirect(): void
     {
         global $config;
@@ -38,6 +43,14 @@ class SearchController
         }
     }
 
+    /**
+     * Perform the search of the given type and render results with pagination.
+     *
+     * @param string $type                    Search type: 'posts', 'IP_notes', 'bans' or 'log'.
+     * @param string $search_query_escaped    Escaped search query from the URL.
+     * @param int    $page_no                 Page number.
+     * @return void
+     */
     public function mod_search(string $type, string $search_query_escaped, int $page_no = 1): void
     {
         global $pdo, $config;
