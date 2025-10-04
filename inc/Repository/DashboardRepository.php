@@ -51,7 +51,7 @@ class DashboardRepository
      * Get posts that are not part of any thread for a board.
      *
      * @param string $boardUri Board URI.
-     * @return array Array of posts (each as assoc array).
+     * @return array Array of posts.
      */
     public function getPostsWithoutThread(string $boardUri): array
     {

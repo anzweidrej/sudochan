@@ -22,8 +22,8 @@ class BanRepository
     /**
      * Select a single ban appeal by id.
      *
-     * @param int $id Appeal id
-     * @return array|false Associative array for the appeal or false if not found
+     * @param int $id Appeal id.
+     * @return array|false Associative array for the appeal or false if not found.
      */
     public function selectAppealById(int $id)
     {
@@ -37,7 +37,7 @@ class BanRepository
     /**
      * Delete a ban appeal by id.
      *
-     * @param int $id Appeal id
+     * @param int $id Appeal id.
      * @return void
      */
     public function deleteAppealById(int $id)
@@ -48,7 +48,7 @@ class BanRepository
     /**
      * Mark a ban appeal as denied by id.
      *
-     * @param int $id Appeal id
+     * @param int $id Appeal id.
      * @return void
      */
     public function denyAppealById(int $id)
@@ -59,7 +59,7 @@ class BanRepository
     /**
      * Select active ban appeals.
      *
-     * @return array List of associative arrays for active appeals
+     * @return array List of associative arrays for active appeals.
      */
     public function selectActiveBanAppeals()
     {
@@ -73,9 +73,9 @@ class BanRepository
     /**
      * Select thumb and file fields from a posts table for a given board uri and post id.
      *
-     * @param string $boardUri Board URI used to build table name
-     * @param int $postId Post id
-     * @return array|false Associative array with 'thumb' and 'file' or false if not found
+     * @param string $boardUri Board URI used to build table name.
+     * @param int $postId Post id.
+     * @return array|false Associative array with 'thumb' and 'file' or false if not found.
      */
     public function selectPostThumbFile(string $boardUri, int $postId)
     {

@@ -11,7 +11,7 @@ class ThemeRepository
     /**
      * Get themes currently in use.
      *
-     * @return string[] Array of theme names
+     * @return string[] Array of theme names.
      */
     public function getThemesInUse(): array
     {
@@ -22,7 +22,7 @@ class ThemeRepository
     /**
      * Delete all settings for a given theme.
      *
-     * @param string $theme Theme directory/name
+     * @param string $theme Theme directory/name.
      * @return void
      */
     public function clearThemeSettings(string $theme): void
@@ -35,9 +35,9 @@ class ThemeRepository
     /**
      * Insert a theme setting.
      *
-     * @param string      $theme Theme directory/name
-     * @param string|null $name  Setting name (NULL for marker row)
-     * @param mixed       $value Setting value
+     * @param string      $theme Theme directory/name.
+     * @param string|null $name  Setting name.
+     * @param mixed       $value Setting value.
      * @return void
      */
     public function insertThemeSetting(string $theme, ?string $name, $value): void

@@ -45,847 +45,445 @@ if (file_exists($config['has_installed'])) {
 
     $boards = BoardService::listBoards();
 
-    switch ($version) {
-        case 'v0.9':
-        case 'v0.9.1':
-            // Upgrade to v0.9.2-dev
-
-            foreach ($boards as &$_board) {
-                // Add `capcode` field after `trip`
-                query(sprintf("ALTER TABLE `posts_%s` ADD  `capcode` VARCHAR( 50 ) NULL AFTER  `trip`", $_board['uri'])) or error(db_error());
-
-                // Resize `trip` to 15 characters
-                query(sprintf("ALTER TABLE `posts_%s` CHANGE  `trip`  `trip` VARCHAR( 15 ) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL", $_board['uri'])) or error(db_error());
-            }
-            // no break
-        case 'v0.9.2-dev':
-            // Upgrade to v0.9.2-dev-1
-
-            // New table: `theme_settings`
-            query("CREATE TABLE IF NOT EXISTS `theme_settings` ( `name` varchar(40) NOT NULL, `value` text, UNIQUE KEY `name` (`name`)) ENGINE=InnoDB DEFAULT CHARSET=utf8;") or error(db_error());
-
-            // New table: `news`
-            query("CREATE TABLE IF NOT EXISTS `news` ( `id` int(11) NOT NULL AUTO_INCREMENT, `name` text NOT NULL, `time` int(11) NOT NULL, `subject` text NOT NULL, `body` text NOT NULL, UNIQUE KEY `id` (`id`) ) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;") or error(db_error());
-            // no break
-        case 'v0.9.2.1-dev':
-        case 'v0.9.2-dev-1':
-            // Fix broken version number/mistake
-            $version = 'v0.9.2-dev-1';
-            // Upgrade to v0.9.2-dev-2
-
-            foreach ($boards as &$_board) {
-                // Increase field sizes
-                query(sprintf("ALTER TABLE `posts_%s` CHANGE  `subject` `subject` VARCHAR( 50 ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL", $_board['uri'])) or error(db_error());
-                query(sprintf("ALTER TABLE `posts_%s` CHANGE  `name` `name` VARCHAR( 35 ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL", $_board['uri'])) or error(db_error());
-            }
-            // no break
-        case 'v0.9.2-dev-2':
-            // Upgrade to v0.9.2-dev-3 (v0.9.2)
-
-            foreach ($boards as &$_board) {
-                // Add `custom_fields` field
-                query(sprintf("ALTER TABLE `posts_%s` ADD `embed` TEXT NULL", $_board['uri'])) or error(db_error());
-            }
-            // no break
-        case 'v0.9.2-dev-3': // v0.9.2-dev-3 == v0.9.2
-        case 'v0.9.2':
-            // Upgrade to v0.9.3-dev-1
-
-            // Upgrade `theme_settings` table
-            query("TRUNCATE TABLE `theme_settings`") or error(db_error());
-            query("ALTER TABLE  `theme_settings` ADD  `theme` VARCHAR( 40 ) NOT NULL FIRST") or error(db_error());
-            query("ALTER TABLE  `theme_settings` CHANGE  `name`  `name` VARCHAR( 40 ) CHARACTER SET utf8 COLLATE utf8_general_ci NULL") or error(db_error());
-            query("ALTER TABLE  `theme_settings` DROP INDEX  `name`") or error(db_error());
-            // no break
-        case 'v0.9.3-dev-1':
-            query("ALTER TABLE  `mods` ADD  `boards` TEXT NOT NULL") or error(db_error());
-            query("UPDATE `mods` SET `boards` = '*'") or error(db_error());
-            // no break
-        case 'v0.9.3-dev-2':
-            foreach ($boards as &$_board) {
-                query(sprintf("ALTER TABLE `posts_%s` CHANGE `filehash`  `filehash` TEXT CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL", $_board['uri'])) or error(db_error());
-            }
-            // no break
-        case 'v0.9.3-dev-3':
-            // Board-specifc bans
-            query("ALTER TABLE `bans` ADD  `board` SMALLINT NULL AFTER  `reason`") or error(db_error());
-            // no break
-        case 'v0.9.3-dev-4':
-            // add ban ID
-            query("ALTER TABLE `bans` ADD  `id` INT NOT NULL AUTO_INCREMENT FIRST, ADD PRIMARY KEY ( `id` ), ADD UNIQUE (`id`)");
-            // no break
-        case 'v0.9.3-dev-5':
-            foreach ($boards as &$_board) {
-                // Increase subject field size
-                query(sprintf("ALTER TABLE `posts_%s` CHANGE  `subject` `subject` VARCHAR( 100 ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL", $_board['uri'])) or error(db_error());
-            }
-            // no break
-        case 'v0.9.3-dev-6':
-            // change to MyISAM
-            $tables = [
-                'bans', 'boards', 'ip_notes', 'modlogs', 'mods', 'mutes', 'noticeboard', 'pms', 'reports', 'robot', 'theme_settings', 'news',
-            ];
-            foreach ($boards as &$board) {
-                $tables[] = "posts_{$board['uri']}";
-            }
-
-            foreach ($tables as &$table) {
-                query("ALTER TABLE  `{$table}` ENGINE = MYISAM DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci") or error(db_error());
-            }
-            // no break
-        case 'v0.9.3-dev-7':
-            foreach ($boards as &$board) {
-                query(sprintf("ALTER TABLE  `posts_%s` CHANGE  `filename` `filename` TEXT CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL", $board['uri'])) or error(db_error());
-            }
-            // no break
-        case 'v0.9.3-dev-8':
-            foreach ($boards as &$board) {
-                query(sprintf("ALTER TABLE `posts_%s` ADD INDEX (  `thread` )", $board['uri'])) or error(db_error());
-            }
-            // no break
-        case 'v0.9.3-dev-9':
-            foreach ($boards as &$board) {
-                query(sprintf("ALTER TABLE `posts_%s`ADD INDEX (  `time` )", $board['uri'])) or error(db_error());
-                query(sprintf("ALTER TABLE `posts_%s`ADD FULLTEXT (`body`)", $board['uri'])) or error(db_error());
-            }
-            // no break
-        case 'v0.9.3-dev-10':
-        case 'v0.9.3':
-            query("ALTER TABLE  `bans` DROP INDEX `id`") or error(db_error());
-            query("ALTER TABLE  `pms` DROP INDEX  `id`") or error(db_error());
-            query("ALTER TABLE  `boards` DROP PRIMARY KEY") or error(db_error());
-            query("ALTER TABLE  `reports` DROP INDEX  `id`") or error(db_error());
-            query("ALTER TABLE  `boards` DROP INDEX `uri`") or error(db_error());
-
-            query("ALTER IGNORE TABLE  `robot` ADD PRIMARY KEY (`hash`)") or error(db_error());
-            query("ALTER TABLE  `bans` ADD FULLTEXT (`ip`)") or error(db_error());
-            query("ALTER TABLE  `ip_notes` ADD INDEX (`ip`)") or error(db_error());
-            query("ALTER TABLE  `modlogs` ADD INDEX (`time`)") or error(db_error());
-            query("ALTER TABLE  `boards` ADD PRIMARY KEY(`uri`)") or error(db_error());
-            query("ALTER TABLE  `mutes` ADD INDEX (`ip`)") or error(db_error());
-            query("ALTER TABLE  `news` ADD INDEX (`time`)") or error(db_error());
-            query("ALTER TABLE  `theme_settings` ADD INDEX (`theme`)") or error(db_error());
-            // no break
-        case 'v0.9.4-dev-1':
-            foreach ($boards as &$board) {
-                query(sprintf("ALTER TABLE  `posts_%s` ADD  `sage` INT( 1 ) NOT NULL AFTER  `locked`", $board['uri'])) or error(db_error());
-            }
-            // no break
-        case 'v0.9.4-dev-2':
-            if (!isset($_GET['confirm'])) {
-                $page['title'] = 'License Change';
-                $page['body'] = '<p style="text-align:center">You are upgrading to a version which uses an amended license. The licenses included with Tinyboard distributions prior to this version (v0.9.4-dev-2) are still valid for those versions, but no longer apply to this and newer versions.</p>'
-                    . '<textarea style="width:700px;height:370px;margin:auto;display:block;background:white;color:black" disabled>' . htmlentities(file_get_contents('LICENSE')) . '</textarea>
-					<p style="text-align:center">
-						<a href="?confirm=1">I have read and understood the agreement. Proceed to upgrading.</a>
-					</p>';
-
-                FileManager::file_write($config['has_installed'], 'v0.9.4-dev-2');
-
-                break;
-            }
-            // no break
-        case 'v0.9.4-dev-3':
-        case 'v0.9.4-dev-4':
-        case 'v0.9.4':
-            foreach ($boards as &$board) {
-                query(sprintf("ALTER TABLE  `posts_%s`
-					CHANGE `subject` `subject` VARCHAR( 100 ) CHARACTER SET utf8 COLLATE utf8_general_ci NULL ,
-					CHANGE  `email`  `email` VARCHAR( 30 ) CHARACTER SET utf8 COLLATE utf8_general_ci NULL ,
-					CHANGE  `name`  `name` VARCHAR( 35 ) CHARACTER SET utf8 COLLATE utf8_general_ci NULL", $board['uri'])) or error(db_error());
-            }
-            // no break
-        case 'v0.9.5-dev-1':
-            foreach ($boards as &$board) {
-                query(sprintf("ALTER TABLE  `posts_%s` ADD  `body_nomarkup` TEXT NULL AFTER  `body`", $board['uri'])) or error(db_error());
-            }
-            query("CREATE TABLE IF NOT EXISTS `cites` (  `board` varchar(8) NOT NULL,  `post` int(11) NOT NULL,  `target_board` varchar(8) NOT NULL,  `target` int(11) NOT NULL,  KEY `target` (`target_board`,`target`),  KEY `post` (`board`,`post`)) ENGINE=MyISAM DEFAULT CHARSET=utf8;") or error(db_error());
-            // no break
-        case 'v0.9.5-dev-2':
-            query("ALTER TABLE  `boards` 
-				CHANGE  `uri`  `uri` VARCHAR( 15 ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
-				CHANGE  `title`  `title` VARCHAR( 40 ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
-				CHANGE  `subtitle`  `subtitle` VARCHAR( 120 ) CHARACTER SET utf8 COLLATE utf8_general_ci NULL") or error(db_error());
-            // no break
-        case 'v0.9.5-dev-3':
-            // v0.9.5
-        case 'v0.9.5':
-            query("ALTER TABLE  `boards` 
-				CHANGE  `uri`  `uri` VARCHAR( 50 ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
-				CHANGE  `title`  `title` TINYTEXT CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
-				CHANGE  `subtitle`  `subtitle` TINYTEXT CHARACTER SET utf8 COLLATE utf8_general_ci NULL") or error(db_error());
-            // no break
-        case 'v0.9.6-dev-1':
-            query("CREATE TABLE IF NOT EXISTS `antispam` (
-				  `board` varchar(255) NOT NULL,
-				  `thread` int(11) DEFAULT NULL,
-				  `hash` bigint(20) NOT NULL,
-				  `created` int(11) NOT NULL,
-				  `expires` int(11) DEFAULT NULL,
-				  `passed` smallint(6) NOT NULL,
-				  PRIMARY KEY (`hash`),
-				  KEY `board` (`board`,`thread`)
-				) ENGINE=MyISAM DEFAULT CHARSET=utf8;") or error(db_error());
-            // no break
-        case 'v0.9.6-dev-2':
-            query("ALTER TABLE `boards`
-				DROP `id`,
-				CHANGE  `uri`  `uri` VARCHAR( 120 ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL") or error(db_error());
-            query("ALTER TABLE  `bans` CHANGE  `board`  `board` VARCHAR( 120 ) NULL DEFAULT NULL") or error(db_error());
-            query("ALTER TABLE  `reports` CHANGE  `board`  `board` VARCHAR( 120 ) NULL DEFAULT NULL") or error(db_error());
-            query("ALTER TABLE  `modlogs` CHANGE  `board`  `board` VARCHAR( 120 ) NULL DEFAULT NULL") or error(db_error());
-            foreach ($boards as $board) {
-                $query = prepare("UPDATE `bans` SET `board` = :newboard WHERE `board` = :oldboard");
-                $query->bindValue(':newboard', $board['uri']);
-                $query->bindValue(':oldboard', $board['id']);
-                $query->execute() or error(db_error($query));
-
-                $query = prepare("UPDATE `modlogs` SET `board` = :newboard WHERE `board` = :oldboard");
-                $query->bindValue(':newboard', $board['uri']);
-                $query->bindValue(':oldboard', $board['id']);
-                $query->execute() or error(db_error($query));
-
-                $query = prepare("UPDATE `reports` SET `board` = :newboard WHERE `board` = :oldboard");
-                $query->bindValue(':newboard', $board['uri']);
-                $query->bindValue(':oldboard', $board['id']);
-                $query->execute() or error(db_error($query));
-            }
-            // no break
-        case 'v0.9.6-dev-3':
-            query("ALTER TABLE  `antispam` CHANGE  `hash`  `hash` CHAR( 40 ) NOT NULL") or error(db_error());
-            // no break
-        case 'v0.9.6-dev-4':
-            query("ALTER TABLE  `news` DROP INDEX  `id`, ADD PRIMARY KEY ( `id` )") or error(db_error());
-            // no break
-        case 'v0.9.6-dev-5':
-            query("ALTER TABLE  `bans` CHANGE  `id`  `id` INT( 11 ) UNSIGNED NOT NULL AUTO_INCREMENT") or error(db_error());
-            query("ALTER TABLE  `mods` CHANGE  `id`  `id` INT( 11 ) UNSIGNED NOT NULL AUTO_INCREMENT") or error(db_error());
-            query("ALTER TABLE  `news` CHANGE  `id`  `id` INT( 11 ) UNSIGNED NOT NULL AUTO_INCREMENT") or error(db_error());
-            query("ALTER TABLE  `noticeboard` CHANGE  `id`  `id` INT( 11 ) UNSIGNED NOT NULL AUTO_INCREMENT") or error(db_error());
-            query("ALTER TABLE  `pms` CHANGE  `id`  `id` INT( 11 ) UNSIGNED NOT NULL AUTO_INCREMENT") or error(db_error());
-            query("ALTER TABLE  `reports` CHANGE  `id`  `id` INT( 11 ) UNSIGNED NOT NULL AUTO_INCREMENT") or error(db_error());
-            foreach ($boards as $board) {
-                query(sprintf("ALTER TABLE  `posts_%s` CHANGE `id`  `id` INT( 11 ) UNSIGNED NOT NULL AUTO_INCREMENT", $board['uri'])) or error(db_error());
-            }
-            // no break
-        case 'v0.9.6-dev-6':
-            foreach ($boards as &$_board) {
-                query(sprintf("CREATE INDEX `thread_id` ON `posts_%s` (`thread`, `id`)", $_board['uri'])) or error(db_error());
-                query(sprintf("ALTER TABLE `posts_%s` DROP INDEX `thread`", $_board['uri'])) or error(db_error());
-            }
-            // no break
-        case 'v0.9.6-dev-7':
-            query("ALTER TABLE  `bans` ADD  `seen` BOOLEAN NOT NULL") or error(db_error());
-            // no break
-        case 'v0.9.6-dev-8':
-            query("ALTER TABLE  `mods` CHANGE  `password`  `password` CHAR( 64 ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL COMMENT  'SHA256'") or error(db_error());
-            query("ALTER TABLE  `mods` ADD  `salt` CHAR( 32 ) NOT NULL AFTER  `password`") or error(db_error());
-            $query = query("SELECT `id`,`password` FROM `mods`") or error(db_error());
-            while ($user = $query->fetch(\PDO::FETCH_ASSOC)) {
-                if (strlen($user['password']) == 40) {
-                    mt_srand(microtime(true) * 100000 + memory_get_usage(true));
-                    $salt = md5(uniqid(mt_rand(), true));
-
-                    $user['salt'] = $salt;
-                    $user['password'] = hash('sha256', $user['salt'] . $user['password']);
-
-                    $_query = prepare("UPDATE `mods` SET `password` = :password, `salt` = :salt WHERE `id` = :id");
-                    $_query->bindValue(':id', $user['id']);
-                    $_query->bindValue(':password', $user['password']);
-                    $_query->bindValue(':salt', $user['salt']);
-                    $_query->execute() or error(db_error($_query));
-                }
-            }
-            // no break
-        case 'v0.9.6-dev-9':
-            foreach ($boards as &$board) {
-                __query(sprintf("ALTER TABLE `posts_%s`
-					CHANGE `subject` `subject` VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
-					CHANGE `email` `email` VARCHAR(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
-					CHANGE `name` `name` VARCHAR(35) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
-					CHANGE `trip` `trip` VARCHAR(15) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
-					CHANGE `capcode` `capcode` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
-					CHANGE `body` `body` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
-					CHANGE `body_nomarkup` `body_nomarkup` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
-					CHANGE `thumb` `thumb` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
-					CHANGE `thumbwidth` `thumbwidth` INT(11) NULL DEFAULT NULL,
-					CHANGE `thumbheight` `thumbheight` INT(11) NULL DEFAULT NULL,
-					CHANGE `file` `file` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
-					CHANGE `filename` `filename` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
-					CHANGE `filehash` `filehash` TEXT CHARACTER SET ascii COLLATE ascii_general_ci NULL DEFAULT NULL,
-					CHANGE `password` `password` VARCHAR(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
-					CHANGE `ip` `ip` VARCHAR(39) CHARACTER SET ascii COLLATE ascii_general_ci NOT NULL,
-					CHANGE `embed` `embed` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
-					DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;", $board['uri'])) or error(db_error());
-            }
-
-            __query("ALTER TABLE  `antispam`
-				CHANGE  `board`  `board` VARCHAR( 120 ) CHARACTER SET ASCII COLLATE ascii_general_ci NOT NULL ,
-				CHANGE  `hash`  `hash` CHAR( 40 ) CHARACTER SET ASCII COLLATE ascii_bin NOT NULL ,
-				DEFAULT CHARACTER SET ASCII COLLATE ascii_bin;") or error(db_error());
-            __query("ALTER TABLE  `bans`
-				CHANGE  `ip`  `ip` VARCHAR( 39 ) CHARACTER SET ASCII COLLATE ascii_general_ci NOT NULL ,
-				CHANGE  `reason`  `reason` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL ,
-				CHANGE  `board`  `board` VARCHAR( 120 ) CHARACTER SET ASCII COLLATE ascii_general_ci NULL DEFAULT NULL,
-				DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;") or error(db_error());
-            __query("ALTER TABLE  `boards`
-				CHANGE  `uri`  `uri` VARCHAR( 120 ) CHARACTER SET ASCII COLLATE ascii_general_ci NOT NULL ,
-				CHANGE  `title`  `title` TINYTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL ,
-				CHANGE  `subtitle`  `subtitle` TINYTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
-				DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;") or error(db_error());
-            __query("ALTER TABLE  `cites`
-				CHANGE  `board`  `board` VARCHAR( 120 ) CHARACTER SET ASCII COLLATE ascii_general_ci NOT NULL ,
-				CHANGE  `target_board`  `target_board` VARCHAR( 120 ) CHARACTER SET ASCII COLLATE ascii_general_ci NOT NULL ,
-				DEFAULT CHARACTER SET ASCII COLLATE ascii_general_ci;") or error(db_error());
-            __query("ALTER TABLE  `ip_notes`
-				CHANGE  `ip`  `ip` VARCHAR( 39 ) CHARACTER SET ASCII COLLATE ascii_general_ci NOT NULL ,
-				CHANGE  `body`  `body` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL ,
-				DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;") or error(db_error());
-            __query("ALTER TABLE  `modlogs`
-				CHANGE  `ip`  `ip` VARCHAR( 39 ) CHARACTER SET ASCII COLLATE ascii_general_ci NOT NULL ,
-				CHANGE  `board`  `board` VARCHAR( 120 ) CHARACTER SET ASCII COLLATE ascii_general_ci NULL DEFAULT NULL ,
-				CHANGE  `text`  `text` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL ,
-				DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;") or error(db_error());
-            __query("ALTER TABLE  `mods`
-				CHANGE  `username`  `username` VARCHAR( 30 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL ,
-				CHANGE  `password`  `password` CHAR( 64 ) CHARACTER SET ASCII COLLATE ascii_general_ci NOT NULL COMMENT 'SHA256',
-				CHANGE  `salt`  `salt` CHAR( 32 ) CHARACTER SET ASCII COLLATE ascii_general_ci NOT NULL ,
-				CHANGE  `boards`  `boards` TEXT CHARACTER SET ASCII COLLATE ascii_general_ci NOT NULL ,
-				DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;") or error(db_error());
-            __query("ALTER TABLE  `mutes`
-				CHANGE  `ip`  `ip` VARCHAR( 39 ) CHARACTER SET ASCII COLLATE ascii_general_ci NOT NULL ,
-				DEFAULT CHARACTER SET ASCII COLLATE ascii_general_ci;") or error(db_error());
-            __query("ALTER TABLE  `news`
-				CHANGE  `name`  `name` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL ,
-				CHANGE  `subject`  `subject` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL ,
-				CHANGE  `body`  `body` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL ,
-				DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;") or error(db_error());
-            __query("ALTER TABLE  `noticeboard`
-				CHANGE  `subject`  `subject` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL ,
-				CHANGE  `body`  `body` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL ,
-				DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;") or error(db_error());
-            __query("ALTER TABLE  `pms`
-				CHANGE  `message`  `message` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL ,
-				DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;") or error(db_error());
-            __query("ALTER TABLE  `reports`
-				CHANGE  `ip`  `ip` VARCHAR( 39 ) CHARACTER SET ASCII COLLATE ascii_general_ci NOT NULL ,
-				CHANGE  `board`  `board` VARCHAR( 120 ) CHARACTER SET ASCII COLLATE ascii_general_ci NULL DEFAULT NULL ,
-				CHANGE  `reason`  `reason` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL ,
-				DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;") or error(db_error());
-            __query("ALTER TABLE  `robot`
-				CHANGE  `hash`  `hash` VARCHAR( 40 ) CHARACTER SET ASCII COLLATE ascii_bin NOT NULL COMMENT  'SHA1',
-				DEFAULT CHARACTER SET ASCII COLLATE ascii_bin;") or error(db_error());
-            __query("ALTER TABLE  `theme_settings`
-				CHANGE  `theme`  `theme` VARCHAR( 40 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL ,
-				CHANGE  `name`  `name` VARCHAR( 40 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL ,
-				CHANGE  `value`  `value` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL ,
-				DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;") or error(db_error());
-            // no break
-        case 'v0.9.6-dev-10':
-            query("ALTER TABLE  `antispam`
-				CHANGE  `board`  `board` VARCHAR( 58 ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL;") or error(db_error());
-            query("ALTER TABLE  `bans`
-				CHANGE  `board`  `board` VARCHAR( 58 ) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL;") or error(db_error());
-            query("ALTER TABLE  `boards`
-				CHANGE  `uri`  `uri` VARCHAR( 58 ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL;") or error(db_error());
-            query("ALTER TABLE  `cites`
-				CHANGE  `board`  `board` VARCHAR( 58 ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL ,
-				CHANGE  `target_board`  `target_board` VARCHAR( 58 ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL ,
-				DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;") or error(db_error());
-            query("ALTER TABLE  `modlogs`
-				CHANGE  `board`  `board` VARCHAR( 58 ) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL;") or error(db_error());
-            query("ALTER TABLE  `mods`
-				CHANGE  `boards`  `boards` TEXT CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL;") or error(db_error());
-            query("ALTER TABLE  `reports`
-				CHANGE  `board`  `board` VARCHAR( 58 ) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL;") or error(db_error());
-            // no break
-        case 'v0.9.6-dev-11':
-            foreach ($boards as &$board) {
-                __query(sprintf(
-                    "ALTER TABLE  ``posts_%s``
-					CHANGE  `thumb`  `thumb` VARCHAR( 255 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
-					CHANGE  `file`  `file` VARCHAR( 255 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL ;",
-                    $board['uri'],
-                )) or error(db_error());
-            }
-            // no break
-        case 'v0.9.6-dev-12':
-            foreach ($boards as &$board) {
-                query(sprintf("ALTER TABLE  ``posts_%s`` ADD INDEX `ip` (`ip`)", $board['uri'])) or error(db_error());
-            }
-            // no break
-        case 'v0.9.6-dev-13':
-            query("ALTER TABLE ``antispam`` ADD INDEX `expires` (`expires`)") or error(db_error());
-            // no break
-        case 'v0.9.6-dev-14':
-            foreach ($boards as &$board) {
-                query(sprintf("ALTER TABLE  ``posts_%s``
-					DROP INDEX `body`,
-					ADD INDEX `filehash` (`filehash`(40))", $board['uri'])) or error(db_error());
-            }
-            query("ALTER TABLE ``modlogs`` ADD INDEX `mod` (`mod`)") or error(db_error());
-            query("ALTER TABLE ``bans`` DROP INDEX `ip`") or error(db_error());
-            query("ALTER TABLE ``bans`` ADD INDEX `ip` (`ip`)") or error(db_error());
-            query("ALTER TABLE ``noticeboard`` ADD INDEX `time` (`time`)") or error(db_error());
-            query("ALTER TABLE ``pms`` ADD INDEX `to` (`to`, `unread`)") or error(db_error());
-            // no break
-        case 'v0.9.6-dev-15':
-            foreach ($boards as &$board) {
-                query(sprintf("ALTER TABLE  ``posts_%s``
-					ADD INDEX `list_threads` (`thread`, `sticky`, `bump`)", $board['uri'])) or error(db_error());
-            }
-            // no break
-        case 'v0.9.6-dev-16':
-            query("ALTER TABLE ``bans`` ADD INDEX `seen` (`seen`)") or error(db_error());
-            // no break
-        case 'v0.9.6-dev-17':
-            query("ALTER TABLE ``ip_notes``
-				DROP INDEX `ip`,
-				ADD INDEX `ip_lookup` (`ip`, `time`)") or error(db_error());
-            // no break
-        case 'v0.9.6-dev-18':
-            query("CREATE TABLE IF NOT EXISTS ``flood`` (
-				  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
-				  `ip` varchar(39) NOT NULL,
-				  `board` varchar(58) CHARACTER SET utf8 NOT NULL,
-				  `time` int(11) NOT NULL,
-				  `posthash` char(32) NOT NULL,
-				  `filehash` char(32) DEFAULT NULL,
-				  `isreply` tinyint(1) NOT NULL,
-				  PRIMARY KEY (`id`),
-				  KEY `ip` (`ip`),
-				  KEY `posthash` (`posthash`),
-				  KEY `filehash` (`filehash`),
-				  KEY `time` (`time`)
-				) ENGINE=MyISAM DEFAULT CHARSET=ascii COLLATE=ascii_bin AUTO_INCREMENT=1 ;") or error(db_error());
-            // no break
-        case 'v0.9.6-dev-19':
-            query("UPDATE ``mods`` SET `type` = 10 WHERE `type` = 0") or error(db_error());
-            query("UPDATE ``mods`` SET `type` = 20 WHERE `type` = 1") or error(db_error());
-            query("UPDATE ``mods`` SET `type` = 30 WHERE `type` = 2") or error(db_error());
-            query("ALTER TABLE ``mods`` CHANGE `type`  `type` smallint(1) NOT NULL") or error(db_error());
-            // no break
-        case 'v0.9.6-dev-20':
-            __query("CREATE TABLE IF NOT EXISTS `bans_new_temp` (
-				`id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-				`ipstart` varbinary(16) NOT NULL,
-				`ipend` varbinary(16) DEFAULT NULL,
-				`created` int(10) unsigned NOT NULL,
-				`expires` int(10) unsigned DEFAULT NULL,
-				`board` varchar(58) DEFAULT NULL,
-				`creator` int(10) NOT NULL,
-				`reason` text,
-				`seen` tinyint(1) NOT NULL,
-				`post` blob,
-				PRIMARY KEY (`id`),
-				KEY `expires` (`expires`),
-				KEY `ipstart` (`ipstart`,`ipend`)
-				) ENGINE=MyISAM  DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1") or error(db_error());
-            $listquery = query("SELECT * FROM ``bans`` ORDER BY `id`") or error(db_error());
-            while ($ban = $listquery->fetch(\PDO::FETCH_ASSOC)) {
-                $query = prepare("INSERT INTO ``bans_new_temp`` VALUES 
-					(NULL, :ipstart, :ipend, :created, :expires, :board, :creator, :reason, :seen, NULL)");
-
-                $range = Sudochan\Bans::parse_range($ban['ip']);
-                if ($range === false) {
-                    // Invalid retard ban; just skip it.
-                    continue;
-                }
-
-                $query->bindValue(':ipstart', $range[0]);
-                if ($range[1] !== false && $range[1] != $range[0]) {
-                    $query->bindValue(':ipend', $range[1]);
-                } else {
-                    $query->bindValue(':ipend', null, \PDO::PARAM_NULL);
-                }
-
-                $query->bindValue(':created', $ban['set']);
-
-                if ($ban['expires']) {
-                    $query->bindValue(':expires', $ban['expires']);
-                } else {
-                    $query->bindValue(':expires', null, \PDO::PARAM_NULL);
-                }
-
-                if ($ban['board']) {
-                    $query->bindValue(':board', $ban['board']);
-                } else {
-                    $query->bindValue(':board', null, PDO::PARAM_NULL);
-                }
-
-                $query->bindValue(':creator', $ban['mod']);
-
-                if ($ban['reason']) {
-                    $query->bindValue(':reason', $ban['reason']);
-                } else {
-                    $query->bindValue(':reason', null, \PDO::PARAM_NULL);
-                }
-
-                $query->bindValue(':seen', $ban['seen']);
-                $query->execute() or error(db_error($query));
-            }
-
-            // Drop old bans table
-            query("DROP TABLE ``bans``") or error(db_error());
-            // Replace with new table
-            query("RENAME TABLE ``bans_new_temp`` TO ``bans``") or error(db_error());
-            // no break
-        case 'v0.9.6-dev-21':
-            __query("CREATE TABLE IF NOT EXISTS ``ban_appeals`` (
-				  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-				  `ban_id` int(10) unsigned NOT NULL,
-				  `time` int(10) unsigned NOT NULL,
-				  `message` text NOT NULL,
-				  `denied` tinyint(1) NOT NULL,
-				  PRIMARY KEY (`id`),
-				  KEY `ban_id` (`ban_id`)
-				) ENGINE=MyISAM  DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;") or error(db_error());
-            // no break
-        case 'v0.9.6-dev-22':
-            // Add category column to boards table
-            query("ALTER TABLE `boards` ADD COLUMN `category` VARCHAR(64) NOT NULL DEFAULT ''") or error(db_error());
-            // no break
-        case false:
-            // Update version number
-            FileManager::file_write($config['has_installed'], VERSION);
-
-            $page['title'] = 'Upgraded';
-            $page['body'] = '<p style="text-align:center">Successfully upgraded from ' . $version . ' to <strong>' . VERSION . '</strong>.</p>';
-            break;
-        default:
-            $page['title'] = 'Unknown version';
-            $page['body'] = '<p style="text-align:center">Sudochan was unable to determine what version is currently installed.</p>';
-            break;
-        case VERSION:
-            $page['title'] = 'Already installed';
-            $page['body'] = '<p style="text-align:center">It appears that Sudochan is already installed (' . $version . ') and there is nothing to upgrade! Delete <strong>' . $config['has_installed'] . '</strong> to reinstall.</p>';
-            break;
-    }
+    require_once __DIR__ . '/migrations.php';
+    run_migrations($version, $boards, $page, $config);
 
     die(element('page.html', $page));
 }
 
-if ($step == 0) {
-    // Agreeement
-    $page['body'] = '
-	<textarea style="width:700px;height:370px;margin:auto;display:block;background:white;color:black" disabled>' . htmlentities(file_get_contents('LICENSE')) . '</textarea>
-	<p style="text-align:center">
-		<a href="?step=1">I have read and understood the agreement. Proceed to installation.</a>
-	</p>';
+$installer = new class ($config, $page, $step) {
+    private array $config;
+    private array $page;
+    private int $step;
 
-    echo element('page.html', $page);
-} elseif ($step == 1) {
-    $page['title'] = 'Pre-installation test';
-
-    $can_exec = true;
-    if (!function_exists('shell_exec')) {
-        $can_exec = false;
-    } elseif (in_array('shell_exec', array_map('trim', explode(', ', ini_get('disable_functions'))))) {
-        $can_exec = false;
-    } elseif (ini_get('safe_mode')) {
-        $can_exec = false;
-    } elseif (trim(shell_exec('echo "TEST"')) !== 'TEST') {
-        $can_exec = false;
-    }
-
-    if (!defined('PHP_VERSION_ID')) {
-        $version = explode('.', PHP_VERSION);
-        define('PHP_VERSION_ID', ($version[0] * 10000 + $version[1] * 100 + $version[2]));
-    }
-
-    // Required extensions
-    $extensions = [
-        'PDO' => [
-            'installed' => extension_loaded('pdo'),
-            'required' => true,
-        ],
-        'GD' => [
-            'installed' => extension_loaded('gd'),
-            'required' => true,
-        ],
-        'Imagick' => [
-            'installed' => extension_loaded('imagick'),
-            'required' => false,
-        ],
-        'OpenSSL' => [
-            'installed' => extension_loaded('openssl'),
-            'required' => true,
-        ],
-    ];
-
-    $tests = [
-        [
-            'category' => 'PHP',
-            'name' => 'PHP &ge; 8.3',
-            'result' => PHP_VERSION_ID >= 80300,
-            'required' => true,
-            'message' => 'Sudochan requires PHP 8.3 or better.',
-        ],
-        [
-            'category' => 'PHP',
-            'name' => 'PHP &ge; 8.4',
-            'result' => PHP_VERSION_ID >= 80400,
-            'required' => false,
-            'message' => 'PHP &ge; 8.4, though not required, is recommended to make the most out of Sudochan configuration files.',
-        ],
-        [
-            'category' => 'PHP',
-            'name' => 'mbstring extension installed',
-            'result' => extension_loaded('mbstring'),
-            'required' => true,
-            'message' => 'You must install the PHP <a href="http://www.php.net/manual/en/mbstring.installation.php">mbstring</a> extension.',
-        ],
-        [
-            'category' => 'PHP',
-            'name' => 'OpenSSL extension installed',
-            'result' => extension_loaded('openssl'),
-            'required' => true,
-            'message' => 'You must install the PHP <a href="https://www.php.net/manual/en/openssl.installation.php">OpenSSL</a> extension.',
-        ],
-        [
-            'category' => 'Database',
-            'name' => 'PDO extension installed',
-            'result' => extension_loaded('pdo'),
-            'required' => true,
-            'message' => 'You must install the PHP <a href="http://www.php.net/manual/en/intro.pdo.php">PDO</a> extension.',
-        ],
-        [
-            'category' => 'Database',
-            'name' => 'MySQL PDO driver installed',
-            'result' => extension_loaded('pdo') && in_array('mysql', \PDO::getAvailableDrivers()),
-            'required' => true,
-            'message' => 'The required <a href="http://www.php.net/manual/en/ref.pdo-mysql.php">PDO MySQL driver</a> is not installed.',
-        ],
-        [
-            'category' => 'Image processing',
-            'name' => 'GD extension installed',
-            'result' => extension_loaded('gd'),
-            'required' => true,
-            'message' => 'You must install the PHP <a href="http://www.php.net/manual/en/intro.image.php">GD</a> extension. GD is a requirement even if you have chosen another image processor for thumbnailing.',
-        ],
-        [
-            'category' => 'Image processing',
-            'name' => 'GD: JPEG',
-            'result' => function_exists('imagecreatefromjpeg'),
-            'required' => true,
-            'message' => 'imagecreatefromjpeg() does not exist. This is a problem.',
-        ],
-        [
-            'category' => 'Image processing',
-            'name' => 'GD: PNG',
-            'result' => function_exists('imagecreatefrompng'),
-            'required' => true,
-            'message' => 'imagecreatefrompng() does not exist. This is a problem.',
-        ],
-        [
-            'category' => 'Image processing',
-            'name' => 'GD: GIF',
-            'result' => function_exists('imagecreatefromgif'),
-            'required' => true,
-            'message' => 'imagecreatefromgif() does not exist. This is a problem.',
-        ],
-        [
-            'category' => 'Image processing',
-            'name' => 'Imagick extension installed',
-            'result' => extension_loaded('imagick'),
-            'required' => false,
-            'message' => '(Optional) The PHP <a href="http://www.php.net/manual/en/imagick.installation.php">Imagick</a> (ImageMagick) extension is not installed. You may not use Imagick for better (and faster) image processing.',
-        ],
-        [
-            'category' => 'Image processing',
-            'name' => '`convert` (command-line ImageMagick)',
-            'result' => $can_exec && shell_exec('which convert'),
-            'required' => false,
-            'message' => '(Optional) `convert` was not found or executable; command-line ImageMagick image processing cannot be enabled.',
-        ],
-        [
-            'category' => 'Image processing',
-            'name' => '`identify` (command-line ImageMagick)',
-            'result' => $can_exec && shell_exec('which identify'),
-            'required' => false,
-            'message' => '(Optional) `identify` was not found or executable; command-line ImageMagick image processing cannot be enabled.',
-        ],
-        [
-            'category' => 'Image processing',
-            'name' => '`gm` (command-line GraphicsMagick)',
-            'result' => $can_exec && shell_exec('which gm'),
-            'required' => false,
-            'message' => '(Optional) `gm` was not found or executable; command-line GraphicsMagick (faster than ImageMagick) cannot be enabled.',
-        ],
-        [
-            'category' => 'Image processing',
-            'name' => '`gifsicle` (command-line animted GIF thumbnailing)',
-            'result' => $can_exec && shell_exec('which gifsicle'),
-            'required' => false,
-            'message' => '(Optional) `gifsicle` was not found or executable; you may not use `convert+gifsicle` for better animated GIF thumbnailing.',
-        ],
-        [
-            'category' => 'File permissions',
-            'name' => getcwd(),
-            'result' => is_writable('.'),
-            'required' => true,
-            'message' => 'Sudochan does not have permission to create directories (boards) here. You will need to <code>chmod</code> (or operating system equivalent) appropriately.',
-        ],
-        [
-            'category' => 'File permissions',
-            'name' => getcwd() . '/tmp/cache',
-            'result' => is_writable('tmp') && (!is_dir('tmp/cache') || is_writable('tmp/cache')),
-            'required' => true,
-            'message' => 'You must give Sudochan permission to create (and write to) the <code>tmp/cache</code> directory or performance will be drastically reduced.',
-        ],
-        [
-            'category' => 'File permissions',
-            'name' => getcwd() . 'instance-config.php',
-            'result' => is_writable('instance-config.php'),
-            'required' => false,
-            'message' => 'Sudochan does not have permission to make changes to <code>instance-config.php</code>. To complete the installation, you will be asked to manually copy and paste code into the file instead.',
-        ],
-        [
-            'category' => 'Misc',
-            'name' => 'Caching available (APC, XCache, Memcached or Redis)',
-            'result' => extension_loaded('apc') || extension_loaded('xcache')
-                || extension_loaded('memcached') || extension_loaded('redis'),
-            'required' => false,
-            'message' => 'You will not be able to enable the additional caching system, designed to minimize SQL queries and significantly improve performance. <a href="http://php.net/manual/en/book.apc.php">APC</a> is the recommended method of caching, but <a href="http://xcache.lighttpd.net/">XCache</a>, <a href="http://www.php.net/manual/en/intro.memcached.php">Memcached</a> and <a href="http://pecl.php.net/package/redis">Redis</a> are also supported.',
-        ],
-        [
-            'category' => 'Misc',
-            'name' => 'Sudochan installed using git',
-            'result' => is_dir('.git'),
-            'required' => false,
-            'message' => 'Sudochan is still beta software and it\'s not going to come out of beta any time soon. As there are often many months between releases yet changes and bug fixes are very frequent, it\'s recommended to use the git repository to maintain your Sudochan installation. Using git makes upgrading much easier.',
-        ],
-    ];
-
-    $config['font_awesome'] = true;
-
-    echo element('page.html', [
-        'body' => element('installer/check-requirements.html', [
-            'extensions' => $extensions,
-            'tests' => $tests,
-            'config' => $config,
-        ]),
-        'title' => 'Checking environment',
-        'config' => $config,
-    ]);
-} elseif ($step == 2) {
-    // Basic config
-    $page['title'] = 'Configuration';
-
-    $config['cookies']['salt'] = substr(base64_encode(sha1(rand())), 0, 30);
-    $config['secure_trip_salt'] = substr(base64_encode(sha1(rand())), 0, 30);
-
-    echo element('page.html', [
-        'body' => element('installer/config.html', [
-            'config' => $config,
-        ]),
-        'title' => 'Configuration',
-        'config' => $config,
-    ]);
-} elseif ($step == 3) {
-    $instance_config = '<?php';
-
-    function create_config_from_array(string &$instance_config, array &$array, string $prefix = ''): void
+    public function __construct(array $config, array $page, int $step)
     {
-        foreach ($array as $name => $value) {
-            if (is_array($value)) {
-                $instance_config .= "\n";
-                create_config_from_array($instance_config, $value, $prefix . '[\'' . addslashes($name) . '\']');
-                $instance_config .= "\n";
+        $this->config = $config;
+        $this->page = $page;
+        $this->step = $step;
+    }
+
+    /**
+     * Check whether a system command exists.
+     *
+     * @param string $cmd Command name.
+     * @return bool True if the command is available.
+     */
+    private function commandExists(string $cmd): bool
+    {
+        if (stripos(PHP_OS, 'WIN') === 0) {
+            $where = @shell_exec('where ' . escapeshellarg($cmd) . ' 2>NUL');
+            return !empty($where);
+        } else {
+            $ret = @shell_exec('command -v ' . escapeshellarg($cmd) . ' >/dev/null 2>&1 && echo ok');
+            return trim((string) $ret) === 'ok';
+        }
+    }
+
+    /**
+     * Dispatch to the handler for the current step.
+     *
+     * @return void
+     */
+    public function dispatch(): void
+    {
+        $handlers = [
+            0 => [$this, 'step0'],
+            1 => [$this, 'step1'],
+            2 => [$this, 'step2'],
+            3 => [$this, 'step3'],
+            4 => [$this, 'step4'],
+            5 => [$this, 'step5'],
+        ];
+
+        if (isset($handlers[$this->step])) {
+            $result = call_user_func($handlers[$this->step]);
+            if (is_array($result)) {
+                $this->page = array_merge($this->page, $result);
+            }
+            echo element('page.html', $this->page);
+            return;
+        }
+
+        echo element('page.html', $this->page);
+    }
+
+    /**
+     * Show license agreement.
+     *
+     * @return array Page data for rendering.
+     */
+    public function step0(): array
+    {
+        return [
+            'body' => '<textarea style="width:700px;height:370px;margin:auto;display:block;background:white;color:black" disabled>' . htmlentities(file_get_contents('LICENSE')) . '</textarea>
+            <p style="text-align:center">
+                <a href="?step=1">I have read and understood the agreement. Proceed to installation.</a>
+            </p>',
+        ];
+    }
+
+    /**
+     * Pre-installation checks.
+     *
+     * @return array Page data for rendering.
+     */
+    public function step1(): array
+    {
+        $can_exec = true;
+        if (!function_exists('shell_exec')) {
+            $can_exec = false;
+        } elseif (in_array('shell_exec', array_map('trim', explode(', ', ini_get('disable_functions'))))) {
+            $can_exec = false;
+        } elseif (ini_get('safe_mode')) {
+            $can_exec = false;
+        } elseif (trim(@shell_exec('echo "TEST"')) !== 'TEST') {
+            $can_exec = false;
+        }
+
+        if (!defined('PHP_VERSION_ID')) {
+            $version = explode('.', PHP_VERSION);
+            define('PHP_VERSION_ID', ($version[0] * 10000 + $version[1] * 100 + $version[2]));
+        }
+
+        // Required extensions
+        $extensions = [
+            'PDO' => [
+                'installed' => extension_loaded('pdo'),
+                'required' => true,
+            ],
+            'GD' => [
+                'installed' => extension_loaded('gd'),
+                'required' => true,
+            ],
+            'Imagick' => [
+                'installed' => extension_loaded('imagick'),
+                'required' => false,
+            ],
+            'OpenSSL' => [
+                'installed' => extension_loaded('openssl'),
+                'required' => true,
+            ],
+        ];
+
+        $tests = [
+            [
+                'category' => 'PHP',
+                'name' => 'PHP &ge; 8.3',
+                'result' => PHP_VERSION_ID >= 80300,
+                'required' => true,
+                'message' => 'Sudochan requires PHP 8.3 or better.',
+            ],
+            [
+                'category' => 'PHP',
+                'name' => 'PHP &ge; 8.4',
+                'result' => PHP_VERSION_ID >= 80400,
+                'required' => false,
+                'message' => 'PHP &ge; 8.4, though not required, is recommended to make the most out of Sudochan configuration files.',
+            ],
+            [
+                'category' => 'PHP',
+                'name' => 'mbstring extension installed',
+                'result' => extension_loaded('mbstring'),
+                'required' => true,
+                'message' => 'You must install the PHP <a href="http://www.php.net/manual/en/mbstring.installation.php">mbstring</a> extension.',
+            ],
+            [
+                'category' => 'PHP',
+                'name' => 'OpenSSL extension installed',
+                'result' => extension_loaded('openssl'),
+                'required' => true,
+                'message' => 'You must install the PHP <a href="https://www.php.net/manual/en/openssl.installation.php">OpenSSL</a> extension.',
+            ],
+            [
+                'category' => 'Database',
+                'name' => 'PDO extension installed',
+                'result' => extension_loaded('pdo'),
+                'required' => true,
+                'message' => 'You must install the PHP <a href="http://www.php.net/manual/en/intro.pdo.php">PDO</a> extension.',
+            ],
+            [
+                'category' => 'Database',
+                'name' => 'MySQL PDO driver installed',
+                'result' => extension_loaded('pdo') && in_array('mysql', \PDO::getAvailableDrivers()),
+                'required' => true,
+                'message' => 'The required <a href="http://www.php.net/manual/en/ref.pdo-mysql.php">PDO MySQL driver</a> is not installed.',
+            ],
+            [
+                'category' => 'Image processing',
+                'name' => 'GD extension installed',
+                'result' => extension_loaded('gd'),
+                'required' => true,
+                'message' => 'You must install the PHP <a href="http://www.php.net/manual/en/intro.image.php">GD</a> extension. GD is a requirement even if you have chosen another image processor for thumbnailing.',
+            ],
+            [
+                'category' => 'Image processing',
+                'name' => 'GD: JPEG',
+                'result' => function_exists('imagecreatefromjpeg'),
+                'required' => true,
+                'message' => 'imagecreatefromjpeg() does not exist. This is a problem.',
+            ],
+            [
+                'category' => 'Image processing',
+                'name' => 'GD: PNG',
+                'result' => function_exists('imagecreatefrompng'),
+                'required' => true,
+                'message' => 'imagecreatefrompng() does not exist. This is a problem.',
+            ],
+            [
+                'category' => 'Image processing',
+                'name' => 'GD: GIF',
+                'result' => function_exists('imagecreatefromgif'),
+                'required' => true,
+                'message' => 'imagecreatefromgif() does not exist. This is a problem.',
+            ],
+            [
+                'category' => 'Image processing',
+                'name' => 'Imagick extension installed',
+                'result' => extension_loaded('imagick'),
+                'required' => false,
+                'message' => '(Optional) The PHP <a href="http://www.php.net/manual/en/imagick.installation.php">Imagick</a> (ImageMagick) extension is not installed. You may not use Imagick for better (and faster) image processing.',
+            ],
+            [
+                'category' => 'Image processing',
+                'name' => '`convert` (command-line ImageMagick)',
+                'result' => $can_exec && $this->commandExists('convert'),
+                'required' => false,
+                'message' => '(Optional) `convert` was not found or executable; command-line ImageMagick image processing cannot be enabled.',
+            ],
+            [
+                'category' => 'Image processing',
+                'name' => '`identify` (command-line ImageMagick)',
+                'result' => $can_exec && $this->commandExists('identify'),
+                'required' => false,
+                'message' => '(Optional) `identify` was not found or executable; command-line ImageMagick image processing cannot be enabled.',
+            ],
+            [
+                'category' => 'Image processing',
+                'name' => '`gm` (command-line GraphicsMagick)',
+                'result' => $can_exec && $this->commandExists('gm'),
+                'required' => false,
+                'message' => '(Optional) `gm` was not found or executable; command-line GraphicsMagick (faster than ImageMagick) cannot be enabled.',
+            ],
+            [
+                'category' => 'Image processing',
+                'name' => '`gifsicle` (command-line animted GIF thumbnailing)',
+                'result' => $can_exec && $this->commandExists('gifsicle'),
+                'required' => false,
+                'message' => '(Optional) `gifsicle` was not found or executable; you may not use `convert+gifsicle` for better animated GIF thumbnailing.',
+            ],
+            [
+                'category' => 'File permissions',
+                'name' => getcwd(),
+                'result' => is_writable('.'),
+                'required' => true,
+                'message' => 'Sudochan does not have permission to create directories (boards) here. You will need to <code>chmod</code> (or operating system equivalent) appropriately.',
+            ],
+            [
+                'category' => 'File permissions',
+                'name' => getcwd() . '/tmp/cache',
+                'result' => is_writable('tmp') && (!is_dir('tmp/cache') || is_writable('tmp/cache')),
+                'required' => true,
+                'message' => 'You must give Sudochan permission to create (and write to) the <code>tmp/cache</code> directory or performance will be drastically reduced.',
+            ],
+            [
+                'category' => 'File permissions',
+                'name' => getcwd() . 'instance-config.php',
+                'result' => is_writable('instance-config.php'),
+                'required' => false,
+                'message' => 'Sudochan does not have permission to make changes to <code>instance-config.php</code>. To complete the installation, you will be asked to manually copy and paste code into the file instead.',
+            ],
+            [
+                'category' => 'Misc',
+                'name' => 'Caching available (APC, XCache, Memcached or Redis)',
+                'result' => extension_loaded('apc') || extension_loaded('xcache')
+                    || extension_loaded('memcached') || extension_loaded('redis'),
+                'required' => false,
+                'message' => 'You will not be able to enable the additional caching system, designed to minimize SQL queries and significantly improve performance. <a href="http://php.net/manual/en/book.apc.php">APC</a> is the recommended method of caching, but <a href="http://xcache.lighttpd.net/">XCache</a>, <a href="http://www.php.net/manual/en/intro.memcached.php">Memcached</a> and <a href="http://pecl.php.net/package/redis">Redis</a> are also supported.',
+            ],
+            [
+                'category' => 'Misc',
+                'name' => 'Sudochan installed using git',
+                'result' => is_dir('.git'),
+                'required' => false,
+                'message' => 'Sudochan is still beta software and it\'s not going to come out of beta any time soon. As there are often many months between releases yet changes and bug fixes are very frequent, it\'s recommended to use the git repository to maintain your Sudochan installation. Using git makes upgrading much easier.',
+            ],
+        ];
+
+        $this->config['font_awesome'] = true;
+
+        return [
+            'body' => element('installer/check-requirements.html', [
+                'extensions' => $extensions,
+                'tests' => $tests,
+                'config' => $this->config,
+            ]),
+            'title' => 'Checking environment',
+            'config' => $this->config,
+        ];
+    }
+
+    /**
+     * Present configuration form.
+     *
+     * @return array Page data for rendering.
+     */
+    public function step2(): array
+    {
+        $this->config['db'] = [
+            'server'   => getenv('MYSQL_HOST') ?: 'mysql',
+            'database' => getenv('MYSQL_DATABASE') ?: 'sudochan',
+            'prefix'   => getenv('MYSQL_PREFIX') ?: '',
+            'user'     => getenv('MYSQL_USER') ?: 'sudochan_user',
+            'password' => getenv('MYSQL_PASSWORD') ?: 'userpassword',
+        ];
+
+        $this->config['cookies']['salt'] = substr(base64_encode(sha1(rand())), 0, 30);
+        $this->config['secure_trip_salt'] = substr(base64_encode(sha1(rand())), 0, 30);
+
+        return [
+            'body' => element('installer/config.html', [
+                'config' => $this->config,
+            ]),
+            'title' => 'Configuration',
+            'config' => $this->config,
+        ];
+    }
+
+    /**
+     * Recursively build config string from an array.
+     *
+     * @param string $instance_config String accumulator.
+     * @param array  $array           Configuration array.
+     * @param string $prefix          Current prefix for nested keys.
+     * @return void
+     */
+    private function create_config_from_array(string &$instance_config, array &$array, string $prefix = ''): void
+    {
+        foreach ($array as $k => $v) {
+            $key = $prefix . '[' . var_export($k, true) . ']';
+            if (is_array($v)) {
+                $this->create_config_from_array($instance_config, $v, $key);
             } else {
-                $instance_config .= '	$config' . $prefix . '[\'' . addslashes($name) . '\'] = ';
-
-                if (is_numeric($value)) {
-                    $instance_config .= $value;
-                } else {
-                    $instance_config .= "'" . addslashes($value) . "'";
-                }
-
-                $instance_config .= ";\n";
+                $instance_config .= '$config' . $key . ' = ' . var_export($v, true) . ";\n";
             }
         }
     }
 
-    create_config_from_array($instance_config, $_POST);
+    /**
+     * Write instance-config.php.
+     *
+     * @return array Page data for rendering.
+     */
+    public function step3(): array
+    {
+        $instance_config = "<?php\n\n";
 
-    $instance_config .= "\n";
+        $this->create_config_from_array($instance_config, $_POST);
 
-    if (@file_put_contents('instance-config.php', $instance_config)) {
-        header('Location: ?step=4', true, $config['redirect_http']);
-    } else {
-        $page['title'] = 'Manual installation required';
-        $page['body'] = '
-			<p>I couldn\'t write to <strong>instance-config.php</strong> with the new configuration, probably due to a permissions error.</p>
-			<p>Please complete the installation manually by copying and pasting the following code into the contents of <strong>instance-config.php</strong>:</p>
-			<textarea style="width:700px;height:370px;margin:auto;display:block;background:white;color:black">' . htmlentities($instance_config) . '</textarea>
-			<p style="text-align:center">
-				<a href="?step=4">Once complete, click here to complete installation.</a>
-			</p>
-		';
-        echo element('page.html', $page);
-    }
-} elseif ($step == 4) {
-    // SQL installation
+        $instance_config .= "\n";
 
-    PageService::buildJavascript();
-
-    $sql = @file_get_contents('install.sql') or error("Couldn't load install.sql.");
-
-    sql_open();
-    $mysql_version = mysql_version();
-
-    // Parse SQL file by splitting on semicolons
-    $queries = array_filter(array_map('trim', explode(';', $sql)));
-
-    // Remove empty queries
-    $queries = array_filter($queries, function ($q) {
-        return $q !== '';
-    });
-
-    $queries[] = element('posts.sql', ['board' => 'b']);
-
-    $sql_errors = '';
-    foreach ($queries as $query) {
-        // Ignore duplicates for boards and mods tables
-        $query = preg_replace('/INSERT INTO\s+`(boards|mods)`/i', 'INSERT IGNORE INTO `$1`', $query);
-        if ($mysql_version < 50503) {
-            $query = preg_replace('/(CHARSET=|CHARACTER SET )utf8mb4/', '$1utf8', $query);
-        }
-        $query = preg_replace('/^([\w\s]*)`([0-9a-zA-Z$_\x{0080}-\x{FFFF}]+)`/u', '$1``$2``', $query);
-        if (!query($query)) {
-            $sql_errors .= '<li>' . db_error() . '</li>';
+        if (@file_put_contents('instance-config.php', $instance_config, LOCK_EX) !== false) {
+            @chmod('instance-config.php', 0644);
+            header('Location: ?step=4', true, $this->config['redirect_http']);
+            return [];
+        } else {
+            return [
+                'title' => 'Manual installation required',
+                'body' => '
+                    <p>I couldn\'t write to <strong>instance-config.php</strong> with the new configuration, probably due to a permissions error.</p>
+                    <p>Please complete the installation manually by copying and pasting the following code into the contents of <strong>instance-config.php</strong>:</p>
+                    <textarea style="width:700px;height:370px;margin:auto;display:block;background:white;color:black">' . htmlentities($instance_config) . '</textarea>
+                    <p style="text-align:center">
+                        <a href="?step=4">Once complete, click here to complete installation.</a>
+                    </p>
+                ',
+            ];
         }
     }
 
-    $page['title'] = 'Installation complete';
-    $page['body'] = '<p style="text-align:center">Thank you for using Sudochan. Please remember to report any bugs you discover. <a href="http://tinyboard.org/docs/?p=Config">How do I edit the config files?</a></p>';
+    /**
+     * Execute SQL install and finalize.
+     *
+     * @return array Page data for rendering.
+     */
+    public function step4(): array
+    {
+        // SQL installation
+        PageService::buildJavascript();
 
-    if (!empty($sql_errors)) {
-        $page['body'] .= '<div class="ban"><h2>SQL errors</h2><p>SQL errors were encountered when trying to install the database. This may be the result of using a database which is already occupied with a Sudochan installation; if so, you can probably ignore this.</p><p>The errors encountered were:</p><ul>' . $sql_errors . '</ul><p><a href="?step=5">Ignore errors and complete installation.</a></p></div>';
-    } else {
+        $sql = @file_get_contents('install.sql') or error("Couldn't load install.sql.");
+
+        sql_open();
+        $mysql_version = mysql_version();
+
+        // Parse SQL file by splitting on semicolons
+        $queries = array_filter(array_map('trim', explode(';', $sql)));
+
+        // Remove empty queries
+        $queries = array_filter($queries, function ($q) {
+            return $q !== '';
+        });
+
+        $queries[] = element('posts.sql', ['board' => 'b']);
+
+        $sql_errors = '';
+        foreach ($queries as $query) {
+            // Ignore duplicates for boards and mods tables
+            $query = preg_replace('/INSERT INTO\s+`(boards|mods)`/i', 'INSERT IGNORE INTO `$1`', $query);
+            if ($mysql_version < 50503) {
+                $query = preg_replace('/(CHARSET=|CHARACTER SET )utf8mb4/', '$1utf8', $query);
+            }
+            $query = preg_replace('/^([\w\s]*)`([0-9a-zA-Z$_\x{0080}-\x{FFFF}]+)`/u', '$1``$2``', $query);
+            if (!query($query)) {
+                $sql_errors .= '<li>' . db_error() . '</li>';
+            }
+        }
+
+        $body = '<p style="text-align:center">Thank you for using Sudochan. Please remember to report any bugs you discover. <a href="http://tinyboard.org/docs/?p=Config">How do I edit the config files?</a></p>';
+
+        if (!empty($sql_errors)) {
+            $body .= '<div class="ban"><h2>SQL errors</h2><p>SQL errors were encountered when trying to install the database. This may be the result of using a database which is already occupied with a Sudochan installation; if so, you can probably ignore this.</p><p>The errors encountered were:</p><ul>' . $sql_errors . '</ul><p><a href="?step=5">Ignore errors and complete installation.</a></p></div>';
+        } else {
+            $boards = BoardService::listBoards();
+            foreach ($boards as &$_board) {
+                BoardService::setupBoard($_board);
+                PageService::buildIndex();
+            }
+
+            FileManager::file_write($this->config['has_installed'], VERSION);
+            $body .= '<div class="ban"><h2>Delete install.php!</h2><p>I couldn\'t remove <strong>install.php</strong>. You will have to remove it manually.</p></div>';
+        }
+
+        return [
+            'title' => 'Installation complete',
+            'body' => $body,
+        ];
+    }
+
+    /**
+     * Finalize and show completion.
+     *
+     * @return array Page data for rendering.
+     */
+    public function step5(): array
+    {
+        $body = '<p style="text-align:center">Thank you for using Sudochan. Please remember to report any bugs you discover.</p>';
+
         $boards = BoardService::listBoards();
         foreach ($boards as &$_board) {
             BoardService::setupBoard($_board);
             PageService::buildIndex();
         }
 
-        FileManager::file_write($config['has_installed'], VERSION);
-        $page['body'] .= '<div class="ban"><h2>Delete install.php!</h2><p>I couldn\'t remove <strong>install.php</strong>. You will have to remove it manually.</p></div>';
+        FileManager::file_write($this->config['has_installed'], VERSION);
+        $body .= '<div class="ban"><h2>Delete install.php!</h2><p>I couldn\'t remove <strong>install.php</strong>. You will have to remove it manually.</p></div>';
+
+        return [
+            'title' => 'Installation complete',
+            'body' => $body,
+        ];
     }
+};
 
-    echo element('page.html', $page);
-} elseif ($step == 5) {
-    $page['title'] = 'Installation complete';
-    $page['body'] = '<p style="text-align:center">Thank you for using Sudochan. Please remember to report any bugs you discover.</p>';
-
-    $boards = BoardService::listBoards();
-    foreach ($boards as &$_board) {
-        BoardService::setupBoard($_board);
-        PageService::buildIndex();
-    }
-
-    FileManager::file_write($config['has_installed'], VERSION);
-    $page['body'] .= '<div class="ban"><h2>Delete install.php!</h2><p>I couldn\'t remove <strong>install.php</strong>. You will have to remove it manually.</p></div>';
-
-    echo element('page.html', $page);
-}
+$installer->dispatch();

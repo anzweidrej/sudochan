@@ -11,8 +11,8 @@ class PmRepository
     /**
      * Get PM by id, including sender and recipient usernames.
      *
-     * @param int $id PM id
-     * @return array|false Associative array of PM data or false if not found
+     * @param int $id PM id.
+     * @return array|false Associative array of PM data or false if not found.
      */
     public function getById(int $id)
     {
@@ -26,7 +26,7 @@ class PmRepository
     /**
      * Delete a PM by id.
      *
-     * @param int $id PM id
+     * @param int $id PM id.
      * @return void
      */
     public function deleteById(int $id): void
@@ -39,7 +39,7 @@ class PmRepository
     /**
      * Mark a PM as read.
      *
-     * @param int $id PM id
+     * @param int $id PM id.
      * @return void
      */
     public function markAsRead(int $id): void
@@ -52,8 +52,8 @@ class PmRepository
     /**
      * Get inbox messages for a moderator.
      *
-     * @param int $modId Moderator id
-     * @return array List of messages as associative arrays
+     * @param int $modId Moderator id.
+     * @return array List of messages as associative arrays.
      */
     public function getInboxForMod(int $modId): array
     {
@@ -66,8 +66,8 @@ class PmRepository
     /**
      * Count unread PMs for a moderator.
      *
-     * @param int $modId Moderator id
-     * @return int Unread count
+     * @param int $modId Moderator id.
+     * @return int Unread count.
      */
     public function countUnreadForMod(int $modId): int
     {
@@ -80,8 +80,8 @@ class PmRepository
     /**
      * Find a moderator id by username.
      *
-     * @param string $username Moderator username
-     * @return mixed Moderator id or false if not found
+     * @param string $username Moderator username.
+     * @return mixed Moderator id or false if not found.
      */
     public function findModIdByUsername(string $username)
     {
@@ -94,8 +94,8 @@ class PmRepository
     /**
      * Find a moderator username by id.
      *
-     * @param mixed $id Moderator id
-     * @return mixed Username or false if not found
+     * @param mixed $id Moderator id.
+     * @return mixed Username or false if not found.
      */
     public function findModUsernameById($id)
     {
@@ -108,10 +108,10 @@ class PmRepository
     /**
      * Insert a new PM.
      *
-     * @param mixed $me Sender moderator id
-     * @param mixed $id Recipient moderator id
-     * @param string $message Message content (already processed)
-     * @param int $time Timestamp
+     * @param mixed $me Sender moderator id.
+     * @param mixed $id Recipient moderator id.
+     * @param string $message Message content.
+     * @param int $time Timestamp.
      * @return void
      */
     public function insertPm($me, $id, $message, $time): void

@@ -13,7 +13,7 @@ class DebugRepository
     /**
      * Count antispam entries.
      *
-     * @param string $where Optional WHERE clause (without the 'WHERE' keyword).
+     * @param string $where Optional WHERE clause.
      * @return int Number of matching antispam rows.
      */
     public function countAntispam(string $where = ''): int
@@ -25,7 +25,7 @@ class DebugRepository
     /**
      * Count antispam entries that have an expiry.
      *
-     * @param string $where Optional additional WHERE condition (without the 'WHERE' keyword).
+     * @param string $where Optional additional WHERE condition.
      * @return int Number of expiring antispam rows.
      */
     public function countExpiringAntispam(string $where = ''): int
@@ -37,7 +37,7 @@ class DebugRepository
     /**
      * Get top antispam entries ordered by passed count.
      *
-     * @param string $where Optional WHERE clause (without the 'WHERE' keyword).
+     * @param string $where Optional WHERE clause.
      * @return array Associative array of antispam rows.
      */
     public function getTopAntispam(string $where = ''): array
@@ -49,7 +49,7 @@ class DebugRepository
     /**
      * Get most recent antispam entries.
      *
-     * @param string $where Optional WHERE clause (without the 'WHERE' keyword).
+     * @param string $where Optional WHERE clause.
      * @return array Associative array of recent antispam rows.
      */
     public function getRecentAntispam(string $where = ''): array
