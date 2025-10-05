@@ -73,7 +73,7 @@ CREATE TABLE IF NOT EXISTS `boards` (
 --
 
 INSERT INTO `boards` VALUES
-('b', 'Random', NULL);
+('b', 'Random', NULL, '');
 
 -- --------------------------------------------------------
 

@@ -51,18 +51,7 @@ if (file_exists($config['has_installed'])) {
     die(element('page.html', $page));
 }
 
-$installer = new class ($config, $page, $step) {
-    private array $config;
-    private array $page;
-    private int $step;
-
-    public function __construct(array $config, array $page, int $step)
-    {
-        $this->config = $config;
-        $this->page = $page;
-        $this->step = $step;
-    }
-
+$installer = new class {
     /**
      * Check whether a system command exists.
      *
@@ -87,6 +76,8 @@ $installer = new class ($config, $page, $step) {
      */
     public function dispatch(): void
     {
+        global $config, $page, $step;
+
         $handlers = [
             0 => [$this, 'step0'],
             1 => [$this, 'step1'],
@@ -96,16 +87,16 @@ $installer = new class ($config, $page, $step) {
             5 => [$this, 'step5'],
         ];
 
-        if (isset($handlers[$this->step])) {
-            $result = call_user_func($handlers[$this->step]);
+        if (isset($handlers[$step])) {
+            $result = call_user_func($handlers[$step]);
             if (is_array($result)) {
-                $this->page = array_merge($this->page, $result);
+                $page = array_merge($page, $result);
             }
-            echo element('page.html', $this->page);
+            echo element('page.html', $page);
             return;
         }
 
-        echo element('page.html', $this->page);
+        echo element('page.html', $page);
     }
 
     /**
@@ -130,6 +121,8 @@ $installer = new class ($config, $page, $step) {
      */
     public function step1(): array
     {
+        global $config;
+
         $can_exec = true;
         if (!function_exists('shell_exec')) {
             $can_exec = false;
@@ -310,16 +303,16 @@ $installer = new class ($config, $page, $step) {
             ],
         ];
 
-        $this->config['font_awesome'] = true;
+        $config['font_awesome'] = true;
 
         return [
             'body' => element('installer/check-requirements.html', [
                 'extensions' => $extensions,
                 'tests' => $tests,
-                'config' => $this->config,
+                'config' => $config,
             ]),
             'title' => 'Checking environment',
-            'config' => $this->config,
+            'config' => $config,
         ];
     }
 
@@ -330,7 +323,9 @@ $installer = new class ($config, $page, $step) {
      */
     public function step2(): array
     {
-        $this->config['db'] = [
+        global $config;
+
+        $config['db'] = [
             'server'   => getenv('MYSQL_HOST') ?: 'mysql',
             'database' => getenv('MYSQL_DATABASE') ?: 'sudochan',
             'prefix'   => getenv('MYSQL_PREFIX') ?: '',
@@ -338,15 +333,15 @@ $installer = new class ($config, $page, $step) {
             'password' => getenv('MYSQL_PASSWORD') ?: 'userpassword',
         ];
 
-        $this->config['cookies']['salt'] = substr(base64_encode(sha1(rand())), 0, 30);
-        $this->config['secure_trip_salt'] = substr(base64_encode(sha1(rand())), 0, 30);
+        $config['cookies']['salt'] = substr(base64_encode(sha1(rand())), 0, 30);
+        $config['secure_trip_salt'] = substr(base64_encode(sha1(rand())), 0, 30);
 
         return [
             'body' => element('installer/config.html', [
-                'config' => $this->config,
+                'config' => $config,
             ]),
             'title' => 'Configuration',
-            'config' => $this->config,
+            'config' => $config,
         ];
     }
 
@@ -377,6 +372,8 @@ $installer = new class ($config, $page, $step) {
      */
     public function step3(): array
     {
+        global $config, $page;
+
         $instance_config = "<?php\n\n";
 
         $this->create_config_from_array($instance_config, $_POST);
@@ -385,7 +382,7 @@ $installer = new class ($config, $page, $step) {
 
         if (@file_put_contents('instance-config.php', $instance_config, LOCK_EX) !== false) {
             @chmod('instance-config.php', 0644);
-            header('Location: ?step=4', true, $this->config['redirect_http']);
+            header('Location: ?step=4', true, $config['redirect_http']);
             return [];
         } else {
             return [
@@ -409,6 +406,8 @@ $installer = new class ($config, $page, $step) {
      */
     public function step4(): array
     {
+        global $config;
+
         // SQL installation
         PageService::buildJavascript();
 
@@ -451,7 +450,7 @@ $installer = new class ($config, $page, $step) {
                 PageService::buildIndex();
             }
 
-            FileManager::file_write($this->config['has_installed'], VERSION);
+            FileManager::file_write($config['has_installed'], VERSION);
             $body .= '<div class="ban"><h2>Delete install.php!</h2><p>I couldn\'t remove <strong>install.php</strong>. You will have to remove it manually.</p></div>';
         }
 
@@ -468,6 +467,8 @@ $installer = new class ($config, $page, $step) {
      */
     public function step5(): array
     {
+        global $config;
+
         $body = '<p style="text-align:center">Thank you for using Sudochan. Please remember to report any bugs you discover.</p>';
 
         $boards = BoardService::listBoards();
@@ -476,7 +477,7 @@ $installer = new class ($config, $page, $step) {
             PageService::buildIndex();
         }
 
-        FileManager::file_write($this->config['has_installed'], VERSION);
+        FileManager::file_write($config['has_installed'], VERSION);
         $body .= '<div class="ban"><h2>Delete install.php!</h2><p>I couldn\'t remove <strong>install.php</strong>. You will have to remove it manually.</p></div>';
 
         return [
