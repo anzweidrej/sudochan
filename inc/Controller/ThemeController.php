@@ -6,9 +6,8 @@
 
 namespace Sudochan\Controller;
 
-use Sudochan\Manager\AuthManager;
-use Sudochan\Manager\ThemeManager;
-use Sudochan\Manager\PermissionManager;
+use Sudochan\Security\Authenticator;
+use Sudochan\Manager\{ThemeManager, PermissionManager};
 use Sudochan\Utils\Token;
 use Sudochan\Repository\ThemeRepository;
 

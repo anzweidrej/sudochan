@@ -6,13 +6,11 @@
 
 namespace Sudochan\Controller;
 
-use Sudochan\Manager\AuthManager;
-use Sudochan\Entity\Post;
-use Sudochan\Entity\Thread;
+use Sudochan\Security\Authenticator;
+use Sudochan\Entity\{Post, Thread};
 use Sudochan\Service\BoardService;
 use Sudochan\Manager\PermissionManager;
-use Sudochan\Utils\TextFormatter;
-use Sudochan\Utils\Token;
+use Sudochan\Utils\{TextFormatter, Token};
 use Sudochan\Repository\ReportRepository;
 
 class ReportController
@@ -139,9 +137,9 @@ class ReportController
         }
 
         if ($all) {
-            AuthManager::modLog("Dismissed all reports by <a href=\"?/IP/$ip\">$ip</a>");
+            Authenticator::modLog("Dismissed all reports by <a href=\"?/IP/$ip\">$ip</a>");
         } else {
-            AuthManager::modLog("Dismissed a report for post #{$id}", $board);
+            Authenticator::modLog("Dismissed a report for post #{$id}", $board);
         }
 
         header('Location: ?/reports', true, $config['redirect_http']);

@@ -4,7 +4,7 @@
  *  Copyright (c) 2010-2013 Tinyboard Development Group
  */
 
-namespace Sudochan;
+namespace Sudochan\Security;
 
 use Sudochan\Utils\StringFormatter;
 
@@ -16,6 +16,15 @@ class AntiBot
     public array $inputs = [];
     public int $index = 0;
 
+    /**
+     * Generate a random string.
+     *
+     * @param int  $length        Length of the string.
+     * @param bool $uppercase     Include uppercase letters.
+     * @param bool $special_chars Include special ASCII characters.
+     * @param bool $unicode_chars Include random unicode symbols.
+     * @return string
+     */
     public static function randomString(int $length, bool $uppercase = false, bool $special_chars = false, bool $unicode_chars = false): string
     {
         $chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
@@ -55,6 +64,12 @@ class AntiBot
         return implode('', $chars);
     }
 
+    /**
+     * Obfuscate a string by converting characters to HTML entities.
+     *
+     * @param string $string Input string.
+     * @return string Obfuscated string.
+     */
     public static function make_confusing(string $string): string
     {
         $chars = preg_split('//u', $string, -1, PREG_SPLIT_NO_EMPTY);
@@ -111,6 +126,11 @@ class AntiBot
         }
     }
 
+    /**
+     * Return a random amount of spaces or a single space.
+     *
+     * @return string
+     */
     public static function space(): string
     {
         if (mt_rand(0, 3) != 0) {
@@ -119,6 +139,12 @@ class AntiBot
         return str_repeat(' ', mt_rand(1, 3));
     }
 
+    /**
+     * Render hidden inputs as HTML.
+     *
+     * @param int|bool $count Number of inputs to output, true = all, false = random.
+     * @return string HTML fragment.
+     */
     public function html(int|bool $count = false): string
     {
         global $config;
@@ -186,11 +212,21 @@ class AntiBot
         return $html;
     }
 
+    /**
+     * Reset html() index to start over.
+     *
+     * @return void
+     */
     public function reset(): void
     {
         $this->index = 0;
     }
 
+    /**
+     * Compute a verification hash for the current inputs and salts.
+     *
+     * @return string SHA1 hash.
+     */
     public function hash(): string
     {
         global $config;

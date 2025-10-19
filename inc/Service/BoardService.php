@@ -6,10 +6,16 @@
 
 namespace Sudochan\Service;
 
-use Sudochan\Cache;
+use Sudochan\Manager\CacheManager as Cache;
 
 class BoardService
 {
+    /**
+     * Get the title for a board.
+     *
+     * @param string $uri Board URI.
+     * @return string|false Board title or false if not found.
+     */
     public static function boardTitle(string $uri): string|false
     {
         $board = self::getBoardInfo($uri);
@@ -19,6 +25,13 @@ class BoardService
         return false;
     }
 
+    /**
+     * Build a part of the board list HTML.
+     *
+     * @param array $list Board list or nested board list.
+     * @param string $root Root URL or prefix.
+     * @return string HTML fragment for this part of the board list.
+     */
     public static function doBoardListPart(array $list, string $root): string
     {
         global $config;
@@ -40,6 +53,12 @@ class BoardService
         return $body;
     }
 
+    /**
+     * Create the boardlist HTML for top and bottom placements.
+     *
+     * @param bool|array $mod If truthy/array, use mod view prefix.
+     * @return array Associative array with 'top' and 'bottom' HTML strings.
+     */
     public static function createBoardlist(bool|array $mod = false): array
     {
         global $config;
@@ -68,6 +87,12 @@ class BoardService
         ];
     }
 
+    /**
+     * Initialize global $board state and ensure board directories exist.
+     *
+     * @param array $array Board data.
+     * @return void
+     */
     public static function setupBoard(array $array): void
     {
         global $board, $config;
@@ -101,6 +126,12 @@ class BoardService
         }
     }
 
+    /**
+     * Open a board by URI and set it up.
+     *
+     * @param string $uri Board URI.
+     * @return bool True if board opened and setup successfully, false otherwise.
+     */
     public static function openBoard(string $uri): bool
     {
         global $config, $build_pages;
@@ -117,6 +148,11 @@ class BoardService
         return false;
     }
 
+    /**
+     * Retrieve all boards from the database.
+     *
+     * @return array List of boards.
+     */
     public static function listBoards(): array
     {
         global $config;
@@ -135,6 +171,12 @@ class BoardService
         return $boards;
     }
 
+    /**
+     * Get information for a single board by URI.
+     *
+     * @param string $uri Board URI.
+     * @return array|false Board data array or false if not found.
+     */
     public static function getBoardInfo(string $uri): array|false
     {
         global $config;

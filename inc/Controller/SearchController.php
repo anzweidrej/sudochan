@@ -6,9 +6,8 @@
 
 namespace Sudochan\Controller;
 
-use Sudochan\Bans;
+use Sudochan\Manager\{BanManager as Bans, PermissionManager};
 use Sudochan\Service\BoardService;
-use Sudochan\Manager\PermissionManager;
 use Sudochan\Utils\TextFormatter;
 
 class SearchController

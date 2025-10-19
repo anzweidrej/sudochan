@@ -6,12 +6,10 @@
 
 namespace Sudochan\Controller;
 
-use Sudochan\Manager\AuthManager;
+use Sudochan\Security\Authenticator;
 use Sudochan\Service\BoardService;
 use Sudochan\Manager\PermissionManager;
-use Sudochan\Utils\Obfuscation;
-use Sudochan\Utils\Token;
-use Sudochan\Utils\TextFormatter;
+use Sudochan\Utils\{Obfuscation, Token, TextFormatter};
 use Sudochan\Repository\DebugRepository;
 
 class DebugController

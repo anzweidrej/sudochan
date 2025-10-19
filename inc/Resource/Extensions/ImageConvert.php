@@ -17,6 +17,11 @@ class ImageConvert extends ImageBase
     public bool $gm = false;
     public bool $gifsicle = false;
 
+    /**
+     * Initialize flags based on global configuration.
+     *
+     * @return void
+     */
     public function init(): void
     {
         global $config;
@@ -31,6 +36,13 @@ class ImageConvert extends ImageBase
         $this->temp = false;
     }
 
+    /**
+     * Get image dimensions using GD first, then identify.
+     *
+     * @param string $src Path to source image.
+     * @param bool $try_gd_first Whether to try getimagesize() before using identify.
+     * @return array|false [width, height] on success or false on failure.
+     */
     public function get_size(string $src, bool $try_gd_first = true): array|false
     {
         if ($try_gd_first) {
@@ -45,6 +57,13 @@ class ImageConvert extends ImageBase
         return false;
     }
 
+    /**
+     * Load basic info for the image.
+     *
+     * Sets $this->width/$this->height when possible and marks $this->image as true/false.
+     *
+     * @return void
+     */
     public function from(): void
     {
         if ($this->width > 0 && $this->height > 0) {
@@ -63,6 +82,12 @@ class ImageConvert extends ImageBase
         }
     }
 
+    /**
+     * Convert/redraw the source image to the destination path.
+     *
+     * @param string $src Destination path to write the converted image to.
+     * @return void
+     */
     public function to(string $src): void
     {
         global $config;
@@ -87,22 +112,44 @@ class ImageConvert extends ImageBase
         }
     }
 
+    /**
+     * Get stored width.
+     *
+     * @return int
+     */
     public function width(): int
     {
         return $this->width;
     }
 
+    /**
+     * Get stored height.
+     *
+     * @return int
+     */
     public function height(): int
     {
         return $this->height;
     }
 
+    /**
+     * Remove temporary file if present.
+     *
+     * @return void
+     */
     public function destroy(): void
     {
         @unlink($this->temp);
         $this->temp = false;
     }
 
+    /**
+     * Resize the source image into a temporary file using convert/gm or gifsicle.
+     *
+     * Updates $this->temp and refreshes $this->width/$this->height on success.
+     *
+     * @return void
+     */
     public function resize(): void
     {
         global $config;
@@ -178,7 +225,13 @@ class ImageConvert extends ImageBase
         }
     }
 
-    // For when -auto-orient doesn't exist (older versions)
+    /**
+     * Return ImageMagick arguments to correct JPEG orientation according to EXIF.
+     *
+     * @param string $src Path to JPEG image.
+     * @param array|false $exif Optional pre-read EXIF data.
+     * @return string|false Arguments to apply or false if no operation needed.
+     */
     public static function jpeg_exif_orientation(string $src, array|false $exif = false): string|false
     {
         if (!$exif) {

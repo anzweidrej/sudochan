@@ -4,16 +4,15 @@
  *  Copyright (c) 2010-2014 Tinyboard Development Group
  */
 
-use Sudochan\Resource\ImageResource as Image;
+use Sudochan\Resource\{ImageResource as Image};
 use Sudochan\Resource\Extensions\ImageConvert;
 use Sudochan\Dispatcher\EventDispatcher;
-use Sudochan\Bans;
-use Sudochan\Mutes;
-use Sudochan\Service\{BoardService, PageService, PostService, MarkupService, AntiSpamService};
+use Sudochan\Manager\{BanManager as Bans, FileManager, ThemeManager, PermissionManager};
+use Sudochan\Service\{MutesService as Mutes, BoardService, PageService, PostService, MarkupService, AntiSpamService};
 use Sudochan\Handler\ErrorHandler;
 use Sudochan\Resolver\DNSResolver;
-use Sudochan\Manager\{AuthManager, FileManager, ThemeManager, PermissionManager};
 use Sudochan\Utils\{Shell, DateRange, TextFormatter, StringFormatter, TripcodeGenerator, Sanitize};
+use Sudochan\Security\Authenticator;
 
 require_once 'bootstrap.php';
 
@@ -294,7 +293,7 @@ $handler = new class {
         }
 
         if ($post['mod'] = isset($_POST['mod']) && $_POST['mod']) {
-            AuthManager::authenticate();
+            Authenticator::authenticate();
             if (!$mod) {
                 // Liar. You're not a mod.
                 error($config['error']['notamod']);

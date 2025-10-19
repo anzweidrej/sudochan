@@ -187,4 +187,18 @@ class StringFormatter
 
         return $data;
     }
+
+    /**
+     * Multibyte-safe substring replace.
+     *
+     * @param string $string Original string.
+     * @param string $replacement Replacement text.
+     * @param int $start Start offset in characters.
+     * @param int $length Length in characters to replace.
+     * @return string Resulting string.
+     */
+    public static function mb_substr_replace(string $string, string $replacement, int $start, int $length): string
+    {
+        return mb_substr($string, 0, $start) . $replacement . mb_substr($string, $start + $length);
+    }
 }

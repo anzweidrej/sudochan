@@ -15,11 +15,21 @@ class ImageGD
     public int $original_width;
     public int $original_height;
 
+    /**
+     * Create a truecolor GD image resource with the configured width and height.
+     *
+     * @return void
+     */
     public function GD_create(): void
     {
         $this->image = imagecreatetruecolor($this->width, $this->height);
     }
 
+    /**
+     * Copy and resample the original image into the working image resource.
+     *
+     * @return void
+     */
     public function GD_copyresampled(): void
     {
         imagecopyresampled(
@@ -36,6 +46,11 @@ class ImageGD
         );
     }
 
+    /**
+     * Convenience: create the working image and perform resampling from the original.
+     *
+     * @return void
+     */
     public function GD_resize(): void
     {
         $this->GD_create();

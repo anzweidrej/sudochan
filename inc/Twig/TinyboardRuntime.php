@@ -8,10 +8,9 @@ namespace Sudochan\Twig;
 
 use Twig\Extension\RuntimeExtensionInterface;
 use Sudochan\Manager\PermissionManager;
-use Sudochan\Manager\AuthManager;
+use Sudochan\Security\Authenticator;
 use Sudochan\Dispatcher\EventDispatcher;
-use Sudochan\Utils\Math;
-use Sudochan\Utils\Token;
+use Sudochan\Utils\{Math, Token};
 
 class TinyboardRuntime implements RuntimeExtensionInterface
 {

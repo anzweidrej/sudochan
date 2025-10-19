@@ -20,11 +20,22 @@ class ImageBase extends ImageGD
     public int $width;
     public int $height;
 
+    /**
+     * Check whether the image was successfully loaded.
+     *
+     * @return bool True if image resource is valid.
+     */
     public function valid(): bool
     {
         return (bool) $this->image;
     }
 
+    /**
+     * Construct the image wrapper.
+     *
+     * @param Image|false $img ImageResource or false.
+     * @param array|false $size Optional [width, height].
+     */
     public function __construct(Image|false $img, array|false $size = false)
     {
         if (method_exists($this, 'init')) {
@@ -42,9 +53,18 @@ class ImageBase extends ImageGD
         }
     }
 
-    // fallback method to satisfy static analysis
+    /**
+     * Fallback loader method for static analysis.
+     *
+     * @return void
+     */
     public function from(): void {}
 
+    /**
+     * Get current image width using backend-specific method when available.
+     *
+     * @return int Width in pixels.
+     */
     public function _width(): int
     {
         if (method_exists($this, 'width')) {
@@ -54,6 +74,11 @@ class ImageBase extends ImageGD
         return imagesx($this->image);
     }
 
+    /**
+     * Get current image height using backend-specific method when available.
+     *
+     * @return int Height in pixels.
+     */
     public function _height(): int
     {
         if (method_exists($this, 'height')) {
@@ -63,6 +88,11 @@ class ImageBase extends ImageGD
         return imagesy($this->image);
     }
 
+    /**
+     * Destroy/free the image resource using backend-specific method when available.
+     *
+     * @return bool True on success.
+     */
     public function _destroy(): bool
     {
         if (method_exists($this, 'destroy')) {
@@ -72,6 +102,14 @@ class ImageBase extends ImageGD
         return imagedestroy($this->image);
     }
 
+    /**
+     * Resize the provided original into this instance using backend-specific method.
+     *
+     * @param mixed $original Backend-specific original image resource.
+     * @param int $width Target width.
+     * @param int $height Target height.
+     * @return void
+     */
     public function _resize(mixed $original, int $width, int $height): void
     {
         $this->original = &$original;

@@ -6,13 +6,10 @@
 
 namespace Sudochan\Controller;
 
-use Sudochan\Manager\AuthManager;
-use Sudochan\Cache;
-use Sudochan\Manager\PermissionManager;
+use Sudochan\Security\Authenticator;
+use Sudochan\Manager\{CacheManager as Cache, PermissionManager};
 use Sudochan\Service\MarkupService;
-use Sudochan\Utils\Token;
-use Sudochan\Utils\TextFormatter;
-use Sudochan\Utils\Sanitize;
+use Sudochan\Utils\{Token, TextFormatter, Sanitize};
 use Sudochan\Repository\NoticeboardRepository;
 
 class NoticeboardController
@@ -56,7 +53,7 @@ class NoticeboardController
                 Cache::delete('noticeboard_preview');
             }
 
-            AuthManager::modLog('Posted a noticeboard entry');
+            Authenticator::modLog('Posted a noticeboard entry');
 
             header('Location: ?/noticeboard#' . $id, true, $config['redirect_http']);
         }
@@ -97,7 +94,7 @@ class NoticeboardController
 
         $this->repository->deleteNotice($id);
 
-        AuthManager::modLog('Deleted a noticeboard entry');
+        Authenticator::modLog('Deleted a noticeboard entry');
 
         if ($config['cache']['enabled']) {
             Cache::delete('noticeboard_preview');

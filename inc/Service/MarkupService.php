@@ -7,44 +7,17 @@
 namespace Sudochan\Service;
 
 use Sudochan\Dispatcher\EventDispatcher;
-use Sudochan\Utils\TextFormatter;
-use Sudochan\Utils\StringFormatter;
-use Sudochan\Utils\Sanitize;
+use Sudochan\Utils\{TextFormatter, StringFormatter, Sanitize};
 
 class MarkupService
 {
-    public static function markup_url(array $matches): string
-    {
-        global $config, $markup_urls;
-
-        $url = $matches[1];
-        $after = $matches[2];
-
-        $markup_urls[] = $url;
-
-        $link = (object) [
-            'href' => $url,
-            'text' => $url,
-            'rel' => 'nofollow',
-            'target' => '_blank',
-        ];
-
-        EventDispatcher::event('markup-url', $link);
-        $link = (array) $link;
-
-        $parts = [];
-        foreach ($link as $attr => $value) {
-            if ($attr == 'text' || $attr == 'after') {
-                continue;
-            }
-            $parts[] = $attr . '="' . $value . '"';
-        }
-        if (isset($link['after'])) {
-            $after = $link['after'] . $after;
-        }
-        return '<a ' . implode(' ', $parts) . '>' . $link['text'] . '</a>' . $after;
-    }
-
+    /**
+     * Apply configured markup rules to a post body.
+     *
+     * @param string $body Post body.
+     * @param bool $track_cites If true, collect and return tracked cites.
+     * @return array List of tracked cites as [board, id] pairs.
+     */
     public static function markup(string &$body, bool $track_cites = false): array
     {
         global $board, $config, $markup_urls;
@@ -143,7 +116,7 @@ class MarkupService
                         . '&gt;&gt;' . $cite
                         . '</a>';
 
-                    $body = self::mb_substr_replace($body, $matches[1][0] . $replacement . $matches[3][0], $matches[0][1] + $skip_chars, mb_strlen($matches[0][0]));
+                    $body = StringFormatter::mb_substr_replace($body, $matches[1][0] . $replacement . $matches[3][0], $matches[0][1] + $skip_chars, mb_strlen($matches[0][0]));
                     $skip_chars += mb_strlen($matches[1][0] . $replacement . $matches[3][0]) - mb_strlen($matches[0][0]);
 
                     if ($track_cites && $config['track_cites']) {
@@ -247,7 +220,7 @@ class MarkupService
                             . '&gt;&gt;&gt;/' . $_board . '/' . $cite
                             . '</a>';
 
-                        $body = self::mb_substr_replace($body, $matches[1][0] . $replacement . $matches[4][0], $matches[0][1] + $skip_chars, mb_strlen($matches[0][0]));
+                        $body = StringFormatter::mb_substr_replace($body, $matches[1][0] . $replacement . $matches[4][0], $matches[0][1] + $skip_chars, mb_strlen($matches[0][0]));
                         $skip_chars += mb_strlen($matches[1][0] . $replacement . $matches[4][0]) - mb_strlen($matches[0][0]);
 
                         if ($track_cites && $config['track_cites']) {
@@ -258,7 +231,7 @@ class MarkupService
                     $replacement = '<a href="' . $crossboard_indexes[$_board] . '">'
                             . '&gt;&gt;&gt;/' . $_board . '/'
                             . '</a>';
-                    $body = self::mb_substr_replace($body, $matches[1][0] . $replacement . $matches[4][0], $matches[0][1] + $skip_chars, mb_strlen($matches[0][0]));
+                    $body = StringFormatter::mb_substr_replace($body, $matches[1][0] . $replacement . $matches[4][0], $matches[0][1] + $skip_chars, mb_strlen($matches[0][0]));
                     $skip_chars += mb_strlen($matches[1][0] . $replacement . $matches[4][0]) - mb_strlen($matches[0][0]);
                 }
             }
@@ -296,10 +269,5 @@ class MarkupService
         $body = str_replace("\t", '        ', $body);
 
         return $tracked_cites;
-    }
-
-    public static function mb_substr_replace(string $string, string $replacement, int $start, int $length): string
-    {
-        return mb_substr($string, 0, $start) . $replacement . mb_substr($string, $start + $length);
     }
 }

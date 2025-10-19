@@ -10,12 +10,22 @@ use Sudochan\Resource\ImageBase;
 
 class ImageImagick extends ImageBase
 {
+    /**
+     * Initialize the internal Imagick instance and set a transparent background.
+     *
+     * @return void
+     */
     public function init(): void
     {
         $this->image = new \Imagick();
         $this->image->setBackgroundColor(new \ImagickPixel('transparent'));
     }
 
+    /**
+     * Load the image into the Imagick instance.
+     *
+     * @return void
+     */
     public function from(): void
     {
         try {
@@ -26,6 +36,12 @@ class ImageImagick extends ImageBase
         }
     }
 
+    /**
+     * Write the Imagick image to disk.
+     *
+     * @param string $src Destination path.
+     * @return void
+     */
     public function to(string $src): void
     {
         global $config;
@@ -39,21 +55,41 @@ class ImageImagick extends ImageBase
         }
     }
 
+    /**
+     * Get the current image width.
+     *
+     * @return int
+     */
     public function width(): int
     {
         return $this->image->getImageWidth();
     }
 
+    /**
+     * Get the current image height.
+     *
+     * @return int
+     */
     public function height(): int
     {
         return $this->image->getImageHeight();
     }
 
+    /**
+     * Destroy the Imagick instance and free resources.
+     *
+     * @return bool True on success, false otherwise.
+     */
     public function destroy(): bool
     {
         return $this->image->destroy();
     }
 
+    /**
+     * Resize the image.
+     *
+     * @return void
+     */
     public function resize(): void
     {
         global $config;

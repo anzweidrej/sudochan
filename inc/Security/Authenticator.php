@@ -4,12 +4,12 @@
  *  Copyright (c) 2010-2013 Tinyboard Development Group
  */
 
-namespace Sudochan\Manager;
+namespace Sudochan\Security;
 
-use Sudochan\Cache;
+use Sudochan\Manager\CacheManager as Cache;
 use Sudochan\Handler\ErrorHandler;
 
-class AuthManager
+class Authenticator
 {
     /**
      * Create a salted hash for validating logins.

@@ -40,7 +40,8 @@ return [
     '/ban'                              => 'secure_POST BanController@mod_ban', // new ban
     '/bans'                             => 'secure_POST BanController@mod_bans', // ban list
     '/bans/(\d+)'                       => 'secure_POST BanController@mod_bans', // ban list
-    '/ban-appeals'                      => 'secure_POST BanController@mod_ban_appeals', // view ban appeals
+
+    '/ban-appeals'                      => 'secure_POST BanAppealsController@mod_ban_appeals', // view ban appeals
 
     '/search'                           => 'SearchController@mod_search_redirect', // search
     '/search/(posts|IP_notes|bans|log)/(.+)/(\d+)' => 'SearchController@mod_search', // search

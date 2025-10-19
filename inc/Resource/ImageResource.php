@@ -51,6 +51,14 @@ class ImageResource
         }
     }
 
+    /**
+     * Create a thumbnail/converted image using the configured backend.
+     *
+     * @param string $extension Desired output extension.
+     * @param int $max_width Maximum width in pixels.
+     * @param int $max_height Maximum height in pixels.
+     * @return ImageBase Backend image instance containing the resized image.
+     */
     public function resize(string $extension, int $max_width, int $max_height): ImageBase
     {
         global $config;
@@ -111,16 +119,32 @@ class ImageResource
         return $thumb;
     }
 
+    /**
+     * Write the current image to a destination path.
+     *
+     * @param string $dst Destination filesystem path.
+     * @return void
+     */
     public function to(string $dst): void
     {
         $this->image->to($dst);
     }
 
+    /**
+     * Delete the source file for this image.
+     *
+     * @return void
+     */
     public function delete(): void
     {
         FileManager::file_unlink($this->src);
     }
 
+    /**
+     * Destroy/free backend resources associated with this image.
+     *
+     * @return void
+     */
     public function destroy(): void
     {
         $this->image->_destroy();

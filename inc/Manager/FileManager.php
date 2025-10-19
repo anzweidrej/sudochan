@@ -6,7 +6,7 @@
 
 namespace Sudochan\Manager;
 
-use Sudochan\Remote;
+use Sudochan\Manager\RemoteManager as Remote;
 use Sudochan\Dispatcher\EventDispatcher;
 
 class FileManager

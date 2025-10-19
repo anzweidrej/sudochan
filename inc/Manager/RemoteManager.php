@@ -4,11 +4,11 @@
  *  Copyright (c) 2010-2013 Tinyboard Development Group
  */
 
-namespace Sudochan;
+namespace Sudochan\Manager;
 
 use Sudochan\Manager\FileManager;
 
-class Remote
+class RemoteManager
 {
     public array $auth = [];
     /** @var resource|mixed|null */
@@ -16,9 +16,6 @@ class Remote
     public string $host;
     public string $type;
 
-    /**
-     * @param array<string,mixed> $config
-     */
     public function __construct(array $config)
     {
         foreach ($config as $name => $value) {
@@ -67,6 +64,13 @@ class Remote
         }
     }
 
+    /**
+     * Write data to a remote path using the configured transfer type.
+     *
+     * @param string $data Data to write.
+     * @param string $remote_path Remote destination path.
+     * @return void
+     */
     public function write(string $data, string $remote_path): void
     {
         global $config;

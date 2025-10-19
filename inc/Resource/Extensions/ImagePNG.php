@@ -10,16 +10,32 @@ use Sudochan\Resource\ImageBase;
 
 class ImagePNG extends ImageBase
 {
+    /**
+     * Create an image resource from a PNG file.
+     *
+     * @return void
+     */
     public function from(): void
     {
         $this->image = @imagecreatefrompng($this->src);
     }
 
+    /**
+     * Save the current image resource to a PNG file.
+     *
+     * @param string $src Path to save the PNG file to.
+     * @return void
+     */
     public function to(string $src): void
     {
         imagepng($this->image, $src);
     }
 
+    /**
+     * Resize the image preserving alpha transparency.
+     *
+     * @return void
+     */
     public function resize(): void
     {
         $this->GD_create();

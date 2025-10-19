@@ -6,11 +6,10 @@
 
 namespace Sudochan\Controller;
 
-use Sudochan\Manager\AuthManager;
+use Sudochan\Security\Authenticator;
 use Sudochan\Service\BoardService;
 use Sudochan\Manager\PermissionManager;
-use Sudochan\Utils\StringFormatter;
-use Sudochan\Utils\Token;
+use Sudochan\Utils\{StringFormatter, Token};
 use Sudochan\Repository\UserRepository;
 
 class UserController
@@ -65,7 +64,7 @@ class UserController
 
                 $this->repository->deleteById($uid);
 
-                AuthManager::modLog('Deleted user ' . StringFormatter::utf8tohtml($user['username']) . ' <small>(#' . $user['id'] . ')</small>');
+                Authenticator::modLog('Deleted user ' . StringFormatter::utf8tohtml($user['username']) . ' <small>(#' . $user['id'] . ')</small>');
 
                 header('Location: ?/users', true, $config['redirect_http']);
 
@@ -80,20 +79,20 @@ class UserController
 
             if ($user['username'] !== $_POST['username']) {
                 // account was renamed
-                AuthManager::modLog('Renamed user "' . StringFormatter::utf8tohtml($user['username']) . '" <small>(#' . $user['id'] . ')</small> to "' . StringFormatter::utf8tohtml($_POST['username']) . '"');
+                Authenticator::modLog('Renamed user "' . StringFormatter::utf8tohtml($user['username']) . '" <small>(#' . $user['id'] . ')</small> to "' . StringFormatter::utf8tohtml($_POST['username']) . '"');
             }
 
             if ($_POST['password'] != '') {
-                $salt = AuthManager::generate_salt();
+                $salt = Authenticator::generate_salt();
                 $password = hash('sha256', $salt . sha1($_POST['password']));
 
                 $this->repository->updatePasswordAndSalt($uid, $password, $salt);
 
-                AuthManager::modLog('Changed password for ' . StringFormatter::utf8tohtml($_POST['username']) . ' <small>(#' . $user['id'] . ')</small>');
+                Authenticator::modLog('Changed password for ' . StringFormatter::utf8tohtml($_POST['username']) . ' <small>(#' . $user['id'] . ')</small>');
 
                 if ($uid == $mod['id']) {
-                    AuthManager::login($_POST['username'], $_POST['password']);
-                    AuthManager::setCookies();
+                    Authenticator::login($_POST['username'], $_POST['password']);
+                    Authenticator::setCookies();
                 }
             }
 
@@ -108,15 +107,15 @@ class UserController
 
         if (PermissionManager::hasPermission($config['mod']['change_password']) && $uid == $mod['id'] && isset($_POST['password'])) {
             if ($_POST['password'] != '') {
-                $salt = AuthManager::generate_salt();
+                $salt = Authenticator::generate_salt();
                 $password = hash('sha256', $salt . sha1($_POST['password']));
 
                 $this->repository->updatePasswordAndSalt($uid, $password, $salt);
 
-                AuthManager::modLog('Changed own password');
+                Authenticator::modLog('Changed own password');
 
-                AuthManager::login($user['username'], $_POST['password']);
-                AuthManager::setCookies();
+                Authenticator::login($user['username'], $_POST['password']);
+                Authenticator::setCookies();
             }
 
             if (PermissionManager::hasPermission($config['mod']['manageusers'])) {
@@ -186,12 +185,12 @@ class UserController
                 error(sprintf($config['error']['invalidfield'], 'type'));
             }
 
-            $salt = AuthManager::generate_salt();
+            $salt = Authenticator::generate_salt();
             $password = hash('sha256', $salt . sha1($_POST['password']));
 
             $userID = (int) $this->repository->insertUser($_POST['username'], $password, $salt, $type, implode(',', $boards));
 
-            AuthManager::modLog('Created a new user: ' . StringFormatter::utf8tohtml($_POST['username']) . ' <small>(#' . $userID . ')</small>');
+            Authenticator::modLog('Created a new user: ' . StringFormatter::utf8tohtml($_POST['username']) . ' <small>(#' . $userID . ')</small>');
 
             header('Location: ?/users', true, $config['redirect_http']);
             return;
@@ -266,7 +265,7 @@ class UserController
 
         $this->repository->updateType($uid, $new_group);
 
-        AuthManager::modLog(($action == 'promote' ? 'Promoted' : 'Demoted') . ' user "'
+        Authenticator::modLog(($action == 'promote' ? 'Promoted' : 'Demoted') . ' user "'
             . StringFormatter::utf8tohtml($mod['username']) . '" to ' . $config['mod']['groups'][$new_group]);
 
         header('Location: ?/users', true, $config['redirect_http']);

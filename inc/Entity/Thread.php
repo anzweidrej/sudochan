@@ -10,12 +10,7 @@ use Sudochan\Dispatcher\EventDispatcher;
 use Sudochan\Entity\Post;
 use Sudochan\Manager\PermissionManager;
 use Sudochan\Service\MarkupService;
-use Sudochan\Utils\Math;
-use Sudochan\Utils\TextFormatter;
-use Sudochan\Utils\StringFormatter;
-use Sudochan\Utils\Token;
-use Sudochan\Utils\LinkBuilder;
-use Sudochan\Utils\Sanitize;
+use Sudochan\Utils\{Math, TextFormatter, StringFormatter, Token, LinkBuilder, Sanitize};
 
 class Thread
 {
@@ -54,6 +49,14 @@ class Thread
     public array $modifiers;
     public int $id;
 
+    /**
+     * Construct a Thread object from a data row.
+     *
+     * @param object|array $post Row data.
+     * @param string|null $root Base root URL.
+     * @param array|bool $mod Moderator context or false.
+     * @param bool $hr Whether to show horizontal rule when rendering.
+     */
     public function __construct(object|array $post, ?string $root = null, array|bool $mod = false, bool $hr = true)
     {
         global $config;
@@ -97,6 +100,12 @@ class Thread
         }
     }
 
+    /**
+     * Build a link to this thread.
+     *
+     * @param string $pre Prefix for the anchor id.
+     * @return string Full URL to the thread anchor.
+     */
     public function link(string $pre = ''): string
     {
         global $config, $board;
@@ -104,11 +113,21 @@ class Thread
         return $this->root . $board['dir'] . $config['dir']['res'] . sprintf($config['file_page'], $this->id) . '#' . $pre . $this->id;
     }
 
+    /**
+     * Add a reply Post to this thread.
+     *
+     * @param Post $post Reply post object
+     */
     public function add(Post $post): void
     {
         $this->posts[] = $post;
     }
 
+    /**
+     * Generate moderator controls for the thread.
+     *
+     * @return string HTML fragment with mod controls or empty string.
+     */
     public function postControls(): string
     {
         global $board, $config;
@@ -193,11 +212,22 @@ class Thread
         return $built;
     }
 
+    /**
+     * Return file aspect ratio as a string.
+     *
+     * @return string Ratio in "w:h" format or empty string if unknown.
+     */
     public function ratio(): string
     {
         return Math::fraction($this->filewidth, $this->fileheight, ':');
     }
 
+    /**
+     * Render the thread using templates.
+     *
+     * @param bool $index True when rendering on index page.
+     * @return string HTML for the thread.
+     */
     public function build(bool $index = false): string
     {
         global $board, $config, $debug;

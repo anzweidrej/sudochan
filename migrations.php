@@ -5,6 +5,7 @@
  */
 
 use Sudochan\Manager\FileManager;
+use Sudochan\Manager\BanManager as Bans;
 
 /**
  * Run database migrations.
@@ -457,7 +458,7 @@ function run_migrations(string &$version, array $boards, array &$page, array $co
                 $query = prepare("INSERT INTO ``bans_new_temp`` VALUES 
 					(NULL, :ipstart, :ipend, :created, :expires, :board, :creator, :reason, :seen, NULL)");
 
-                $range = Sudochan\Bans::parse_range($ban['ip']);
+                $range = Bans::parse_range($ban['ip']);
                 if ($range === false) {
                     // Invalid retard ban; just skip it.
                     continue;

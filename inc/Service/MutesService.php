@@ -4,13 +4,19 @@
  *  Copyright (c) 2010-2013 Tinyboard Development Group
  */
 
-namespace Sudochan;
+namespace Sudochan\Service;
 
-use Sudochan\Cache;
+use Sudochan\Manager\CacheManager as Cache;
 use Sudochan\Dispatcher\EventDispatcher;
 
-class Mutes
+class MutesService
 {
+    /**
+     * Normalize a message and produce a robot hash.
+     *
+     * @param string $body Message body to normalize.
+     * @return string SHA1 hash of the normalized body.
+     */
     public static function makerobot(string $body): string
     {
         global $config;
@@ -27,6 +33,12 @@ class Mutes
         return sha1($body);
     }
 
+    /**
+     * Check whether the provided body matches a known robot hash and record it.
+     *
+     * @param string $body Message body to check.
+     * @return bool True if considered a robot, false if new and recorded.
+     */
     public static function checkRobot(string $body): bool
     {
         if (empty($body) || EventDispatcher::event('check-robot', $body)) {
@@ -50,6 +62,11 @@ class Mutes
         return false;
     }
 
+    /**
+     * Compute current mute duration based on recent mutes for the requester.
+     *
+     * @return int Mute duration in seconds.
+     */
     public static function muteTime(): int
     {
         global $config;
@@ -70,6 +87,11 @@ class Mutes
         return pow($config['robot_mute_multiplier'], $result);
     }
 
+    /**
+     * Record a mute for the current requester and return the computed mute duration.
+     *
+     * @return int Mute duration in seconds after recording.
+     */
     public static function mute(): int
     {
         // Insert mute
@@ -81,6 +103,11 @@ class Mutes
         return self::muteTime();
     }
 
+    /**
+     * Enforce mute for the current requester if applicable.
+     *
+     * @return void
+     */
     public static function checkMute(): void
     {
         global $config, $debug;

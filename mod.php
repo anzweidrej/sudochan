@@ -4,7 +4,7 @@
  *  Copyright (c) 2010-2014 Tinyboard Development Group
  */
 
-use Sudochan\Manager\AuthManager;
+use Sudochan\Security\Authenticator;
 use Sudochan\Controller\AuthController;
 use Sudochan\Utils\Token;
 use Sudochan\Dispatcher;
@@ -12,7 +12,7 @@ use Sudochan\Dispatcher;
 require_once 'bootstrap.php';
 
 // Authenticate the mod user
-AuthManager::authenticate();
+Authenticator::authenticate();
 
 if (!empty($config['debug'])) {
     $parse_start_time = microtime(true);

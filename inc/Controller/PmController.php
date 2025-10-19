@@ -6,14 +6,10 @@
 
 namespace Sudochan\Controller;
 
-use Sudochan\Manager\AuthManager;
-use Sudochan\Cache;
-use Sudochan\Manager\PermissionManager;
+use Sudochan\Security\Authenticator;
+use Sudochan\Manager\{CacheManager as Cache, PermissionManager};
 use Sudochan\Service\MarkupService;
-use Sudochan\Utils\StringFormatter;
-use Sudochan\Utils\TextFormatter;
-use Sudochan\Utils\Token;
-use Sudochan\Utils\Sanitize;
+use Sudochan\Utils\{StringFormatter, TextFormatter, Token, Sanitize};
 use Sudochan\Repository\PmRepository;
 
 class PmController
@@ -65,7 +61,7 @@ class PmController
                 Cache::delete('pm_unreadcount_' . $mod['id']);
             }
 
-            AuthManager::modLog('Read a PM');
+            Authenticator::modLog('Read a PM');
         }
 
         if ($reply) {
@@ -144,7 +140,7 @@ class PmController
                 Cache::delete('pm_unreadcount_' . $id);
             }
 
-            AuthManager::modLog('Sent a PM to ' . StringFormatter::utf8tohtml($username));
+            Authenticator::modLog('Sent a PM to ' . StringFormatter::utf8tohtml($username));
 
             header('Location: ?/', true, $config['redirect_http']);
         }

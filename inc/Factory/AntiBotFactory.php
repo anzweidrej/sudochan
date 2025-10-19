@@ -6,10 +6,17 @@
 
 namespace Sudochan\Factory;
 
-use Sudochan\AntiBot;
+use Sudochan\Security\AntiBot;
 
 class AntiBotFactory
 {
+    /**
+     * Create and persist an AntiBot instance.
+     *
+     * @param string $board Board identifier.
+     * @param int|null $thread Thread ID or null for board-level.
+     * @return AntiBot Newly created AntiBot instance.
+     */
     public static function _create_antibot(string $board, ?int $thread): AntiBot
     {
         global $config, $purged_old_antispam;
@@ -43,6 +50,13 @@ class AntiBotFactory
         return $antibot;
     }
 
+    /**
+     * Public wrapper to create an AntiBot instance.
+     *
+     * @param string $board Board identifier.
+     * @param int|null $thread Optional thread ID.
+     * @return AntiBot Newly created AntiBot instance.
+     */
     public static function create_antibot(string $board, ?int $thread = null): AntiBot
     {
         require_once __DIR__ . '/../AntiBot.php';

@@ -3,10 +3,16 @@
 namespace Sudochan\Service;
 
 use Sudochan\Utils\Obfuscation;
-use Sudochan\Filter;
+use Sudochan\Manager\FilterManager as Filter;
 
 class AntiSpamService
 {
+    /**
+     * Validate posted anti-spam hash against reconstructed inputs and DB record.
+     *
+     * @param array $extra_salt Optional extra salt parts to include in the hash.
+     * @return bool|string Returns the valid hash string, or true/false-like sentinel on failure.
+     */
     public static function checkSpam(array $extra_salt = []): bool|string
     {
         global $config, $pdo;
@@ -65,6 +71,12 @@ class AntiSpamService
         return $hash;
     }
 
+    /**
+     * Increment the 'passed' counter for an anti-spam hash.
+     *
+     * @param string $hash The anti-spam hash to increment.
+     * @return void
+     */
     public static function incrementSpamHash(string $hash): void
     {
         $query = prepare('UPDATE ``antispam`` SET `passed` = `passed` + 1 WHERE `hash` = :hash');
@@ -72,6 +84,11 @@ class AntiSpamService
         $query->execute() or error(db_error($query));
     }
 
+    /**
+     * Purge old entries from the flood prevention table based on configured cache time.
+     *
+     * @return void
+     */
     public static function purge_flood_table(): void
     {
         global $config;
@@ -96,6 +113,12 @@ class AntiSpamService
         query("DELETE FROM ``flood`` WHERE `time` < $time") or error(db_error());
     }
 
+    /**
+     * Run configured filters against a post and apply their actions.
+     *
+     * @param array $post The post data to check.
+     * @return void
+     */
     public static function do_filters(array $post): void
     {
         global $config;

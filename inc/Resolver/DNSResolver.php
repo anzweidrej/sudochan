@@ -6,7 +6,7 @@
 
 namespace Sudochan\Resolver;
 
-use Sudochan\Cache;
+use Sudochan\Manager\CacheManager as Cache;
 use Sudochan\Utils\Shell;
 
 class DNSResolver

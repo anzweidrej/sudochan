@@ -8,8 +8,7 @@ namespace Sudochan\Twig;
 
 use Sudochan\Twig\TinyboardRuntime;
 use Twig\Extension\AbstractExtension;
-use Twig\TwigFilter;
-use Twig\TwigFunction;
+use Twig\{TwigFilter, TwigFunction};
 
 class TinyboardExtension extends AbstractExtension
 {

@@ -4,12 +4,12 @@
  *  Copyright (c) 2010-2013 Tinyboard Development Group
  */
 
-namespace Sudochan;
+namespace Sudochan\Manager;
 
-use Sudochan\Bans;
+use Sudochan\Manager\BanManager as Bans;
 use Sudochan\Utils\Obfuscation;
 
-class Filter
+class FilterManager
 {
     public array|false|null $flood_check = null;
     private array $condition;
@@ -27,6 +27,14 @@ class Filter
         }
     }
 
+    /**
+     * Evaluate a single condition against a post.
+     *
+     * @param array $post Post data.
+     * @param string $condition Condition name.
+     * @param mixed $match Pattern or value to match.
+     * @return bool|int True/false or integer.
+     */
     public function match(array $post, string $condition, mixed $match): bool|int
     {
         $condition = strtolower($condition);
@@ -150,6 +158,11 @@ class Filter
         }
     }
 
+    /**
+     * Execute the action defined by this filter.
+     *
+     * @return void
+     */
     public function action(): void
     {
         global $board;
@@ -188,6 +201,12 @@ class Filter
         }
     }
 
+    /**
+     * Check all conditions for a post.
+     *
+     * @param array $post Post data.
+     * @return bool True if all conditions match.
+     */
     public function check(array $post): bool
     {
         foreach ($this->condition as $condition => $value) {

@@ -7,17 +7,21 @@
 namespace Sudochan\Service;
 
 use Sudochan\Dispatcher\EventDispatcher;
-use Sudochan\Manager\FileManager;
-use Sudochan\Cache;
-use Sudochan\Api;
-use Sudochan\Entity\Thread;
-use Sudochan\Entity\Post;
+use Sudochan\Manager\{FileManager, CacheManager as Cache};
+use Sudochan\Translator\APITranslator as Api;
+use Sudochan\Entity\{Thread, Post};
 use Sudochan\Service\MarkupService;
 use Sudochan\Utils\Obfuscation;
 use Sudochan\Factory\AntiBotFactory;
 
 class PostService
 {
+    /**
+     * Check whether a thread is locked.
+     *
+     * @param int $id Thread id.
+     * @return bool True if locked, false otherwise.
+     */
     public static function threadLocked(int $id): bool
     {
         global $board;
@@ -38,6 +42,12 @@ class PostService
         return (bool) $locked;
     }
 
+    /**
+     * Check whether a thread is sage-locked.
+     *
+     * @param int $id Thread id.
+     * @return bool True if sage-locked, false otherwise.
+     */
     public static function threadSageLocked(int $id): bool
     {
         global $board;
@@ -58,6 +68,12 @@ class PostService
         return (bool) $sagelocked;
     }
 
+    /**
+     * Check whether a thread exists.
+     *
+     * @param int $id Thread id.
+     * @return bool True if thread exists, false otherwise.
+     */
     public static function threadExists(int $id): bool
     {
         global $board;
@@ -73,6 +89,12 @@ class PostService
         return false;
     }
 
+    /**
+     * Insert a flood entry for a post.
+     *
+     * @param array $post Post data.
+     * @return void
+     */
     public static function insertFloodPost(array $post): void
     {
         global $board;
@@ -91,6 +113,12 @@ class PostService
         $query->execute() or error(db_error($query));
     }
 
+    /**
+     * Insert a post into the database.
+     *
+     * @param array $post Post data array.
+     * @return string Inserted post ID.
+     */
     public static function post(array $post): string
     {
         global $pdo, $board;
@@ -190,6 +218,12 @@ class PostService
         return $pdo->lastInsertId();
     }
 
+    /**
+     * Bump a thread's bump timestamp.
+     *
+     * @param int $id Thread id.
+     * @return bool Always true on success.
+     */
     public static function bumpThread(int $id): bool
     {
         global $config, $board, $build_pages;
@@ -210,7 +244,13 @@ class PostService
         return true;
     }
 
-    // Remove file from post
+    /**
+     * Delete a file attached to a post.
+     *
+     * @param int $id Post id.
+     * @param bool $remove_entirely_if_already Remove fully if already marked deleted.
+     * @return void
+     */
     public static function deleteFile(int $id, bool $remove_entirely_if_already = true): void
     {
         global $board, $config;
@@ -251,7 +291,12 @@ class PostService
         }
     }
 
-    // rebuild post (markup)
+    /**
+     * Rebuild a post's markup and update stored HTML.
+     *
+     * @param int $id Post id.
+     * @return bool True on success, false on failure.
+     */
     public static function rebuildPost(int $id): bool
     {
         global $board;
@@ -276,7 +321,14 @@ class PostService
         return true;
     }
 
-    // Delete a post (reply or thread)
+    /**
+     * Delete a post or entire thread.
+     *
+     * @param int $id Post or thread id.
+     * @param bool $error_if_doesnt_exist Whether to error if post doesn't exist.
+     * @param bool $rebuild_after Whether to rebuild affected thread after delete.
+     * @return bool True on success.
+     */
     public static function deletePost(int $id, bool $error_if_doesnt_exist = true, bool $rebuild_after = true): bool
     {
         global $board, $config;
@@ -357,6 +409,11 @@ class PostService
         return true;
     }
 
+    /**
+     * Clean old threads beyond max pages.
+     *
+     * @return void
+     */
     public static function clean(): void
     {
         global $board, $config;
@@ -372,6 +429,12 @@ class PostService
         }
     }
 
+    /**
+     * Find page number where a thread appears.
+     *
+     * @param int $thread Thread id.
+     * @return int|false Page number or false if not found.
+     */
     public static function thread_find_page(int $thread): int|false
     {
         global $config, $board;
@@ -384,6 +447,14 @@ class PostService
         return floor(($config['threads_per_page'] + $index) / $config['threads_per_page']);
     }
 
+    /**
+     * Build a thread page.
+     *
+     * @param int $id Thread id.
+     * @param bool $return Whether to return HTML instead of writing file.
+     * @param array|bool $mod Mod flag or array for mod prefix.
+     * @return string|null Thread HTML when $return is true, null otherwise.
+     */
     public static function buildThread(int $id, bool $return = false, array|bool $mod = false): ?string
     {
         global $board, $config, $build_pages;
@@ -449,6 +520,12 @@ class PostService
         return null;
     }
 
+    /**
+     * Get post by file hash.
+     *
+     * @param string $hash File hash.
+     * @return array|false Post array with id and thread or false if not found.
+     */
     public static function getPostByHash(string $hash): array|false
     {
         global $board;
@@ -463,6 +540,13 @@ class PostService
         return false;
     }
 
+    /**
+     * Get post by file hash within a specific thread.
+     *
+     * @param string $hash File hash.
+     * @param int $thread Thread id.
+     * @return array|false Post array with id and thread or false if not found.
+     */
     public static function getPostByHashInThread(string $hash, int $thread): array|false
     {
         global $board;

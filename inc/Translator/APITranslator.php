@@ -4,16 +4,15 @@
  *  Copyright (c) 2010-2013 Tinyboard Development Group
  */
 
-namespace Sudochan;
+namespace Sudochan\Translator;
 
 use Sudochan\Entity\Thread;
-use Sudochan\Utils\TextFormatter;
-use Sudochan\Utils\Sanitize;
+use Sudochan\Utils\{TextFormatter, Sanitize};
 
 /**
  * Class for generating json API compatible with 4chan API
  */
-class Api
+class APITranslator
 {
     public array $config;
     public array $postFields;

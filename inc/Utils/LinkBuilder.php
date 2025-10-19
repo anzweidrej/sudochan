@@ -6,6 +6,8 @@
 
 namespace Sudochan\Utils;
 
+use Sudochan\Dispatcher\EventDispatcher;
+
 class LinkBuilder
 {
     /**
@@ -37,5 +39,43 @@ class LinkBuilder
         }
 
         return 'Embedding error.';
+    }
+
+    /**
+     * Build an HTML anchor for a matched URL.
+     *
+     * @param array $matches Regex capture groups for the URL and trailing text.
+     * @return string HTML anchor plus trailing text.
+     */
+    public static function markup_url(array $matches): string
+    {
+        global $config, $markup_urls;
+
+        $url = $matches[1];
+        $after = $matches[2];
+
+        $markup_urls[] = $url;
+
+        $link = (object) [
+            'href' => $url,
+            'text' => $url,
+            'rel' => 'nofollow',
+            'target' => '_blank',
+        ];
+
+        EventDispatcher::event('markup-url', $link);
+        $link = (array) $link;
+
+        $parts = [];
+        foreach ($link as $attr => $value) {
+            if ($attr == 'text' || $attr == 'after') {
+                continue;
+            }
+            $parts[] = $attr . '="' . $value . '"';
+        }
+        if (isset($link['after'])) {
+            $after = $link['after'] . $after;
+        }
+        return '<a ' . implode(' ', $parts) . '>' . $link['text'] . '</a>' . $after;
     }
 }

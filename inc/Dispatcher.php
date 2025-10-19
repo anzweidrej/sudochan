@@ -10,11 +10,11 @@ class Dispatcher
     /**
      * Dispatch mod pages.
      *
-     * @param array         $pages
-     * @param string        $query
-     * @param array         $config
-     * @param array|null    &$debug
-     * @param float|null    $parse_start_time
+     * @param array $pages
+     * @param string $query
+     * @param array $config
+     * @param array|null &$debug
+     * @param float|null $parse_start_time
      */
     public static function dispatch(array $pages, string $query, array $config, ?array &$debug = null, ?float $parse_start_time = null): void
     {

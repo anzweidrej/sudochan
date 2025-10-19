@@ -6,10 +6,9 @@
 
 namespace Sudochan\Controller;
 
-use Sudochan\Manager\AuthManager;
+use Sudochan\Security\Authenticator;
 use Sudochan\Handler\ErrorHandler;
-use Sudochan\Utils\StringFormatter;
-use Sudochan\Utils\Token;
+use Sudochan\Utils\{StringFormatter, Token};
 
 class AuthController
 {
@@ -29,18 +28,18 @@ class AuthController
             // Check if inputs are set and not empty
             if (!isset($_POST['username'], $_POST['password']) || $_POST['username'] == '' || $_POST['password'] == '') {
                 $args['error'] = $config['error']['invalid'];
-            } elseif (!AuthManager::login($_POST['username'], $_POST['password'])) {
+            } elseif (!Authenticator::login($_POST['username'], $_POST['password'])) {
                 if ($config['syslog']) {
                     ErrorHandler::_syslog(LOG_WARNING, 'Unauthorized login attempt!');
                 }
 
                 $args['error'] = $config['error']['invalid'];
             } else {
-                AuthManager::modLog('Logged in');
+                Authenticator::modLog('Logged in');
 
                 // Login successful
                 // Set cookies
-                AuthManager::setCookies();
+                Authenticator::setCookies();
 
                 if ($redirect) {
                     header('Location: ?' . $redirect, true, $config['redirect_http']);
@@ -65,7 +64,7 @@ class AuthController
     public function mod_logout(): void
     {
         global $config;
-        AuthManager::destroyCookies();
+        Authenticator::destroyCookies();
 
         header('Location: ?/', true, $config['redirect_http']);
     }

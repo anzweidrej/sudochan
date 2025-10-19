@@ -4,12 +4,17 @@
  *  Copyright (c) 2010-2013 Tinyboard Development Group
  */
 
-namespace Sudochan;
+namespace Sudochan\Manager;
 
-class Cache
+class CacheManager
 {
     private static mixed $cache = null;
 
+    /**
+     * Initialize cache backend from global $config.
+     *
+     * @return void
+     */
     public static function init(): void
     {
         global $config;
@@ -37,6 +42,12 @@ class Cache
         }
     }
 
+    /**
+     * Retrieve a value from cache.
+     *
+     * @param string $key
+     * @return mixed|null Cached value or false on miss.
+     */
     public static function get(string $key): mixed
     {
         global $config, $debug;
@@ -73,6 +84,14 @@ class Cache
         return $data;
     }
 
+    /**
+     * Store a value in cache.
+     *
+     * @param string $key
+     * @param mixed $value
+     * @param int|false $expires Seconds until expiration or false to use default.
+     * @return void
+     */
     public static function set(string $key, mixed $value, int|false $expires = false): void
     {
         global $config, $debug;
@@ -112,6 +131,12 @@ class Cache
         }
     }
 
+    /**
+     * Remove a key from cache.
+     *
+     * @param string $key
+     * @return void
+     */
     public static function delete(string $key): void
     {
         global $config, $debug;
@@ -142,6 +167,11 @@ class Cache
         }
     }
 
+    /**
+     * Flush all cached entries.
+     *
+     * @return bool True on success, false otherwise.
+     */
     public static function flush(): bool
     {
         global $config;

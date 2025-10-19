@@ -6,17 +6,12 @@
 
 namespace Sudochan\Controller;
 
-use Sudochan\Manager\AuthManager;
-use Sudochan\Entity\Thread;
-use Sudochan\Entity\Post;
-use Sudochan\Bans;
-use Sudochan\Service\BoardService;
-use Sudochan\Service\MarkupService;
+use Sudochan\Security\Authenticator;
+use Sudochan\Entity\{Thread, Post};
+use Sudochan\Manager\{BanManager as Bans, PermissionManager};
+use Sudochan\Service\{BoardService, MarkupService};
 use Sudochan\Resolver\DNSResolver;
-use Sudochan\Manager\PermissionManager;
-use Sudochan\Utils\TextFormatter;
-use Sudochan\Utils\Token;
-use Sudochan\Utils\Sanitize;
+use Sudochan\Utils\{TextFormatter, Token, Sanitize};
 use Sudochan\Repository\IpNoteRepository;
 
 class IpNoteController
@@ -49,7 +44,7 @@ class IpNoteController
 
         $this->repository->removeNote($ip, $id);
 
-        AuthManager::modLog("Removed a note for <a href=\"?/IP/{$ip}\">{$ip}</a>");
+        Authenticator::modLog("Removed a note for <a href=\"?/IP/{$ip}\">{$ip}</a>");
 
         header('Location: ?/IP/' . $ip . '#notes', true, $config['redirect_http']);
     }
@@ -89,7 +84,7 @@ class IpNoteController
 
             $this->repository->insertNote($ip, $mod['id'], $_POST['note']);
 
-            AuthManager::modLog("Added a note for <a href=\"?/IP/{$ip}\">{$ip}</a>");
+            Authenticator::modLog("Added a note for <a href=\"?/IP/{$ip}\">{$ip}</a>");
 
             header('Location: ?/IP/' . $ip . '#notes', true, $config['redirect_http']);
             return;

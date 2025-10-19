@@ -6,19 +6,11 @@
 
 namespace Sudochan\Controller;
 
-use Sudochan\Manager\AuthManager;
+use Sudochan\Security\Authenticator;
 use Sudochan\Dispatcher\EventDispatcher;
-use Sudochan\Bans;
-use Sudochan\Service\BoardService;
-use Sudochan\Service\PageService;
-use Sudochan\Service\PostService;
-use Sudochan\Service\MarkupService;
-use Sudochan\Manager\FileManager;
-use Sudochan\Manager\ThemeManager;
-use Sudochan\Manager\PermissionManager;
-use Sudochan\Utils\DateRange;
-use Sudochan\Utils\StringFormatter;
-use Sudochan\Utils\Token;
+use Sudochan\Manager\{BanManager as Bans, FileManager, ThemeManager, PermissionManager};
+use Sudochan\Service\{BoardService, PageService, PostService, MarkupService};
+use Sudochan\Utils\{DateRange, StringFormatter, Token};
 use Sudochan\Repository\PostRepository;
 
 class PostController
@@ -44,7 +36,7 @@ class PostController
 
         $query = $this->repository->updateLock($board, $post, $unlock ? 0 : 1);
         if ($query->rowCount()) {
-            AuthManager::modLog(($unlock ? 'Unlocked' : 'Locked') . " thread #{$post}");
+            Authenticator::modLog(($unlock ? 'Unlocked' : 'Locked') . " thread #{$post}");
             PostService::buildThread($post);
             PageService::buildIndex();
         }
@@ -76,7 +68,7 @@ class PostController
 
         $query = $this->repository->updateSticky($board, $post, $unsticky ? 0 : 1);
         if ($query->rowCount()) {
-            AuthManager::modLog(($unsticky ? 'Unstickied' : 'Stickied') . " thread #{$post}");
+            Authenticator::modLog(($unsticky ? 'Unstickied' : 'Stickied') . " thread #{$post}");
             PostService::buildThread($post);
             PageService::buildIndex();
         }
@@ -98,7 +90,7 @@ class PostController
 
         $query = $this->repository->updateBumplock($board, $post, $unbumplock ? 0 : 1);
         if ($query->rowCount()) {
-            AuthManager::modLog(($unbumplock ? 'Unbumplocked' : 'Bumplocked') . " thread #{$post}");
+            Authenticator::modLog(($unbumplock ? 'Unbumplocked' : 'Bumplocked') . " thread #{$post}");
             PostService::buildThread($post);
             PageService::buildIndex();
         }
@@ -232,7 +224,7 @@ class PostController
                 }
             }
 
-            AuthManager::modLog("Moved thread #{$postID} to " . sprintf($config['board_abbreviation'], $targetBoard) . " (#{$newID})", $originBoard);
+            Authenticator::modLog("Moved thread #{$postID} to " . sprintf($config['board_abbreviation'], $targetBoard) . " (#{$newID})", $originBoard);
 
             // build new thread
             PostService::buildThread($newID);
@@ -341,13 +333,13 @@ class PostController
                 $this->repository->updateBodyAppendForBan($board, $post, $body_nomarkup);
                 PostService::rebuildPost($post);
 
-                AuthManager::modLog("Attached a public ban message to post #{$post}: " . StringFormatter::utf8tohtml($_POST['message']));
+                Authenticator::modLog("Attached a public ban message to post #{$post}: " . StringFormatter::utf8tohtml($_POST['message']));
                 PostService::buildThread($thread ? $thread : $post);
                 PageService::buildIndex();
             } elseif (isset($_POST['delete']) && (int) $_POST['delete']) {
                 // Delete post
                 PostService::deletePost($post);
-                AuthManager::modLog("Deleted post #{$post}");
+                Authenticator::modLog("Deleted post #{$post}");
                 // Rebuild board
                 PageService::buildIndex();
                 // Rebuild themes
@@ -402,9 +394,9 @@ class PostController
             }
 
             if ($edit_raw_html) {
-                AuthManager::modLog("Edited raw HTML of post #{$postID}");
+                Authenticator::modLog("Edited raw HTML of post #{$postID}");
             } else {
-                AuthManager::modLog("Edited post #{$postID}");
+                Authenticator::modLog("Edited post #{$postID}");
                 PostService::rebuildPost($postID);
             }
 
@@ -442,7 +434,7 @@ class PostController
         // Delete post
         PostService::deletePost($post);
         // Record the action
-        AuthManager::modLog("Deleted post #{$post}");
+        Authenticator::modLog("Deleted post #{$post}");
         // Rebuild board
         PageService::buildIndex();
         // Rebuild themes
@@ -466,7 +458,7 @@ class PostController
         // Delete file
         PostService::deleteFile($post);
         // Record the action
-        AuthManager::modLog("Deleted file from post #{$post}");
+        Authenticator::modLog("Deleted file from post #{$post}");
 
         // Rebuild board
         PageService::buildIndex();
@@ -498,7 +490,7 @@ class PostController
         $this->repository->updateThumb($board, $post, "spoiler", 128, 128);
 
         // Record the action
-        AuthManager::modLog("Spoilered file from post #{$post}");
+        Authenticator::modLog("Spoilered file from post #{$post}");
 
         // Rebuild thread
         PostService::buildThread($result['thread'] ? $result['thread'] : $post);
@@ -578,7 +570,7 @@ class PostController
         }
 
         // Record the action
-        AuthManager::modLog("Deleted all posts by IP address: <a href=\"?/IP/$ip\">$ip</a>");
+        Authenticator::modLog("Deleted all posts by IP address: <a href=\"?/IP/$ip\">$ip</a>");
 
         // Redirect
         header('Location: ?/' . sprintf($config['board_path'], $boardName) . $config['file_index'], true, $config['redirect_http']);

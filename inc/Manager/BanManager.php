@@ -4,23 +4,24 @@
  *  Copyright (c) 2010-2013 Tinyboard Development Group
  */
 
-namespace Sudochan;
+namespace Sudochan\Manager;
 
 use Lifo\IP\CIDR;
-use Sudochan\Manager\AuthManager;
-use Sudochan\Service\MarkupService;
-use Sudochan\Service\BoardService;
-use Sudochan\Utils\DateRange;
-use Sudochan\Utils\StringFormatter;
-use Sudochan\Utils\TextFormatter;
-use Sudochan\Entity\Post;
-use Sudochan\Entity\Thread;
+use Sudochan\Security\Authenticator;
+use Sudochan\Service\{MarkupService, BoardService};
+use Sudochan\Utils\{DateRange, StringFormatter, TextFormatter, Sanitize};
+use Sudochan\Entity\{Post, Thread};
 use Sudochan\Dispatcher\EventDispatcher;
-use Sudochan\Cache;
-use Sudochan\Utils\Sanitize;
+use Sudochan\Manager\CacheManager as Cache;
 
-class Bans
+class BanManager
 {
+    /**
+     * Convert an IP range to a human-readable string.
+     *
+     * @param array $mask [ipstart, ipend]
+     * @return string Human readable mask (single IP, CIDR or '???')
+     */
     public static function range_to_string(array $mask): string
     {
         list($ipstart, $ipend) = $mask;
@@ -43,6 +44,12 @@ class Bans
         return '???';
     }
 
+    /**
+     * Calculate binary range (inet_pton) for a CIDR string.
+     *
+     * @param string $mask CIDR notation.
+     * @return array [ipstart, ipend] as binary strings.
+     */
     private static function calc_cidr(string $mask): array
     {
         $cidr = new CIDR($mask);
@@ -51,6 +58,12 @@ class Bans
         return [inet_pton($range[0]), inet_pton($range[1])];
     }
 
+    /**
+     * Parse a human time string to a UNIX timestamp or false.
+     *
+     * @param string $str
+     * @return int|false Timestamp when the ban expires, or false on failure.
+     */
     public static function parse_time(string $str): int|false
     {
         if (empty($str)) {
@@ -99,6 +112,12 @@ class Bans
         return time() + $expire;
     }
 
+    /**
+     * Parse a mask string into binary start/end addresses.
+     *
+     * @param string $mask
+     * @return array|false [ipstart, ipend] (binary via inet_pton) or false on invalid mask.
+     */
     public static function parse_range(string $mask): array|false
     {
         $ipstart = false;
@@ -143,16 +162,24 @@ class Bans
         return [$ipstart, $ipend];
     }
 
+    /**
+     * Find bans that match a given IP and optional board.
+     *
+     * @param string $ip IP address in text form.
+     * @param string|false $board Board URI or false for all boards.
+     * @param bool $get_mod_info Include moderator username if true.
+     * @return array List of bans.
+     */
     public static function find(string $ip, string|false $board = false, bool $get_mod_info = false): array
     {
         global $config;
 
         $query = prepare('SELECT ``bans``.*' . ($get_mod_info ? ', `username`' : '') . ' FROM ``bans``
-		' . ($get_mod_info ? 'LEFT JOIN ``mods`` ON ``mods``.`id` = `creator`' : '') . '
-		WHERE
-			(' . ($board ? '(`board` IS NULL OR `board` = :board) AND' : '') . '
-			(`ipstart` = :ip OR (:ip >= `ipstart` AND :ip <= `ipend`)))
-		ORDER BY `expires` IS NULL, `expires` DESC');
+        ' . ($get_mod_info ? 'LEFT JOIN ``mods`` ON ``mods``.`id` = `creator`' : '') . '
+        WHERE
+            (' . ($board ? '(`board` IS NULL OR `board` = :board) AND' : '') . '
+            (`ipstart` = :ip OR (:ip >= `ipstart` AND :ip <= `ipend`)))
+        ORDER BY `expires` IS NULL, `expires` DESC');
 
         if ($board) {
             $query->bindValue(':board', $board);
@@ -178,14 +205,21 @@ class Bans
         return $ban_list;
     }
 
+    /**
+     * List all bans with optional pagination.
+     *
+     * @param int $offset
+     * @param int $limit
+     * @return array List of bans
+     */
     public static function list_all(int $offset = 0, int $limit = 9001): array
     {
         $offset = (int) $offset;
         $limit = (int) $limit;
 
         $query = query("SELECT ``bans``.*, `username` FROM ``bans``
-			LEFT JOIN ``mods`` ON ``mods``.`id` = `creator`
-			ORDER BY `created` DESC LIMIT $offset, $limit") or error(db_error());
+            LEFT JOIN ``mods`` ON ``mods``.`id` = `creator`
+            ORDER BY `created` DESC LIMIT $offset, $limit") or error(db_error());
         $bans = $query->fetchAll(\PDO::FETCH_ASSOC);
 
         foreach ($bans as &$ban) {
@@ -195,22 +229,45 @@ class Bans
         return $bans;
     }
 
+    /**
+     * Count total bans.
+     *
+     * @return int
+     */
     public static function count(): int
     {
         $query = query("SELECT COUNT(*) FROM ``bans``") or error(db_error());
         return (int) $query->fetchColumn();
     }
 
+    /**
+     * Mark a ban as seen.
+     *
+     * @param int|string $ban_id
+     * @return void
+     */
     public static function seen(int|string $ban_id): void
     {
         $query = query("UPDATE ``bans`` SET `seen` = 1 WHERE `id` = " . (int) $ban_id) or error(db_error());
     }
 
+    /**
+     * Purge expired and seen bans from the database.
+     *
+     * @return void
+     */
     public static function purge(): void
     {
         $query = query("DELETE FROM ``bans`` WHERE `expires` IS NOT NULL AND `expires` < " . time() . " AND `seen` = 1") or error(db_error());
     }
 
+    /**
+     * Delete a ban by id, optionally logging the action.
+     *
+     * @param int|string $ban_id
+     * @param bool $modlog Log removal to modlog when true.
+     * @return bool True if deletion executed.
+     */
     public static function delete(int|string $ban_id, bool $modlog = false): bool
     {
         if ($modlog) {
@@ -222,7 +279,7 @@ class Bans
 
             $mask = self::range_to_string([$ban['ipstart'], $ban['ipend']]);
 
-            AuthManager::modLog("Removed ban #{$ban_id} for "
+            Authenticator::modLog("Removed ban #{$ban_id} for "
                 . (filter_var($mask, FILTER_VALIDATE_IP) !== false ? "<a href=\"?/IP/$mask\">$mask</a>" : $mask));
         }
 
@@ -231,6 +288,17 @@ class Bans
         return true;
     }
 
+    /**
+     * Create a new ban.
+     *
+     * @param string $mask IP/CIDR/wildcard/single IP.
+     * @param string $reason Reason text.
+     * @param int|string|false $length Seconds or parseable time string, or false for permanent.
+     * @param string|false $ban_board Board URI or false for global.
+     * @param int|false $mod_id Moderator id or false to use current mod.
+     * @param array|false $post Optional post info to attach.
+     * @return string Inserted ban id.
+     */
     public static function new_ban(
         string $mask,
         string $reason,
@@ -295,7 +363,7 @@ class Bans
         $query->execute() or error(db_error($query));
 
         if (isset($mod['id']) && $mod['id'] == $mod_id) {
-            AuthManager::modLog('Created a new '
+            Authenticator::modLog('Created a new '
                 . ($length > 0 ? preg_replace('/^(\d+) (\w+?)s?$/', '$1-$2', DateRange::until($length)) : 'permanent')
                 . ' ban on '
                 . ($ban_board ? '/' . $ban_board . '/' : 'all boards')
@@ -307,12 +375,77 @@ class Bans
         return $pdo->lastInsertId();
     }
 
+    /**
+     * Check whether the current request IP is banned.
+     *
+     * @param string|false $board Optional board URI to restrict the check.
+     * @return bool|null True if an event handler handled the check, null otherwise.
+     */
+    public static function checkBan(string|false $board = false): ?bool
+    {
+        global $config;
+
+        if (!isset($_SERVER['REMOTE_ADDR'])) {
+            // Server misconfiguration
+            return null;
+        }
+
+        if (EventDispatcher::event('check-ban', $board)) {
+            return true;
+        }
+
+        $bans = self::find($_SERVER['REMOTE_ADDR'], $board);
+
+        foreach ($bans as &$ban) {
+            if ($ban['expires'] && $ban['expires'] < time()) {
+                self::delete($ban['id']);
+                if ($config['require_ban_view'] && !$ban['seen']) {
+                    if (!isset($_POST['json_response'])) {
+                        self::displayBan($ban);
+                    } else {
+                        header('Content-Type: text/json');
+                        die(json_encode(['error' => true, 'banned' => true]));
+                    }
+                }
+            } else {
+                if (!isset($_POST['json_response'])) {
+                    self::displayBan($ban);
+                } else {
+                    header('Content-Type: text/json');
+                    die(json_encode(['error' => true, 'banned' => true]));
+                }
+            }
+        }
+
+        // I'm not sure where else to put this. It doesn't really matter where; it just needs to be called every
+        // now and then to keep the ban list tidy.
+        if ($config['cache']['enabled'] && $last_time_purged = Cache::get('purged_bans_last')) {
+            if (time() - $last_time_purged < $config['purge_bans']) {
+                return null;
+            }
+        }
+
+        self::purge();
+
+        if ($config['cache']['enabled']) {
+            Cache::set('purged_bans_last', time());
+        }
+
+        return null;
+    }
+
+    /**
+     * Show the banned page for a given ban and terminate execution.
+     *
+     * @param array $ban Ban record data.
+     * @return void Exits via die() after rendering.
+     */
     public static function displayBan(array $ban): void
     {
         global $config, $board;
 
         if (!$ban['seen']) {
-            Bans::seen($ban['id']);
+            self::seen($ban['id']);
         }
 
         $ban['ip'] = $_SERVER['REMOTE_ADDR'];
@@ -375,58 +508,5 @@ class Bans
                 ],
             )
         );
-    }
-
-    public static function checkBan(string|false $board = false): ?bool
-    {
-        global $config;
-
-        if (!isset($_SERVER['REMOTE_ADDR'])) {
-            // Server misconfiguration
-            return null;
-        }
-
-        if (EventDispatcher::event('check-ban', $board)) {
-            return true;
-        }
-
-        $bans = Bans::find($_SERVER['REMOTE_ADDR'], $board);
-
-        foreach ($bans as &$ban) {
-            if ($ban['expires'] && $ban['expires'] < time()) {
-                Bans::delete($ban['id']);
-                if ($config['require_ban_view'] && !$ban['seen']) {
-                    if (!isset($_POST['json_response'])) {
-                        self::displayBan($ban);
-                    } else {
-                        header('Content-Type: text/json');
-                        die(json_encode(['error' => true, 'banned' => true]));
-                    }
-                }
-            } else {
-                if (!isset($_POST['json_response'])) {
-                    self::displayBan($ban);
-                } else {
-                    header('Content-Type: text/json');
-                    die(json_encode(['error' => true, 'banned' => true]));
-                }
-            }
-        }
-
-        // I'm not sure where else to put this. It doesn't really matter where; it just needs to be called every
-        // now and then to keep the ban list tidy.
-        if ($config['cache']['enabled'] && $last_time_purged = Cache::get('purged_bans_last')) {
-            if (time() - $last_time_purged < $config['purge_bans']) {
-                return null;
-            }
-        }
-
-        Bans::purge();
-
-        if ($config['cache']['enabled']) {
-            Cache::set('purged_bans_last', time());
-        }
-
-        return null;
     }
 }

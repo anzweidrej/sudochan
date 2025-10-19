@@ -6,13 +6,9 @@
 
 namespace Sudochan\Controller;
 
-use Sudochan\Manager\AuthManager;
-use Sudochan\Cache;
-use Sudochan\Service\BoardService;
-use Sudochan\Service\PageService;
-use Sudochan\Service\PostService;
-use Sudochan\Manager\ThemeManager;
-use Sudochan\Manager\PermissionManager;
+use Sudochan\Security\Authenticator;
+use Sudochan\Manager\{CacheManager as Cache, ThemeManager, PermissionManager};
+use Sudochan\Service\{BoardService, PageService, PostService};
 use Sudochan\Utils\Token;
 use Sudochan\Repository\DashboardRepository;
 

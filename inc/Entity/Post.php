@@ -6,15 +6,10 @@
 
 namespace Sudochan\Entity;
 
-use Sudochan\Manager\PermissionManager;
-use Sudochan\Service\MarkupService;
-use Sudochan\Utils\Math;
-use Sudochan\Utils\TextFormatter;
-use Sudochan\Utils\StringFormatter;
-use Sudochan\Manager\AuthManager;
-use Sudochan\Utils\LinkBuilder;
-use Sudochan\Utils\Token;
-use Sudochan\Utils\Sanitize;
+use Sudochan\Manager\{PermissionManager};
+use Sudochan\Service\{MarkupService};
+use Sudochan\Security\{Authenticator};
+use Sudochan\Utils\{Math, TextFormatter, StringFormatter, LinkBuilder, Token, Sanitize};
 
 class Post
 {
@@ -49,6 +44,13 @@ class Post
     public ?bool $locked = null;
     public ?bool $sage = null;
 
+    /**
+     * Construct a Post object from a data row.
+     *
+     * @param object|array $post Row data.
+     * @param string|null $root Base root URL.
+     * @param array|bool $mod Moderator context or false.
+     */
     public function __construct(object|array $post, ?string $root = null, array|bool $mod = false)
     {
         global $config;
@@ -87,6 +89,12 @@ class Post
         }
     }
 
+    /**
+     * Build a link to this post.
+     *
+     * @param string $pre Prefix for the anchor id.
+     * @return string Full URL to the post anchor.
+     */
     public function link(string $pre = ''): string
     {
         global $config, $board;
@@ -94,6 +102,11 @@ class Post
         return $this->root . $board['dir'] . $config['dir']['res'] . sprintf($config['file_page'], $this->thread) . '#' . $pre . $this->id;
     }
 
+    /**
+     * Generate moderator controls for the post.
+     *
+     * @return string HTML fragment with mod controls or empty string
+     */
     public function postControls(): string
     {
         global $board, $config;
@@ -149,11 +162,22 @@ class Post
         return $built;
     }
 
+    /**
+     * Return file aspect ratio as a string.
+     *
+     * @return string Ratio in "w:h" format or empty string if unknown
+     */
     public function ratio(): string
     {
         return Math::fraction($this->filewidth, $this->fileheight, ':');
     }
 
+    /**
+     * Render the post using templates.
+     *
+     * @param bool $index True when rendering on index page
+     * @return string HTML for the post
+     */
     public function build(bool $index = false): string
     {
         global $board, $config;

@@ -6,16 +6,21 @@
 
 namespace Sudochan\Service;
 
-use Sudochan\Entity\Thread;
-use Sudochan\Entity\Post;
-use Sudochan\Cache;
-use Sudochan\Api;
-use Sudochan\Manager\FileManager;
+use Sudochan\Entity\{Thread, Post};
+use Sudochan\Manager\{CacheManager as Cache, FileManager};
+use Sudochan\Translator\APITranslator as Api;
 use Sudochan\Service\BoardService;
 use Sudochan\Factory\AntiBotFactory;
 
 class PageService
 {
+    /**
+     * Render a board index page.
+     *
+     * @param int $page Page number to render.
+     * @param bool|array $mod Mod view flag or array for mod prefix.
+     * @return array|false Render context array or false if page doesn't exist.
+     */
     public static function index(int $page, bool|array $mod = false): array|false
     {
         global $board, $config, $debug;
@@ -101,6 +106,13 @@ class PageService
         ];
     }
 
+    /**
+     * Build previous/next page buttons for a pages array.
+     *
+     * @param array $pages Pages array as returned by getPages().
+     * @param bool $mod Whether mod prefix is used.
+     * @return array Associative array with 'prev' and 'next' HTML/button values.
+     */
     public static function getPageButtons(array $pages, bool $mod = false): array
     {
         global $config, $board;
@@ -149,6 +161,12 @@ class PageService
         return $btn;
     }
 
+    /**
+     * Generate pages metadata for the board.
+     *
+     * @param bool $mod Whether mod prefix is used.
+     * @return array Array of pages with 'num' and 'link' keys.
+     */
     public static function getPages(bool $mod = false): array
     {
         global $board, $config;
@@ -177,6 +195,11 @@ class PageService
         return $pages;
     }
 
+    /**
+     * Build and write all index pages.
+     *
+     * @return void
+     */
     public static function buildIndex(): void
     {
         global $board, $config, $build_pages;
@@ -248,6 +271,11 @@ class PageService
         }
     }
 
+    /**
+     * Build and write the main JavaScript file used by the board.
+     *
+     * @return void
+     */
     public static function buildJavascript(): void
     {
         global $config;
@@ -283,7 +311,12 @@ class PageService
         FileManager::file_write($config['file_script'], $script);
     }
 
-    // Returns an associative array with 'replies' and 'images' keys
+    /**
+     * Count replies and images for a thread.
+     *
+     * @param int $id Thread id.
+     * @return array Associative array with keys 'replies' and 'images'.
+     */
     public static function numPosts(int $id): array
     {
         global $board;

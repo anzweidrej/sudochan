@@ -6,7 +6,7 @@
 
 namespace Sudochan\Repository;
 
-class BanRepository
+class BanAppealsRepository
 {
     /**
      * Remove ban appeals that reference non-existent bans.

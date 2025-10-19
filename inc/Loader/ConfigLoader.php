@@ -8,7 +8,7 @@ namespace Sudochan\Loader;
 
 use Sudochan\Handler\ErrorHandler;
 use Sudochan\Dispatcher\EventDispatcher;
-use Sudochan\Cache;
+use Sudochan\Manager\CacheManager as Cache;
 
 $microtime_start = microtime(true);
 

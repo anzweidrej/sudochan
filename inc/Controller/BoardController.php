@@ -6,16 +6,10 @@
 
 namespace Sudochan\Controller;
 
-use Sudochan\Manager\AuthManager;
-use Sudochan\Cache;
-use Sudochan\Service\BoardService;
-use Sudochan\Service\PageService;
-use Sudochan\Service\PostService;
-use Sudochan\Manager\ThemeManager;
-use Sudochan\Manager\PermissionManager;
-use Sudochan\Manager\FileManager;
-use Sudochan\Utils\Token;
-use Sudochan\Utils\StringFormatter;
+use Sudochan\Security\Authenticator;
+use Sudochan\Manager\{CacheManager as Cache, ThemeManager, PermissionManager, FileManager};
+use Sudochan\Service\{BoardService, PageService, PostService};
+use Sudochan\Utils\{Token, StringFormatter};
 use Sudochan\Repository\BoardRepository;
 
 class BoardController
@@ -59,7 +53,7 @@ class BoardController
                     Cache::delete('all_boards');
                 }
 
-                AuthManager::modLog('Deleted board: ' . sprintf($config['board_abbreviation'], $board['uri']), false);
+                Authenticator::modLog('Deleted board: ' . sprintf($config['board_abbreviation'], $board['uri']), false);
 
                 // Delete posting table
                 $this->repository->dropPostsTable($board['uri']);
@@ -103,7 +97,7 @@ class BoardController
             } else {
                 $this->repository->updateBoardInfo($board['uri'], $_POST['title'], $_POST['subtitle'], $_POST['category']);
 
-                AuthManager::modLog('Edited board information for ' . sprintf($config['board_abbreviation'], $board['uri']), false);
+                Authenticator::modLog('Edited board information for ' . sprintf($config['board_abbreviation'], $board['uri']), false);
             }
 
             if ($config['cache']['enabled']) {
@@ -173,7 +167,7 @@ class BoardController
 
             $this->repository->insertBoard($_POST['uri'], $_POST['title'], $_POST['subtitle'], $_POST['category']);
 
-            AuthManager::modLog('Created a new board: ' . sprintf($config['board_abbreviation'], $_POST['uri']));
+            Authenticator::modLog('Created a new board: ' . sprintf($config['board_abbreviation'], $_POST['uri']));
 
             if (!BoardService::openBoard($_POST['uri'])) {
                 error(_("Couldn't open board after creation."));

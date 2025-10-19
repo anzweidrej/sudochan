@@ -6,13 +6,10 @@
 
 namespace Sudochan\Controller;
 
-use Sudochan\Manager\AuthManager;
-use Sudochan\Manager\ThemeManager;
-use Sudochan\Manager\PermissionManager;
+use Sudochan\Security\Authenticator;
+use Sudochan\Manager\{ThemeManager, PermissionManager};
 use Sudochan\Service\MarkupService;
-use Sudochan\Utils\Token;
-use Sudochan\Utils\TextFormatter;
-use Sudochan\Utils\Sanitize;
+use Sudochan\Utils\{Token, TextFormatter, Sanitize};
 use Sudochan\Repository\NewsRepository;
 
 class NewsController
@@ -52,7 +49,7 @@ class NewsController
 
             $id = $this->repository->insert($name, time(), $_POST['subject'], $_POST['body']);
 
-            AuthManager::modLog('Posted a news entry');
+            Authenticator::modLog('Posted a news entry');
 
             ThemeManager::rebuildThemes('news');
 
@@ -91,7 +88,7 @@ class NewsController
 
         $this->repository->deleteById($id);
 
-        AuthManager::modLog('Deleted a news entry');
+        Authenticator::modLog('Deleted a news entry');
 
         header('Location: ?/news', true, $config['redirect_http']);
     }
