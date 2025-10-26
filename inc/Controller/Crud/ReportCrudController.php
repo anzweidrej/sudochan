@@ -4,7 +4,7 @@
  *  Copyright (c) 2010-2013 Tinyboard Development Group
  */
 
-namespace Sudochan\Action;
+namespace Sudochan\Controller\Crud;
 
 use Sudochan\Manager\{BanManager as Bans};
 use Sudochan\Resolver\DNSResolver;
@@ -12,7 +12,7 @@ use Sudochan\Service\{BoardService, MarkupService};
 use Sudochan\Handler\ErrorHandler;
 use Sudochan\Utils\Sanitize;
 
-class ReportAction
+class ReportCrudController
 {
     public function executeReport(): void
     {

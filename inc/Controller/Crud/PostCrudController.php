@@ -4,7 +4,7 @@
  *  Copyright (c) 2010-2013 Tinyboard Development Group
  */
 
-namespace Sudochan\Action;
+namespace Sudochan\Controller\Crud;
 
 use Sudochan\Resource\{ImageResource as Image};
 use Sudochan\Resource\Extensions\ImageConvert;
@@ -16,7 +16,7 @@ use Sudochan\Resolver\DNSResolver;
 use Sudochan\Utils\{Shell, StringFormatter, TripcodeGenerator, Sanitize};
 use Sudochan\Security\Authenticator;
 
-class PostAction
+class PostCrudController
 {
     /**
      * Delete a temporary file and invoke the fatal error handler.

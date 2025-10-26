@@ -4,7 +4,7 @@
  *  Copyright (c) 2010-2014 Tinyboard Development Group
  */
 
-use Sudochan\Action\{BanAppealAction, DeleteAction, PostAction, ReportAction};
+use Sudochan\Controller\Crud\{BanAppealCrudController, DeleteCrudController, PostCrudController, ReportCrudController};
 
 require_once 'bootstrap.php';
 
@@ -18,10 +18,10 @@ $handler = new class {
     public function dispatch(): void
     {
         $actions = [
-            'delete'  => [DeleteAction::class, 'executeDelete'],
-            'report'  => [ReportAction::class, 'executeReport'],
-            'post'    => [PostAction::class, 'executePost'],
-            'appeal'  => [BanAppealAction::class, 'executeBanAppeal'],
+            'delete'  => [DeleteCrudController::class, 'executeDelete'],
+            'report'  => [ReportCrudController::class, 'executeReport'],
+            'post'    => [PostCrudController::class, 'executePost'],
+            'appeal'  => [BanAppealCrudController::class, 'executeBanAppeal'],
         ];
 
         foreach ($actions as $key => $callable) {

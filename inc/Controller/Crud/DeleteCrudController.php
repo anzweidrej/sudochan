@@ -4,7 +4,7 @@
  *  Copyright (c) 2010-2013 Tinyboard Development Group
  */
 
-namespace Sudochan\Action;
+namespace Sudochan\Controller\Crud;
 
 use Sudochan\Manager\{BanManager as Bans, ThemeManager};
 use Sudochan\Resolver\DNSResolver;
@@ -12,7 +12,7 @@ use Sudochan\Service\{BoardService, PageService, PostService};
 use Sudochan\Utils\DateRange;
 use Sudochan\Handler\ErrorHandler;
 
-class DeleteAction
+class DeleteCrudController
 {
     public function executeDelete(): void
     {
