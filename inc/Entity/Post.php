@@ -6,9 +6,9 @@
 
 namespace Sudochan\Entity;
 
-use Sudochan\Manager\{PermissionManager};
-use Sudochan\Service\{MarkupService};
-use Sudochan\Security\{Authenticator};
+use Sudochan\Manager\PermissionManager;
+use Sudochan\Service\MarkupService;
+use Sudochan\Security\Authenticator;
 use Sudochan\Utils\{Math, TextFormatter, StringFormatter, LinkBuilder, Token, Sanitize};
 
 class Post

@@ -10,12 +10,12 @@
  * =======================
  */
 
-// Global announcement -- the very simple version.
+// Global announcement, the very simple version.
 // This used to be wrongly named $config['blotter'] (still exists as an alias).
 // $config['global_message'] = 'This is an important announcement!';
 $config['blotter'] = &$config['global_message'];
 
-// Automatically check if a newer version of Tinyboard is available when an administrator logs in.
+// Automatically check if a newer version of Sudochan is available when an administrator logs in.
 $config['check_updates'] = true;
 // How often to check for updates
 $config['check_updates_time'] = 43200; // 12 hours
@@ -58,7 +58,7 @@ $config['shell_path'] = '/usr/local/bin';
  */
 
 // Database driver (http://www.php.net/manual/en/pdo.drivers.php)
-// Only MySQL is supported by Tinyboard at the moment, sorry.
+// Only MySQL is supported by Sudochan at the moment, sorry.
 $config['db']['type'] = 'mysql';
 // Hostname, IP address or Unix socket (prefixed with ":")
 $config['db']['server'] = 'localhost';
@@ -67,7 +67,7 @@ $config['db']['server'] = 'localhost';
 // Login
 $config['db']['user'] = '';
 $config['db']['password'] = '';
-// Tinyboard database
+// Sudochan database
 $config['db']['database'] = '';
 // Table prefix (optional)
 $config['db']['prefix'] = '';
@@ -93,18 +93,26 @@ $config['cache']['enabled'] = false;
 // Timeout for cached objects such as posts and HTML.
 $config['cache']['timeout'] = 60 * 60 * 48; // 48 hours
 
-// Optional prefix if you're running multiple Tinyboard instances on the same machine.
+// Optional prefix if you're running multiple Sudochan instances on the same machine.
 $config['cache']['prefix'] = '';
 
 // Memcached servers to use. Read more: http://www.php.net/manual/en/memcached.addservers.php
 $config['cache']['memcached'] = [
-    ['localhost', 11211],
+    [
+        'host' => 'localhost',
+        'port' => 11211,
+    ],
 ];
 
 // Redis server to use. Location, port, password, database id.
-// Note that Tinyboard may clear the database at times, so you may want to pick a database id just for
-// Tinyboard to use.
-$config['cache']['redis'] = ['localhost', 6379, '', 1];
+// Note that Sudochan may clear the database at times, so you may want to pick a database id just for
+// Sudochan to use.
+$config['cache']['redis'] = [
+    'host'     => 'localhost',
+    'port'     => 6379,
+    'password' => '',
+    'database' => 1,
+];
 
 /*
  * ====================
@@ -184,7 +192,7 @@ $config['spam']['hidden_inputs_expire'] = 60 * 60 * 3; // three hours
 // Whether to use Unicode characters in hidden input names and values.
 $config['spam']['unicode'] = true;
 
-// These are fields used to confuse the bots. Make sure they aren't actually used by Tinyboard, or it won't work.
+// These are fields used to confuse the bots. Make sure they aren't actually used by Sudochan, or it won't work.
 $config['spam']['hidden_input_names'] = [
     'user',
     'username',
@@ -334,7 +342,7 @@ $config['filters'][] = [
 
 // Filter flood prevention conditions ("flood-match") depend on a table which contains a cache of recent
 // posts across all boards. This table is automatically purged of older posts, determining the maximum
-// "age" by looking at each filter. However, when determining the maximum age, Tinyboard does not look
+// "age" by looking at each filter. However, when determining the maximum age, Sudochan does not look
 // outside the current board. This means that if you have a special flood condition for a specific board
 // (contained in a board configuration file) which has a flood-time greater than any of those in the
 // global configuration, you need to set the following variable to the maximum flood-time condition value.
@@ -394,10 +402,10 @@ $config['reply_hard_limit'] = 0;
 $config['robot_enable'] = false;
 // Strip repeating characters when making hashes.
 $config['robot_strip_repeating'] = true;
-// Enabled mutes? Tinyboard uses ROBOT9000's original 2^x implementation where x is the number of times
+// Enabled mutes? Sudochan uses ROBOT9000's original 2^x implementation where x is the number of times
 // you have been muted in the past.
 $config['robot_mute'] = true;
-// How long before Tinyboard forgets about a mute?
+// How long before Sudochan forgets about a mute?
 $config['robot_mute_hour'] = 336; // 2 weeks
 // If you want to alter the algorithm a bit. Default value is 2.
 $config['robot_mute_multiplier'] = 2; // (n^x where x is the number of previous mutes)
@@ -410,7 +418,7 @@ $config['markup_urls'] = true;
 // Optional URL prefix for links (eg. "http://anonym.to/?").
 $config['link_prefix'] = '';
 
-// Allow "uploading" images via URL as well. Users can enter the URL of the image and then Tinyboard will
+// Allow "uploading" images via URL as well. Users can enter the URL of the image and then Sudochan will
 // download it. Not usually recommended.
 $config['allow_upload_by_url'] = false;
 // The timeout for the above, in seconds.
@@ -470,7 +478,7 @@ $config['ban_show_post'] = false;
 // a link to an email address or IRC chat room to appeal the ban.
 $config['ban_page_extra'] = '';
 
-// Allow users to appeal bans through Tinyboard.
+// Allow users to appeal bans through Sudochan.
 $config['ban_appeals'] = false;
 
 // Do not allow users to appeal bans that are shorter than this length (in seconds).
@@ -505,7 +513,7 @@ $config['markup'][] = ["/\*\*(.+?)\*\*/", "<span class=\"spoiler\">\$1</span>"];
 $config['markup_repair_tidy'] = false;
 
 // Always regenerate markup. This isn't recommended and should only be used for debugging; by default,
-// Tinyboard only parses post markup when it needs to, and keeps post-markup HTML in the database. This
+// Sudochan only parses post markup when it needs to, and keeps post-markup HTML in the database. This
 // will significantly impact performance when enabled.
 $config['always_regenerate_markup'] = false;
 
@@ -653,7 +661,7 @@ $config['allow_subtitle_html'] = false;
  * ====================
  */
 
-// Tinyboard has been translated into a few langauges. See .locales for available translations.
+// Sudochan has been translated into a few langauges. See .locales for available translations.
 $config['locale'] = 'en'; // (en, ru_RU.UTF-8, fi_FI.UTF-8, pl_PL.UTF-8)
 
 // Timezone to use for displaying dates/tiems.
@@ -742,7 +750,7 @@ $config['page_nav_top'] = false;
 // with non-board links.
 // $config['custom_categories'] = [
 //     'Links' => [
-//         'Tinyboard' => 'http://tinyboard.org',
+//         'Sudochan' => 'http://sudochan.org',
 //         'Donate' => 'donate.html'
 //     ]
 // ];
@@ -757,8 +765,8 @@ $config['display_flags'] = true;
 // Location of post flags/icons (where "%s" is the flag name). Defaults to static/flags/%s.png.
 // $config['uri_flags'] = 'http://static.example.org/flags/%s.png';
 
-// Width and height (and more?) of post flags. Can be overridden with the Tinyboard post modifier:
-// <tinyboard flag style>.
+// Width and height (and more?) of post flags. Can be overridden with the Sudochan post modifier:
+// <sudochan flag style>.
 $config['flag_style'] = 'width:16px;height:11px;';
 
 /*
@@ -785,7 +793,7 @@ $config['additional_javascript'][] = 'js/download-original.js';
 $config['additional_javascript'][] = 'js/frames-link.js';
 
 // Where these script files are located on the web. Defaults to $config['root'].
-// $config['additional_javascript_url'] = 'http://static.example.org/tinyboard-javascript-stuff/';
+// $config['additional_javascript_url'] = 'http://static.example.org/sudochan-javascript-stuff/';
 
 // Compile all additional scripts into one file ($config['file_script']) instead of including them seperately.
 $config['additional_javascript_compile'] = false;
@@ -951,7 +959,7 @@ $config['dir']['res'] = 'res/';
 
 // Where to store the .html templates. This folder and the template files must exist.
 $config['dir']['template'] = getcwd() . '/templates';
-// Location of Tinyboard "themes".
+// Location of Sudochan "themes".
 $config['dir']['themes'] = getcwd() . '/templates/themes';
 // Same as above, but a URI (accessable by web interface).
 $config['dir']['themes_uri'] = 'templates/themes';
@@ -1297,8 +1305,6 @@ $config['mod']['config'][MOD] = [
  * ====================
  */
 
-// http://tinyboard.org/docs/?p=Events
-
 // EventDispatcher::event_handler('post', function($post) {
 // 	// do something
 // });
@@ -1332,15 +1338,15 @@ $config['api']['enabled'] = false;
  */
 
 // Meta keywords. It's probably best to include these in per-board configurations.
-$config['meta_keywords'] = 'chan,anonymous discussion,imageboard,tinyboard';
+$config['meta_keywords'] = 'chan,anonymous discussion,imageboard,sudochan';
 
 // Link imageboard to your Google Analytics account to track users and provide traffic insights.
 $config['google_analytics'] = 'UA-xxxxxxx-yy';
 // Keep the Google Analytics cookies to one domain -- ga._setDomainName()
 $config['google_analytics_domain'] = 'www.example.org';
 
-// If you use Varnish, Squid, or any similar caching reverse-proxy in front of Tinyboard, you can
-// configure Tinyboard to PURGE files when they're written to.
+// If you use Varnish, Squid, or any similar caching reverse-proxy in front of Sudochan, you can
+// configure Sudochan to PURGE files when they're written to.
 // $config['purge'] = [
 // 	['127.0.0.1', 80],
 // 	['127.0.0.1', 80, 'example.org']

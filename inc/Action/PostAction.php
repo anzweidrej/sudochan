@@ -1,0 +1,789 @@
+<?php
+
+/*
+ *  Copyright (c) 2010-2013 Tinyboard Development Group
+ */
+
+namespace Sudochan\Action;
+
+use Sudochan\Resource\{ImageResource as Image};
+use Sudochan\Resource\Extensions\ImageConvert;
+use Sudochan\Dispatcher\EventDispatcher;
+use Sudochan\Manager\{BanManager as Bans, FileManager, ThemeManager, PermissionManager};
+use Sudochan\Service\{MutesService as Mutes, BoardService, PageService, PostService, MarkupService, AntiSpamService};
+use Sudochan\Handler\ErrorHandler;
+use Sudochan\Resolver\DNSResolver;
+use Sudochan\Utils\{Shell, StringFormatter, TripcodeGenerator, Sanitize};
+use Sudochan\Security\Authenticator;
+
+class PostAction
+{
+    /**
+     * Delete a temporary file and invoke the fatal error handler.
+     *
+     * @param string $file Path to the temporary file to delete.
+     * @return void
+     */
+    private static function unlink_tmp_file(string $file): void
+    {
+        @unlink($file);
+        ErrorHandler::fatal_error_handler();
+    }
+
+    /**
+     * Download a file from a remote URL into a temporary file and populate
+     * the $_FILES['file'] superglobal so the rest of the upload handling can
+     * treat it like a normal upload.
+     *
+     * @param array<string,mixed> &$post Post data array to augment
+     * @return void
+     */
+    private function download_file_from_url(array &$post): void
+    {
+        global $config;
+
+        $post['file_url'] = $_POST['file_url'];
+
+        if (!preg_match('@^https?://@', $post['file_url'])) {
+            error($config['error']['invalidimg']);
+        }
+
+        if (mb_strpos($post['file_url'], '?') !== false) {
+            $url_without_params = mb_substr($post['file_url'], 0, mb_strpos($post['file_url'], '?'));
+        } else {
+            $url_without_params = $post['file_url'];
+        }
+
+        $post['extension'] = strtolower(mb_substr($url_without_params, mb_strrpos($url_without_params, '.') + 1));
+        if (!in_array($post['extension'], $config['allowed_ext']) && !in_array($post['extension'], $config['allowed_ext_files'])) {
+            error($config['error']['unknownext']);
+        }
+
+        $post['file_tmp'] = tempnam($config['tmp'], 'url');
+
+        register_shutdown_function([self::class, 'unlink_tmp_file'], $post['file_tmp']);
+
+        $fp = fopen($post['file_tmp'], 'w');
+
+        $curl = curl_init();
+        curl_setopt($curl, CURLOPT_URL, $post['file_url']);
+        curl_setopt($curl, CURLOPT_FAILONERROR, true);
+        curl_setopt($curl, CURLOPT_FOLLOWLOCATION, false);
+        curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, 5);
+        curl_setopt($curl, CURLOPT_TIMEOUT, $config['upload_by_url_timeout']);
+        curl_setopt($curl, CURLOPT_USERAGENT, 'Tinyboard');
+        curl_setopt($curl, CURLOPT_BINARYTRANSFER, true);
+        curl_setopt($curl, CURLOPT_FILE, $fp);
+        curl_setopt($curl, CURLOPT_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS);
+
+        if (curl_exec($curl) === false) {
+            error($config['error']['nomove']);
+        }
+
+        curl_close($curl);
+
+        fclose($fp);
+
+        $_FILES['file'] = [
+            'name' => basename($url_without_params),
+            'tmp_name' => $post['file_tmp'],
+            'error' => 0,
+            'size' => filesize($post['file_tmp']),
+        ];
+    }
+
+    /**
+     * Strip characters that cannot be stored in the database charset from the
+     * provided text.
+     *
+     * @param string $post Text to sanitize/strip symbols from
+     * @return string Sanitized text with unsupported symbols removed
+     */
+    private function strip_symbols(string $post): string
+    {
+        if (mysql_version() >= 50503) {
+            // Assume we're using the utf8mb4 charset
+            return $post;
+        } else {
+            // MySQL's `utf8` charset only supports up to 3-byte symbols
+            // Remove anything >= 0x010000
+            $chars = preg_split('//u', $post, -1, PREG_SPLIT_NO_EMPTY);
+            $out = '';
+            foreach ($chars as $char) {
+                $o = 0;
+                $ord = StringFormatter::ordutf8($char, $o);
+                if ($ord >= 0x010000) {
+                    continue;
+                }
+                $out .= $char;
+            }
+            return $out;
+        }
+    }
+
+    /**
+     * Strip metadata from an image file using exiftool.
+     *
+     * @param string $upload Path to the image file to strip metadata from
+     * @return void
+     */
+    private function strip_image_metadata(string $upload): void
+    {
+        if ($error = Shell::shell_exec_error('exiftool -overwrite_original -ignoreMinorErrors -q -q -all= '
+            . escapeshellarg($upload))) {
+            error(_('Could not strip EXIF metadata!'), null, $error);
+        }
+    }
+
+    /**
+     * Verify Google reCAPTCHA response.
+     *
+     * @return void
+     * @global array $config
+     */
+    private function check_recaptcha(): void
+    {
+        global $config;
+
+        if (!isset($_POST['g-recaptcha-response'])) {
+            error($config['error']['bot']);
+        }
+        $recaptcha = new \ReCaptcha\ReCaptcha($config['recaptcha_private']);
+        // Check what reCAPTCHA has to say...
+        $resp = $recaptcha->verify($_POST['g-recaptcha-response'], $_SERVER['REMOTE_ADDR']);
+        if (!$resp->isSuccess()) {
+            error($config['error']['captcha']);
+        }
+    }
+
+    /**
+     * Append country flag info to post body using GeoIP2.
+     *
+     * @param array<string,mixed> &$post Post array to modify
+     * @return void
+     */
+    private function append_country_flag_to_post_body(array &$post): void
+    {
+        try {
+            $reader = new \GeoIp2\Database\Reader(__DIR__ . '/GeoLite2-Country.mmdb');
+            $record = $reader->country($_SERVER['REMOTE_ADDR']);
+            $country_code = $record->country->isoCode;
+            $country_name = $record->country->name;
+
+            if ($country_code && !in_array(strtolower($country_code), ['eu', 'ap', 'o1', 'a1', 'a2'])) {
+                $post['body'] .= "\n<tinyboard flag>" . strtolower($country_code) . "</tinyboard>"
+                    . "\n<tinyboard flag alt>" . $country_name . "</tinyboard>";
+            }
+        } catch (\Exception $e) {
+            error('GeoIP2 error: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Validate post field lengths and raise errors when limits are exceeded.
+     *
+     * @param array<string,mixed> $post Post data to validate
+     * @param bool $mod True when the poster is a moderator
+     * @return void
+     */
+    private function check_string_length(array $post, bool $mod): void
+    {
+        global $config;
+
+        if (mb_strlen($post['name']) > 35) {
+            error(sprintf($config['error']['toolong'], 'name'));
+        }
+        if (mb_strlen($post['email']) > 40) {
+            error(sprintf($config['error']['toolong'], 'email'));
+        }
+        if (mb_strlen($post['subject']) > 100) {
+            error(sprintf($config['error']['toolong'], 'subject'));
+        }
+        if (!$mod && mb_strlen($post['body']) > $config['max_body']) {
+            error($config['error']['toolong_body']);
+        }
+        if (mb_strlen($post['password']) > 20) {
+            error(sprintf($config['error']['toolong'], 'password'));
+        }
+    }
+
+    /**
+     * Ensure uploaded file size is within configured limits.
+     *
+     * @return void
+     */
+    private function check_file_size(): void
+    {
+        global $config;
+
+        $size = $_FILES['file']['size'];
+        if ($size > $config['max_filesize']) {
+            error(StringFormatter::sprintf3($config['error']['filesize'], [
+                'sz' => number_format($size),
+                'filesz' => number_format($size),
+                'maxsz' => number_format($config['max_filesize']),
+            ]));
+        }
+    }
+
+    public function executePost(): void
+    {
+        global $config, $board, $mod, $pdo;
+
+        if (!isset($_POST['body'], $_POST['board'])) {
+            error($config['error']['bot']);
+        }
+
+        if (!isset($_POST['name'])) {
+            $_POST['name'] = $config['anonymous'];
+        }
+
+        if (!isset($_POST['email'])) {
+            $_POST['email'] = '';
+        }
+
+        if (!isset($_POST['subject'])) {
+            $_POST['subject'] = '';
+        }
+
+        if (!isset($_POST['password'])) {
+            $_POST['password'] = '';
+        }
+
+        $post = ['board' => $_POST['board']];
+
+        if (isset($_POST['thread'])) {
+            $post['op'] = false;
+            $post['thread'] = round($_POST['thread']);
+        } elseif ($config['quick_reply'] && isset($_POST['quick-reply'])) {
+            $post['op'] = false;
+            $post['thread'] = round($_POST['quick-reply']);
+        } else {
+            $post['op'] = true;
+        }
+
+        if (!(($post['op'] && $_POST['post'] == $config['button_newtopic'])
+            || (!$post['op'] && $_POST['post'] == $config['button_reply']))) {
+            error($config['error']['bot']);
+        }
+
+        // Check the referrer
+        if ($config['referer_match'] !== false
+            && (!isset($_SERVER['HTTP_REFERER']) || !preg_match($config['referer_match'], urldecode($_SERVER['HTTP_REFERER'])))) {
+            error($config['error']['referer']);
+        }
+
+        DNSResolver::checkDNSBL();
+
+        // Check if board exists
+        if (!BoardService::openBoard($post['board'])) {
+            error($config['error']['noboard']);
+        }
+
+        // Check if banned
+        Bans::checkBan($board['uri']);
+
+        // Check for CAPTCHA right after opening the board so the "return" link is in there
+        if ($config['recaptcha']) {
+            $this->check_recaptcha();
+        }
+
+        if ($post['mod'] = isset($_POST['mod']) && $_POST['mod']) {
+            Authenticator::authenticate();
+            if (!$mod) {
+                // Liar. You're not a mod.
+                error($config['error']['notamod']);
+            }
+
+            $post['sticky'] = $post['op'] && isset($_POST['sticky']);
+            $post['locked'] = $post['op'] && isset($_POST['lock']);
+            $post['raw'] = isset($_POST['raw']);
+
+            if ($post['sticky'] && !PermissionManager::hasPermission($config['mod']['sticky'], $board['uri'])) {
+                error($config['error']['noaccess']);
+            }
+            if ($post['locked'] && !PermissionManager::hasPermission($config['mod']['lock'], $board['uri'])) {
+                error($config['error']['noaccess']);
+            }
+            if ($post['raw'] && !PermissionManager::hasPermission($config['mod']['rawhtml'], $board['uri'])) {
+                error($config['error']['noaccess']);
+            }
+        }
+
+        if (!$post['mod']) {
+            $post['antispam_hash'] = AntiSpamService::checkSpam([$board['uri'], isset($post['thread']) && !($config['quick_reply'] && isset($_POST['quick-reply'])) ? $post['thread'] : ($config['try_smarter'] && isset($_POST['page']) ? 0 - (int) $_POST['page'] : null)]);
+            if ($post['antispam_hash'] === true) {
+                error($config['error']['spam']);
+            }
+        }
+
+        if ($config['robot_enable'] && $config['robot_mute']) {
+            Mutes::checkMute();
+        }
+
+        //Check if thread exists
+        if (!$post['op']) {
+            $query = prepare(sprintf("SELECT `sticky`,`locked`,`sage` FROM ``posts_%s`` WHERE `id` = :id AND `thread` IS NULL LIMIT 1", $board['uri']));
+            $query->bindValue(':id', $post['thread'], \PDO::PARAM_INT);
+            $query->execute() or error(db_error());
+
+            if (!$thread = $query->fetch(\PDO::FETCH_ASSOC)) {
+                // Non-existant
+                error($config['error']['nonexistant']);
+            }
+        }
+
+        // Check for an embed field
+        if ($config['enable_embedding'] && isset($_POST['embed']) && !empty($_POST['embed'])) {
+            // yep; validate it
+            $value = $_POST['embed'];
+            foreach ($config['embedding'] as &$embed) {
+                if (preg_match($embed[0], $value)) {
+                    // Valid link
+                    $post['embed'] = $value;
+                    // This is bad, lol.
+                    $post['no_longer_require_an_image_for_op'] = true;
+                    break;
+                }
+            }
+            if (!isset($post['embed'])) {
+                error($config['error']['invalid_embed']);
+            }
+        }
+
+        if (!PermissionManager::hasPermission($config['mod']['bypass_field_disable'], $board['uri'])) {
+            if ($config['field_disable_name']) {
+                $_POST['name'] = $config['anonymous'];
+            } // "forced anonymous"
+
+            if ($config['field_disable_email']) {
+                $_POST['email'] = '';
+            }
+
+            if ($config['field_disable_password']) {
+                $_POST['password'] = '';
+            }
+
+            if ($config['field_disable_subject'] || (!$post['op'] && $config['field_disable_reply_subject'])) {
+                $_POST['subject'] = '';
+            }
+        }
+
+        if ($config['allow_upload_by_url'] && isset($_POST['file_url']) && !empty($_POST['file_url'])) {
+            $this->download_file_from_url($post);
+        }
+
+        // Check for a file
+        if ($post['op'] && !isset($post['no_longer_require_an_image_for_op'])) {
+            if (!isset($_FILES['file']['tmp_name']) || $_FILES['file']['tmp_name'] == '' && $config['force_image_op']) {
+                error($config['error']['noimage']);
+            }
+        }
+
+        $post['name'] = $_POST['name'] != '' ? $_POST['name'] : $config['anonymous'];
+        $post['subject'] = $_POST['subject'];
+        $post['email'] = str_replace(' ', '%20', htmlspecialchars($_POST['email']));
+        $post['body'] = $_POST['body'];
+        $post['password'] = $_POST['password'];
+        $post['has_file'] = !isset($post['embed']) && (($post['op'] && !isset($post['no_longer_require_an_image_for_op']) && $config['force_image_op']) || (isset($_FILES['file']) && $_FILES['file']['tmp_name'] != ''));
+
+        if ($post['has_file']) {
+            $post['filename'] = urldecode($_FILES['file']['name']);
+        }
+
+        if (!($post['has_file'] || isset($post['embed'])) || (($post['op'] && $config['force_body_op']) || (!$post['op'] && $config['force_body']))) {
+            $stripped_whitespace = preg_replace('/[\s]/u', '', $post['body']);
+            if ($stripped_whitespace == '') {
+                error($config['error']['tooshort_body']);
+            }
+        }
+
+        if (!$post['op']) {
+            // Check if thread is locked
+            // but allow mods to post
+            if ($thread['locked'] && !PermissionManager::hasPermission($config['mod']['postinlocked'], $board['uri'])) {
+                error($config['error']['locked']);
+            }
+
+            $numposts = PageService::numPosts($post['thread']);
+
+            if ($config['reply_hard_limit'] != 0 && $config['reply_hard_limit'] <= $numposts['replies']) {
+                error($config['error']['reply_hard_limit']);
+            }
+
+            if ($post['has_file'] && $config['image_hard_limit'] != 0 && $config['image_hard_limit'] <= $numposts['images']) {
+                error($config['error']['image_hard_limit']);
+            }
+        }
+
+        if ($post['has_file']) {
+            $this->check_file_size();
+        }
+
+        $post['capcode'] = false;
+
+        if ($mod && preg_match('/^((.+) )?## (.+)$/', $post['name'], $matches)) {
+            $name = $matches[2] != '' ? $matches[2] : $config['anonymous'];
+            $cap = $matches[3];
+
+            if (isset($config['mod']['capcode'][$mod['type']])) {
+                if ($config['mod']['capcode'][$mod['type']] === true
+                    || (
+                        is_array($config['mod']['capcode'][$mod['type']])
+                        && in_array($cap, $config['mod']['capcode'][$mod['type']])
+                    )) {
+
+                    $post['capcode'] = StringFormatter::utf8tohtml($cap);
+                    $post['name'] = $name;
+                }
+            }
+        }
+
+        $trip = TripcodeGenerator::generate_tripcode($post['name']);
+        $post['name'] = $trip[0];
+        $post['trip'] = isset($trip[1]) ? $trip[1] : '';
+
+        if (strtolower($post['email']) == 'noko') {
+            $noko = true;
+            $post['email'] = '';
+        } else {
+            $noko = false;
+        }
+
+        if ($post['has_file']) {
+            $post['extension'] = strtolower(mb_substr($post['filename'], mb_strrpos($post['filename'], '.') + 1));
+            if (isset($config['filename_func'])) {
+                $post['file_id'] = $config['filename_func']($post);
+            } else {
+                $post['file_id'] = time() . substr(microtime(), 2, 3);
+            }
+
+            $post['file'] = $board['dir'] . $config['dir']['img'] . $post['file_id'] . '.' . $post['extension'];
+            $post['thumb'] = $board['dir'] . $config['dir']['thumb'] . $post['file_id'] . '.' . ($config['thumb_ext'] ? $config['thumb_ext'] : $post['extension']);
+        }
+
+        if ($config['strip_combining_chars']) {
+            $post['name'] = StringFormatter::strip_combining_chars($post['name']);
+            $post['email'] = StringFormatter::strip_combining_chars($post['email']);
+            $post['subject'] = StringFormatter::strip_combining_chars($post['subject']);
+            $post['body'] = StringFormatter::strip_combining_chars($post['body']);
+        }
+
+        $this->check_string_length($post, $mod);
+
+        Sanitize::wordfilters($post['body']);
+
+        $post['body'] = Sanitize::escape_markup_modifiers($post['body']);
+
+        if ($mod && isset($post['raw']) && $post['raw']) {
+            $post['body'] .= "\n<tinyboard raw html>1</tinyboard>";
+        }
+
+        if ($config['country_flags']) {
+            $this->append_country_flag_to_post_body($post);
+        }
+
+        $post['body_nomarkup'] = $this->strip_symbols($post['body']);
+
+        $post['tracked_cites'] = MarkupService::markup($post['body'], true);
+
+        if ($post['has_file']) {
+            if (!in_array($post['extension'], $config['allowed_ext']) && !in_array($post['extension'], $config['allowed_ext_files'])) {
+                error($config['error']['unknownext']);
+            }
+
+            $is_an_image = !in_array($post['extension'], $config['allowed_ext_files']);
+
+            // Truncate filename if it is too long
+            $post['filename'] = mb_substr($post['filename'], 0, $config['max_filename_len']);
+
+            $upload = $_FILES['file']['tmp_name'];
+
+            if (!is_readable($upload)) {
+                error($config['error']['nomove']);
+            }
+
+            $post['filehash'] = md5_file($upload);
+            $post['filesize'] = filesize($upload);
+        }
+
+        if (!PermissionManager::hasPermission($config['mod']['bypass_filters'], $board['uri'])) {
+            AntiSpamService::do_filters($post);
+        }
+
+        if ($post['has_file']) {
+            if ($is_an_image && $config['ie_mime_type_detection'] !== false) {
+                // Check IE MIME type detection XSS exploit
+                $buffer = file_get_contents($upload, false, null, 0, 255);
+                if (preg_match($config['ie_mime_type_detection'], $buffer)) {
+                    FileManager::undoImage($post);
+                    error($config['error']['mime_exploit']);
+                }
+
+                // find dimensions of an image using GD
+                if (!$size = @getimagesize($upload)) {
+                    error($config['error']['invalidimg']);
+                }
+                if ($size[0] > $config['max_width'] || $size[1] > $config['max_height']) {
+                    error($config['error']['maxsize']);
+                }
+
+                if ($config['convert_auto_orient'] && ($post['extension'] == 'jpg' || $post['extension'] == 'jpeg')) {
+                    // The following code corrects the image orientation.
+                    // Currently only works with the 'convert' option selected but it could easily be expanded to work with the rest if you can be bothered.
+                    if (!($config['redraw_image'] || (($config['strip_exif'] && !$config['use_exiftool']) && ($post['extension'] == 'jpg' || $post['extension'] == 'jpeg')))) {
+                        if (in_array($config['thumb_method'], ['convert', 'convert+gifsicle', 'gm', 'gm+gifsicle'])) {
+                            $exif = @exif_read_data($upload);
+                            $gm = in_array($config['thumb_method'], ['gm', 'gm+gifsicle']);
+                            if (isset($exif['Orientation']) && $exif['Orientation'] != 1) {
+                                if ($config['convert_manual_orient']) {
+                                    $error = Shell::shell_exec_error(($gm ? 'gm ' : '') . 'convert '
+                                        . escapeshellarg($upload) . ' '
+                                        . ImageConvert::jpeg_exif_orientation(false, $exif) . ' '
+                                        . (
+                                            $config['strip_exif'] ? '+profile "*"'
+                                            : ($config['use_exiftool'] ? '' : '+profile "*"')
+                                        ) . ' '
+                                        . escapeshellarg($upload));
+                                    if ($config['use_exiftool'] && !$config['strip_exif']) {
+                                        if ($exiftool_error = Shell::shell_exec_error(
+                                            'exiftool -overwrite_original -q -q -orientation=1 -n '
+                                                . escapeshellarg($upload),
+                                        )) {
+                                            error('exiftool failed!', null, $exiftool_error);
+                                        }
+                                    } else {
+                                        // TODO: Find another way to remove the Orientation tag from the EXIF profile
+                                        // without needing `exiftool`.
+                                    }
+                                } else {
+                                    $error = Shell::shell_exec_error(($gm ? 'gm ' : '') . 'convert '
+                                            . escapeshellarg($upload) . ' -auto-orient ' . escapeshellarg($upload));
+                                }
+                                if ($error) {
+                                    error('Could not auto-orient image!', null, $error);
+                                }
+                                $size = @getimagesize($upload);
+                                if ($config['strip_exif']) {
+                                    $post['exif_stripped'] = true;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // create image object
+                $image = new Image($upload, $post['extension'], $size);
+                if ($image->size->width > $config['max_width'] || $image->size->height > $config['max_height']) {
+                    $image->delete();
+                    error($config['error']['maxsize']);
+                }
+
+                $post['width'] = $image->size->width;
+                $post['height'] = $image->size->height;
+
+                if ($config['spoiler_images'] && isset($_POST['spoiler'])) {
+                    $post['thumb'] = 'spoiler';
+
+                    $size = @getimagesize($config['spoiler_image']);
+                    $post['thumbwidth'] = $size[0];
+                    $post['thumbheight'] = $size[1];
+                } elseif ($config['minimum_copy_resize']
+                    && $image->size->width <= $config['thumb_width']
+                    && $image->size->height <= $config['thumb_height']
+                    && $post['extension'] == ($config['thumb_ext'] ? $config['thumb_ext'] : $post['extension'])) {
+
+                    // Copy, because there's nothing to resize
+                    copy($upload, $post['thumb']);
+
+                    $post['thumbwidth'] = $image->size->width;
+                    $post['thumbheight'] = $image->size->height;
+                } else {
+                    $thumb = $image->resize(
+                        $config['thumb_ext'] ? $config['thumb_ext'] : $post['extension'],
+                        $post['op'] ? $config['thumb_op_width'] : $config['thumb_width'],
+                        $post['op'] ? $config['thumb_op_height'] : $config['thumb_height'],
+                    );
+
+                    $thumb->to($post['thumb']);
+
+                    $post['thumbwidth'] = $thumb->width;
+                    $post['thumbheight'] = $thumb->height;
+
+                    $thumb->_destroy();
+                }
+
+                if ($config['redraw_image'] || (!@$post['exif_stripped'] && $config['strip_exif'] && ($post['extension'] == 'jpg' || $post['extension'] == 'jpeg'))) {
+                    if (!$config['redraw_image'] && $config['use_exiftool']) {
+                        $this->strip_image_metadata($upload);
+                    } else {
+                        $image->to($post['file']);
+                        $dont_copy_file = true;
+                    }
+                }
+                $image->destroy();
+            } else {
+                // not an image
+                //copy($config['file_thumb'], $post['thumb']);
+                $post['thumb'] = 'file';
+
+                $size = @getimagesize(sprintf(
+                    $config['file_thumb'],
+                    isset($config['file_icons'][$post['extension']])
+                        ? $config['file_icons'][$post['extension']] : $config['file_icons']['default'],
+                ));
+                $post['thumbwidth'] = $size[0];
+                $post['thumbheight'] = $size[1];
+            }
+
+            if (!isset($dont_copy_file) || !$dont_copy_file) {
+                if (isset($post['file_tmp'])) {
+                    if (!@rename($upload, $post['file'])) {
+                        error($config['error']['nomove']);
+                    }
+                    chmod($post['file'], 0644);
+                } elseif (!@move_uploaded_file($upload, $post['file'])) {
+                    error($config['error']['nomove']);
+                }
+            }
+        }
+
+        if ($post['has_file']) {
+            if ($config['image_reject_repost']) {
+                if ($p = PostService::getPostByHash($post['filehash'])) {
+                    FileManager::undoImage($post);
+                    error(sprintf(
+                        $config['error']['fileexists'],
+                        ($post['mod'] ? $config['root'] . $config['file_mod'] . '?/' : $config['root'])
+                        . ($board['dir'] . $config['dir']['res']
+                            . (
+                                $p['thread']
+                                ? $p['thread'] . '.html#' . $p['id']
+                                : $p['id'] . '.html'
+                            )),
+                    ));
+                }
+            } elseif (!$post['op'] && $config['image_reject_repost_in_thread']) {
+                if ($p = PostService::getPostByHashInThread($post['filehash'], $post['thread'])) {
+                    FileManager::undoImage($post);
+                    error(sprintf(
+                        $config['error']['fileexistsinthread'],
+                        ($post['mod'] ? $config['root'] . $config['file_mod'] . '?/' : $config['root'])
+                        . ($board['dir'] . $config['dir']['res']
+                            . (
+                                $p['thread']
+                                ? $p['thread'] . '.html#' . $p['id']
+                                : $p['id'] . '.html'
+                            )),
+                    ));
+                }
+            }
+        }
+
+        if (!PermissionManager::hasPermission($config['mod']['postunoriginal'], $board['uri']) && $config['robot_enable'] && Mutes::checkRobot($post['body_nomarkup'])) {
+            FileManager::undoImage($post);
+            if ($config['robot_mute']) {
+                error(sprintf($config['error']['muted'], Mutes::mute()));
+            } else {
+                error($config['error']['unoriginal']);
+            }
+        }
+
+        // Remove board directories before inserting them into the database.
+        if ($post['has_file']) {
+            $post['file_path'] = $post['file'];
+            $post['thumb_path'] = $post['thumb'];
+            $post['file'] = mb_substr($post['file'], mb_strlen($board['dir'] . $config['dir']['img']));
+            if ($is_an_image && $post['thumb'] != 'spoiler') {
+                $post['thumb'] = mb_substr($post['thumb'], mb_strlen($board['dir'] . $config['dir']['thumb']));
+            }
+        }
+
+        $post = (object) $post;
+        if ($error = EventDispatcher::event('post', $post)) {
+            FileManager::undoImage((array) $post);
+            error($error);
+        }
+        $post = (array) $post;
+
+        $post['id'] = $id = PostService::post($post);
+
+        PostService::insertFloodPost($post);
+
+        if (isset($post['antispam_hash'])) {
+            AntiSpamService::incrementSpamHash($post['antispam_hash']);
+        }
+
+        if (isset($post['tracked_cites']) && !empty($post['tracked_cites'])) {
+            $insert_rows = [];
+            foreach ($post['tracked_cites'] as $cite) {
+                $insert_rows[] = '('
+                    . $pdo->quote($board['uri']) . ', ' . (int) $id . ', '
+                    . $pdo->quote($cite[0]) . ', ' . (int) $cite[1] . ')';
+            }
+            query('INSERT INTO ``cites`` VALUES ' . implode(', ', $insert_rows)) or error(db_error());
+        }
+
+        if (!$post['op'] && strtolower($post['email']) != 'sage' && !$thread['sage'] && ($config['reply_limit'] == 0 || $numposts['replies'] + 1 < $config['reply_limit'])) {
+            PostService::bumpThread($post['thread']);
+        }
+
+        PostService::buildThread($post['op'] ? $id : $post['thread']);
+
+        if ($config['try_smarter'] && $post['op']) {
+            $build_pages = range(1, $config['max_pages']);
+        }
+
+        if ($post['op']) {
+            PostService::clean();
+        }
+
+        EventDispatcher::event('post-after', $post);
+
+        PageService::buildIndex();
+
+        if (isset($_SERVER['HTTP_REFERER'])) {
+            // Tell Javascript that we posted successfully
+            if (isset($_COOKIE[$config['cookies']['js']])) {
+                $js = json_decode($_COOKIE[$config['cookies']['js']]);
+            } else {
+                $js = (object) [];
+            }
+            // Tell it to delete the cached post for referer
+            $js->{$_SERVER['HTTP_REFERER']} = true;
+            // Encode and set cookie
+            setcookie($config['cookies']['js'], json_encode($js), 0, $config['cookies']['jail'] ? $config['cookies']['path'] : '/', '', false, false);
+        }
+
+        $root = $post['mod'] ? $config['root'] . $config['file_mod'] . '?/' : $config['root'];
+
+        if ($config['always_noko'] || $noko) {
+            $redirect = $root . $board['dir'] . $config['dir']['res']
+                . sprintf($config['file_page'], $post['op'] ? $id : $post['thread']) . (!$post['op'] ? '#' . $id : '');
+        } else {
+            $redirect = $root . $board['dir'] . $config['file_index'];
+        }
+
+        if ($config['syslog']) {
+            ErrorHandler::_syslog(LOG_INFO, 'New post: /' . $board['dir'] . $config['dir']['res']
+                . sprintf($config['file_page'], $post['op'] ? $id : $post['thread']) . (!$post['op'] ? '#' . $id : ''));
+        }
+
+        if ($post['op']) {
+            ThemeManager::rebuildThemes('post-thread', $board['uri']);
+        } else {
+            ThemeManager::rebuildThemes('post', $board['uri']);
+        }
+
+        if (!isset($_POST['json_response'])) {
+            header('Location: ' . $redirect, true, $config['redirect_http']);
+        } else {
+            header('Content-Type: text/json; charset=utf-8');
+            echo json_encode([
+                'redirect' => $redirect,
+                'noko' => $config['always_noko'] || $noko,
+                'id' => $id,
+            ]);
+        }
+    }
+}
