@@ -8,13 +8,6 @@
  *    -l [locale], --locale=[locale]
  *      Updates only [locale] locale. If it does not exist yet, we create a new directory.
  *
- *  Examples:
- *    i18n_extract.php -l en_US
- *    i18n_extract.php --locale=fr_FR
- *
- *  This script is based on code from vichan-devel/vichan
- *  Copyright (c) 2012-2018 vichan-devel
- *  Copyright (c) 2010-2014 Tinyboard Development Group (tinyboard.org)
  */
 
 require dirname(__FILE__) . '/cli.php';

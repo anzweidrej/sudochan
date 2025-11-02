@@ -8,9 +8,6 @@
  *    -l [locale], --locale=[locale]
  *      Compiles [locale] locale.
  *
- *  This script is based on code from vichan-devel/vichan
- *  Copyright (c) 2012-2018 vichan-devel
- *  Copyright (c) 2010-2014 Tinyboard Development Group (tinyboard.org)
  */
 
 require dirname(__FILE__) . '/cli.php';

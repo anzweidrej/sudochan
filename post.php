@@ -4,7 +4,7 @@
  *  Copyright (c) 2010-2014 Tinyboard Development Group
  */
 
-use Sudochan\Controller\Crud\{BanAppealCrudController, DeleteCrudController, PostCrudController, ReportCrudController};
+use Sudochan\Controller\Crud\{BanAppealCrudController, PostCrudController, ReportCrudController};
 
 require_once 'bootstrap.php';
 
@@ -18,7 +18,7 @@ $handler = new class {
     public function dispatch(): void
     {
         $actions = [
-            'delete'  => [DeleteCrudController::class, 'executeDelete'],
+            'delete'  => [PostCrudController::class, 'executeDelete'],
             'report'  => [ReportCrudController::class, 'executeReport'],
             'post'    => [PostCrudController::class, 'executePost'],
             'appeal'  => [BanAppealCrudController::class, 'executeBanAppeal'],
